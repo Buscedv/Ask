@@ -1,48 +1,96 @@
-# Single line comment
+$tasks = [
+    {
+        id: 1,
+        title: 'Buy groceries',
+        description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
+        done: False
+    },
+    {
+        id: 2,
+        title: 'Learn Python',
+        description: 'Need to find a good Python tutorial on the web',
+        done: False
+    }
+]
 
-/*
-Multi line
-comment
-*/
 
-'string'
-$variable
-
-@('/route') {
-	# this is a route function
+@GET('/todo/api/v1.0/tasks') {
+	respond({
+		tasks: $tasks
+	})
 }
 
-function() {
-	# this is a function
-}
+@get('/todo/api/v1.0/tasks/$task_id') {
+	$response = {}
 
-&('/path/api') {
-	# this is a request
-}
-
-Name {
-	# this is  a class
-	_construct($self) {
-		# class constructor function
+	/*
+	for ($task in $tasks) {
+		if ($task.id == $task_id) {
+			$response = $task
+		}
 	}
+	*/
+
+	# IDEA! Deep selection, object in array select by value. (26-30)
+    $response = deep($tasks, {id: $task_id})
+    # End IDEA!
+
+    respond {task: $response}
 }
 
-! # not
-& # and
-| # or
+@post('/todo/api/v1.0/tasks') {
+	if (!$body or !'title' in $body) {
+		respond status(400)
+	}
 
-for($elemn in $list) {
-	# for loop
+	$task = {
+		id: $tasks[-1].id + 1,
+        title: $body.title,
+        description: $body.description,
+        done: False
+	}
+
+	$tasks.append($task)
+
+	respond {task: $task}
 }
 
-for ($i in range(0, 11)) {
-	# i in range
+@put('/todo/api/v1.0/tasks/$task_id') {
+	$task = deep($tasks, {id: $task_id})
+
+	if ($task.len == 0) {
+		respond status(4040)
+	}
+
+	if (!$body) {
+		respond status(4040)
+	}
+
+	if (!'title' in $body or !'description' in $body or !'done' in $body) {
+		respond status(4040)
+	}
+
+	/*
+	$task.title = $body.title
+	$task.description = $body.description
+	$task.done = $body.done
+	*/
+
+	# IDEA! Quick put, value(s) update. (62-64)
+	quickPut($task, $body)
+	# End IDEA!
+
+	respond {task: $task}
 }
 
-# there will be built-in support for abnex.
+@delete('/todo/api/v1.0/tasks/$task_id') {
+	$task = deep($tasks, {id: $task_id})
 
-import # whatever library
-export # whatever value
-use # catches exports
+	if ($task.len == 0) {
+		respond status(404)
+	}
 
+	$tasks.remove($task)
 
+	respond {result: True}
+}

@@ -1,17 +1,12 @@
 # Single line comment
 
-/*
-Multi line
-comment
-*/
-
 'string'
 $variable
 ['array']
 {'object': 'value'}
 '\' escaping \''
 
-@('/route') {
+@[method]('/route') {
 	# this is a route function
 }
 
