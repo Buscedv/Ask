@@ -115,76 +115,126 @@ def is_class(possible):
 	return False
 
 
-# Splits line up into keywords and data
-def pre_tokenizer(source_line):
+def tokenizer(line):
 	tokens = []
 
 	tmp = ''
 
-	# Switches
-	is_var = False
 	is_string = False
+	is_number = False
+	is_var = False
+	is_property = False
+	global active_start
 
-	operators = ['=', '+', ')', '{', '}', ',', '#']
-	keywords = ['in', 'import', 'export', 'use']
+	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'respond', 'not', 'pass', 'else', 'and', 'or', 'global']
 
-	for char_index, char in enumerate(source_line):
-		if char == '$':
-			tokens.append(Variable(None, None))
-			is_var = True
-		elif char == '\'' or char == '"':
+	for char_index, char in enumerate(line):
+		if char == '"' or char == '\'':
 			if is_string:
-				tokens[-1].set_value(tmp)
+				is_string = False
+				tokens.append(['STRING', tmp])
+				tmp = ''
 			else:
-				tokens.append(String(None))
-
-			is_string = not is_string
-		elif char == '(':
-			tokens.append(Function(tmp))
-			tmp = ''
-		elif char in operators or char_index == len(source_line) - 1:
+				is_string = True
+				tmp = ''
+		elif char == '$' and is_string is False:
+			is_var = True
+		elif char == '{':
+			tokens.append(['START', char])
+			active_start = True
+		elif char == '}':
+			active_start = False
 			if is_var:
-				tokens[-1].set_data_type('VAR')
-				tokens[-1].set_value(tmp)
+				if is_property:
+					tokens.append(['PROPERTY', tmp])
+					is_property = False
+					tmp = ''
+					tokens.append(['END', char])
+					continue
+
+				tokens.append(['VAR', tmp])
 				is_var = False
 				tmp = ''
 
-			if char in operators:
-				if char == '{' and is_class(tmp):
-					tokens.append(Class(tmp))
+			tokens.append(['END', char])
+		elif char == '(':
+			tokens.append(['FUNCTION', tmp])
+			tmp = ''
+		elif not is_string and not is_var and char.isnumeric() or char == '-' and not is_number:
+			is_number = True
+			tmp += char
 
-				if char == '#':
-					break
+			if not line[char_index+1].isnumeric() and line[char_index+1] != '-':
+				tokens.append(['NUMBER', tmp])
+				tmp = ''
+				is_number = False
 
-				tokens.append(Operator(char))
-		elif not is_string and char.isnumeric() or char == '-':
-			if tokens:
-				if isinstance(tokens[-1], Number):
-					tokens[-1].add_to_value(char)
+		elif char == '[':
+			if is_var:
+				if is_property:
+					tokens.append(['PROPERTY', tmp])
+					is_property = False
+					tmp = ''
 					continue
-			tokens.append(Number(char))
-		else:
-			if char == ' ' and is_string or char != ' ':
-				tmp += char
-				if tmp[-2:] == 'in' and is_var:
-					tokens[-1].set_data_type('VAR')
-					tokens[-1].set_value(tmp[:-2])
-					is_var = False
+
+				tokens.append(['VAR', tmp])
+				is_var = False
+				tmp = ''
+			tokens.append(['LIST_START', '['])
+		elif char == ']':
+			tokens.append(['LIST_END', ']'])
+		elif char in operators and is_string is False or char_index == len(line) - 1 and is_string is False:
+			if is_var:
+				is_var = False
+				if is_property:
+					tokens.append(['PROPERTY', tmp])
+					is_property = False
 					tmp = ''
 
-					tokens.append(Keyword('IN'))
-				# Keyword check
-				if not is_string and not is_var:
-					if tmp in keywords:
-						tokens.append(Keyword(tmp))
-						tmp = ''
+					if char != '\n':
+						tokens.append(['OPERATOR', char])
+					continue
 
+				tokens.append(['VAR', tmp])
+				tmp = ''
+			elif active_start and char == ':':
+				tokens.append(['DICT_KEY', tmp])
+				tmp = ''
+
+			if char == '.':
+				is_property = True
+				is_var = True
+
+			if char != '\n':
+				tokens.append(['OPERATOR', char])
+		else:
+			if char != ' ' or char == ' ' and is_string:
+				if char == '#':
+					break
+				else:
+					tmp += char
+
+					# Checks for keyword
+					if is_var and len(tmp) >= 2:
+						if tmp[-2:] in ['in', '||', '&&']:
+							tokens.append(['VAR', tmp[:-2]])
+							tokens.append(['KEYWORD', tmp[-2:]])
+							is_var = False
+							tmp = ''
+					elif tmp in keywords and not is_var:
+						tokens.append(['KEYWORD', tmp])
+						tmp = ''
 	return tokens
 
 
 def fix_up_line(source_line):
 	return source_line.replace('\t', '')
 
+
+active_start = False
+
+is_multi_line_comment = False
 
 filename = sys.argv[1]
 
@@ -195,11 +245,17 @@ with open(filename) as f:
 tokenized_lines = []
 
 for line in source_lines:
-	tokenized_lines.append(pre_tokenizer(fix_up_line(line)))
+	line = fix_up_line(line)
+	if line[:2] == '/*':
+		is_multi_line_comment = True
+		continue
+	elif line[:2] == '*/':
+		is_multi_line_comment = False
+		continue
 
-for line in tokenized_lines:
-	for token in line:
-		print('Class:')
-		print(token)
-		print('Class value:')
-		print(token.get_value())
+	if not is_multi_line_comment:
+		tokenized_line = tokenizer(line)
+		if tokenized_line:
+			tokenized_lines.append(tokenized_line)
+
+print(tokenized_lines)
