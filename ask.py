@@ -123,14 +123,14 @@ def parser(tokens, current_token):
 		elif token_type in ['STRING', 'DICT_KEY']:
 			tmp_token_val_indents, tmp_token_val = separate_indents_and_content(token_val)
 			parsed.append(tmp_token_val_indents + '\'' + tmp_token_val + '\'')
-		elif token_type in ['NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
+		elif token_type in ['NUMBER', 'OPERATOR', 'PROPERTY']:
 			parsed.append(token_val)
 		elif token_type == 'VAR':
 			if token_val.replace('\t', '') in ['_body']:
 				parsed.append(transpile_var(token_val))
 			else:
 				parsed.append(token_val)
-		elif token_type in ['DICT_START', 'DICT_END']:
+		elif token_type in ['DICT_START', 'DICT_END', 'LIST_START', 'LIST_END']:
 			parsed.append(token_val)
 
 		if token_type == 'LINE':
@@ -204,14 +204,10 @@ def tokenizer(line):
 					is_property = False
 					tmp = ''
 
-					if char != '\n':
-						tokens.append(['OPERATOR', char])
-					continue
-
 				tokens.append(['VAR', tmp])
 				tmp = ''
 
-			tokens.append(['DICT_END', '}'])
+			tokens.append(['DICT_END', char])
 			active_dict = False
 		elif char in operators and is_string is False or char_index == len(line) - 1 and is_string is False:
 			if is_var:
@@ -248,16 +244,16 @@ def tokenizer(line):
 					tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
 
 					if is_var and len(tmp_tmp) >= 2:
-						tmp_keyword_lenght = 0
+						tmp_keyword_length = 0
 
 						if tmp_tmp[-2:] in ['in', 'or']:
-							tmp_keyword_lenght = -2
+							tmp_keyword_length = -2
 						elif tmp_tmp[-3:] in ['and']:
-							tmp_keyword_lenght = -3
+							tmp_keyword_length = -3
 
-						if tmp_keyword_lenght:
-							tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_lenght]])
-							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_lenght:]])
+						if tmp_keyword_length:
+							tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
 
 							tmp = ''
 

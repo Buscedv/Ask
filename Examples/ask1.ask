@@ -20,11 +20,9 @@ $tasks = [
 	$response = {}
 
 	/*
-	for ($task in $tasks) {
-		if ($task.id == $task_id) {
+	for ($task in $tasks):
+		if ($task.id == $task_id):
 			$response = $task
-		}
-	}
 	*/
 
 	# IDEA! Deep selection, object in array select by value. (26-30)
@@ -47,7 +45,6 @@ $tasks = [
 	$tasks.append($task)
 
 	respond ({task: $task})
-}
 
 @put('/todo/api/v1.0/tasks/$task_id'):
 	$task = deep($tasks, {id: $task_id})
