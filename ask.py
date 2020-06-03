@@ -125,9 +125,10 @@ def tokenizer(line):
 	is_var = False
 	is_property = False
 	global active_start
+	global is_waiting_for_function_start
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'respond', 'not', 'pass', 'else', 'and', 'or', 'global']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'respond', 'not', 'pass', 'else', 'and', 'or', 'global', 'def']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
@@ -142,8 +143,12 @@ def tokenizer(line):
 			is_var = True
 		elif char == '{':
 			tokens.append(['START', char])
-			active_start = True
+			if not is_waiting_for_function_start:
+				active_start = True
 		elif char == '}':
+
+			if is_waiting_for_function_start:
+				is_waiting_for_function_start = False
 			active_start = False
 			if is_var:
 				if is_property:
@@ -224,6 +229,8 @@ def tokenizer(line):
 							tmp = ''
 					elif tmp in keywords and not is_var:
 						tokens.append(['KEYWORD', tmp])
+						if tmp == 'def':
+							is_waiting_for_function_start = True
 						tmp = ''
 	return tokens
 
@@ -233,6 +240,7 @@ def fix_up_line(source_line):
 
 
 active_start = False
+is_waiting_for_function_start = False
 
 is_multi_line_comment = False
 
