@@ -1,118 +1,87 @@
 import sys
 
 
-class Class:
-	value = None
+def transpile_keyword(keyword):
+	keywords = {
+		'def': 'def'
+	}
 
-	def __init__(self, value):
-		self.value = value
+	if keyword in keywords.keys():
+		return keywords[keyword]
 
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-
-class Function:
-	value = None
-
-	def __init__(self, value):
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-
-class Keyword:
-	value = ''
-
-	def __init__(self, value):
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-
-class Operator:
-	value = None
-
-	def __init__(self, value):
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-
-class Number:
-	value = ''
-
-	def __init__(self, value):
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-	def add_to_value(self, to_add):
-		self.set_value(
-			int(
-				str(
-					self.get_value()
-				) + to_add
-			)
-		)
-
-
-class String:
-	value = ''
-
-	def __init__(self, value):
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def set_value(self, value):
-		self.value = value
-
-
-class Variable:
-	value = None,
-	data_type = None,
-
-	def __init__(self, data_type, value):
-		self.data_type = data_type
-		self.value = value
-
-	def get_value(self):
-		return self.value
-
-	def get_data_type(self):
-		return self.data_type
-
-	def set_value(self, value):
-		self.value = value
-
-	def set_data_type(self, data_type):
-		self.data_type = data_type
-
-
-def is_class(possible):
-	if len(possible) >= 1:
-		return possible[0].isupper()
 	return False
+
+
+def transpile_function(function):
+	functions = {
+		'respond': 'return jsonify',
+		'deep': 'AskLibrary.deep'
+	}
+
+	if function in functions.keys():
+		return functions[function]
+
+	return False
+
+
+def parser(tokens, current_token):
+	global parsed
+	global return_run
+	global start_is_block
+	global indent_layers
+
+	token = tokens[current_token]
+
+	token_type = token[0]
+	token_val = token[1]
+
+	if return_run:
+		return_run = False
+		return token_val
+	else:
+		if token_type == 'FUNCTION':
+			if token_val[0] == '@':
+				return_run = True
+				parsed.append('@app.route(\'' + parser(tokens, current_token + 1) + '\', methods=[\'' + token_val[1:].upper() + '\'])')
+				start_is_block = True
+			elif transpile_function(token_val):
+				parsed.append(transpile_function(token_val) + '(')
+		elif token_type == 'KEYWORD' and transpile_keyword(token_val):
+			if token_val == 'def':
+				start_is_block = True
+			parsed.append(transpile_keyword(token_val))
+		elif token_type == 'START':
+			if start_is_block:
+				start_is_block = False
+				indent_layers.append('\t')
+				parsed.append(':\n')
+			else:
+				parsed.append('{\n')
+		elif token_type == 'END':
+			parsed.append('\n}\n')
+			if indent_layers:
+				indent_layers.pop(-1)
+		elif token_type == 'OPERATOR':
+			parsed.append(token_val)
+		elif token_type == 'DICT_KEY':
+			parsed.append('\'' + token_val + '\'')
+		elif token_type == 'VAR':
+			parsed.append(token_val)
+
+		if indent_layers:
+			last_token = parsed[-1]
+			last_token = ''.join(indent_layers) + last_token
+
+			parsed[-1] = last_token
+
+
+
+
+
+	# Recursively calls parser() when there is more code to parse
+	if len(tokens) - 1 > current_token:
+		parser(tokens, current_token + 1)
+
 
 
 def tokenizer(line):
@@ -128,7 +97,7 @@ def tokenizer(line):
 	global is_waiting_for_function_start
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'respond', 'not', 'pass', 'else', 'and', 'or', 'global', 'def']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
@@ -239,16 +208,21 @@ def fix_up_line(source_line):
 	return source_line.replace('\t', '')
 
 
+# Global variables set up
 active_start = False
 is_waiting_for_function_start = False
+parsed = []
+return_run = False
+start_is_block = False
+indent_layers = []
 
+# Start
 is_multi_line_comment = False
 
 filename = sys.argv[1]
 
 with open(filename) as f:
 	source_lines = f.readlines()
-
 
 tokenized_lines = []
 
@@ -266,4 +240,16 @@ for line in source_lines:
 		if tokenized_line:
 			tokenized_lines.append(tokenized_line)
 
-print(tokenized_lines)
+
+tokens = []
+
+for line in tokenized_lines:
+	for token in line:
+		tokens.append(token)
+
+print('--TOKENS:')
+for token in tokens:
+	print(token)
+parser(tokens, 0)
+print('\n--PARSED:')
+print(''.join(parsed))

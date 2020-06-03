@@ -15,26 +15,26 @@
 
 
 #@GET('/todo/api/v1.0/tasks') {
-#	respond {tasks: $tasks}
+#	respond({tasks: $tasks})
 #}
 
-#@get('/todo/api/v1.0/tasks/$task_id') {
-#	$response = {}
-#
-#	/*
-#	for ($task in $tasks) {
-#		if ($task.id == $task_id) {
-#			$response = $task
-#		}
-#	}
-#	*/
-#
-#	# IDEA! Deep selection, object in array select by value. (26-30)
-#    $response = deep($tasks, {id: $task_id})
-#    # End IDEA!
-#
-#    respond {task: $response}
-#}
+@get('/todo/api/v1.0/tasks/$task_id') {
+	$response = {}
+
+	/*
+	for ($task in $tasks) {
+		if ($task.id == $task_id) {
+			$response = $task
+		}
+	}
+	*/
+
+	# IDEA! Deep selection, object in array select by value. (26-30)
+    $response = deep($tasks, {id: $task_id})
+    # End IDEA!
+
+    respond ({task: $response})
+}
 #
 #@post('/todo/api/v1.0/tasks') {
 #	if (!$body || !'title' in $body) {
