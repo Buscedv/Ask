@@ -65,7 +65,7 @@ $tasks = [
 	*/
 
 	# IDEA! Quick put, value(s) update. (62-64)
-	quickPut($task, $_body)
+	$task = quickPut($task, $_body)
 	# End IDEA!
 
 	respond ({task: $task})
