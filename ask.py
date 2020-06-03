@@ -1,19 +1,5 @@
 import sys
 
-
-def transpile_keyword(keyword):
-	keywords = {
-		'def': 'def',
-	}
-
-	indents, keyword_stripped = separate_indents_and_content(keyword)
-
-	if keyword_stripped in keywords.keys():
-		return indents + keywords[keyword_stripped]
-
-	return False
-
-
 def transpile_function(function):
 	functions = {
 		'respond': 'return jsonify',
@@ -85,7 +71,6 @@ def separate_indents_and_content(string):
 def parser(tokens, current_token):
 	global parsed
 	global return_run
-	global is_route
 	global function_in_route_name
 	global vars_used_by_route
 
@@ -101,30 +86,27 @@ def parser(tokens, current_token):
 		if token_type == 'FUNCTION':
 			if token_val.replace('\t', '')[0] == '@':
 				return_run = True
-				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val.replace('\t', '')[1:].upper() + '\']')
+				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val.replace('\t', '')[1:].upper() + '\'])')
 
 				# Prep. for function in route (used by flask)
-				is_route = True
-
 				return_run = True
 				function_in_route_name = parser(tokens, current_token + 1).replace('/', '_').replace('$', '').replace('.', '_')
-				function_in_route_name += token_val.replace('\t', '')[1:]
+				function_in_route_name += '_' + token_val.replace('\t', '')[1:]
 
 				return_run = True
 				vars_used_by_route = get_vars_used_by_route(route_url_parser(parser(tokens, current_token + 1)))
+
+				parsed.append('\ndef ' + function_in_route_name + '(' + vars_used_by_route)
 
 				current_token += 1
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
 			else:
 				parsed.append(token_val + '(')
-		elif token_type == 'KEYWORD' and transpile_keyword(token_val):
-			parsed.append(transpile_keyword(token_val))
 		elif token_type == 'KEYWORD':
 			parsed.append(' ' + token_val + ' ')
 		elif token_type in ['STRING', 'DICT_KEY']:
-			tmp_indents, tmp_content = separate_indents_and_content(token_val)
-			parsed.append(tmp_indents + '\'' + tmp_content + '\'')
+			parsed.append('\'' + token_val + '\'')
 		elif token_type in ['VAR', 'NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
 			parsed.append(token_val)
 		elif token_type in ['DICT_START', 'DICT_END']:
@@ -194,6 +176,20 @@ def tokenizer(line):
 			tokens.append(['DICT_START', '{'])
 			active_dict = True
 		elif char == '}':
+			if is_var:
+				is_var = False
+				if is_property:
+					tokens.append(['PROPERTY', tmp])
+					is_property = False
+					tmp = ''
+
+					if char != '\n':
+						tokens.append(['OPERATOR', char])
+					continue
+
+				tokens.append(['VAR', tmp])
+				tmp = ''
+
 			tokens.append(['DICT_END', '}'])
 			active_dict = False
 		elif char in operators and is_string is False or char_index == len(line) - 1 and is_string is False:
@@ -228,24 +224,24 @@ def tokenizer(line):
 					tmp += char
 
 					# Checks for keyword
-					if is_var and len(tmp) >= 2:
-						tamp_keyword_length = 0
+					tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
 
-						if tmp[-2:] in ['in', 'or']:
-							tamp_keyword_length = -2
-						elif tmp[-3:] in ['and']:
-							tamp_keyword_length = -3
+					if is_var and len(tmp_tmp) > 2:
+						tmp_keyword_lenght = 0
 
-						if tamp_keyword_length:
-							tokens.append(['VAR', tmp[:tamp_keyword_length]])
-							tokens.append(['KEYWORD', tmp[tamp_keyword_length:]])
-							is_var = False
-							tmp = ''
-					elif tmp in keywords and not is_var:
-						tokens.append(['KEYWORD', tmp])
-						if tmp == 'def':
-							is_waiting_for_function_start = True
+						if tmp_tmp[-2:] in ['in', 'or']:
+							tmp_keyword_lenght = -2
+						elif tmp_tmp[-3:] in ['and']:
+							tmp_keyword_lenght = -3
+
+						if tmp_keyword_lenght:
+							tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_lenght]])
+							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_lenght:]])
+
+					elif tmp_tmp in keywords and not is_var:
+						tokens.append(['KEYWORD', tmp_tmp_indents + tmp_tmp])
 						tmp = ''
+
 	return tokens
 
 
@@ -254,14 +250,13 @@ active_dict = False
 is_waiting_for_function_start = False
 parsed = []
 return_run = False
-is_route = False
 function_in_route_name = ''
 vars_used_by_route = ''
 
 # Start
 is_multi_line_comment = False
 
-is_dev = False
+is_dev = True
 
 flask_boilerplate = '# -- FLASK BOILERPLATE HERE --\n'
 

@@ -1,18 +1,17 @@
 $tasks = [
-    {
-        id: 1,
-        title: 'Buy groceries',
-        description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
-        done: False
-    },
-    {
-        id: 2,
-        title: 'Learn Python',
-        description: 'Need to find a good Python tutorial on the web',
-        done: False
-    }
+	{
+    	id: 1,
+    	title: 'Buy groceries',
+    	description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
+    	done: False
+	},
+	{
+		id: 2,
+		title: 'Learn Python',
+		description: 'Need to find a good Python tutorial on the web',
+		done: False
+	}
 ]
-
 
 @GET('/todo/api/v1.0/tasks'):
 	respond({tasks: $tasks})
@@ -29,10 +28,10 @@ $tasks = [
 	*/
 
 	# IDEA! Deep selection, object in array select by value. (26-30)
-    $response = deep($tasks, {id: $task_id})
+	$response = deep($tasks, {id: $task_id})
     # End IDEA!
 
-    respond ({task: $response})
+	respond ({task: $response})
 
 @post('/todo/api/v1.0/tasks'):
 	if (not $body and not 'title' in $body):
@@ -84,3 +83,5 @@ $tasks = [
 	$tasks.remove($task)
 
 	respond ({result: True})
+
+	return "lol"
