@@ -3,7 +3,7 @@ import sys
 
 def transpile_keyword(keyword):
 	keywords = {
-		'def': 'def'
+		'def': 'def',
 	}
 
 	if keyword in keywords.keys():
@@ -24,10 +24,33 @@ def transpile_function(function):
 	return False
 
 
+def route_url_parser(raw_url):
+	if '$' in raw_url:
+		head = ''
+		tail = ''
+		var = ''
+
+		collect = False
+
+		for char_index, char in enumerate(raw_url):
+			if char == '$':
+				head = raw_url[:char_index]
+				collect = True
+			elif collect:
+				if char != '/':
+					var += char
+				else:
+					tail = raw_url[char_index:]
+					collect = False
+
+		return head + '<' + var + '>' + tail
+
+	return raw_url
+
+
 def parser(tokens, current_token):
 	global parsed
 	global return_run
-	global start_is_block
 	global indent_layers
 
 	token = tokens[current_token]
@@ -42,41 +65,34 @@ def parser(tokens, current_token):
 		if token_type == 'FUNCTION':
 			if token_val[0] == '@':
 				return_run = True
-				parsed.append('@app.route(\'' + parser(tokens, current_token + 1) + '\', methods=[\'' + token_val[1:].upper() + '\'])')
-				start_is_block = True
+				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val[1:].upper() + '\']')
+				current_token += 1
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
-		elif token_type == 'KEYWORD' and transpile_keyword(token_val):
-			if token_val == 'def':
-				start_is_block = True
-			parsed.append(transpile_keyword(token_val))
-		elif token_type == 'START':
-			if start_is_block:
-				start_is_block = False
-				indent_layers.append('\t')
-				parsed.append(':\n')
 			else:
-				parsed.append('{\n')
+				parsed.append(token_val + '(')
+		elif token_type == 'KEYWORD' and transpile_keyword(token_val):
+			parsed.append(transpile_keyword(token_val))
+		elif token_type == 'KEYWORD':
+			parsed.append(' ' + token_val + ' ')
+		elif token_type == 'START':
+			parsed.append('{')
+			indent_layers.append('\t')
 		elif token_type == 'END':
-			parsed.append('\n}\n')
-			if indent_layers:
-				indent_layers.pop(-1)
-		elif token_type == 'OPERATOR':
-			parsed.append(token_val)
+			parsed.append('}')
+			indent_layers.pop(-1)
 		elif token_type == 'DICT_KEY':
 			parsed.append('\'' + token_val + '\'')
-		elif token_type == 'VAR':
+		elif token_type in ['VAR', 'NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
 			parsed.append(token_val)
+		elif token_type == 'STRING':
+			parsed.append('\'' + token_val + '\'')
 
-		if indent_layers:
-			last_token = parsed[-1]
-			last_token = ''.join(indent_layers) + last_token
+		if token_type == 'LINE':
+			parsed.append('\n')
 
-			parsed[-1] = last_token
-
-
-
-
+		if indent_layers and tokens[current_token - 1][0] == 'LINE':
+			parsed[-1] = ''.join(indent_layers) + parsed[-1]
 
 	# Recursively calls parser() when there is more code to parse
 	if len(tokens) - 1 > current_token:
@@ -213,7 +229,6 @@ active_start = False
 is_waiting_for_function_start = False
 parsed = []
 return_run = False
-start_is_block = False
 indent_layers = []
 
 # Start
@@ -246,6 +261,7 @@ tokens = []
 for line in tokenized_lines:
 	for token in line:
 		tokens.append(token)
+	tokens.append(['LINE', '\n'])
 
 print('--TOKENS:')
 for token in tokens:
