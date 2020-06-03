@@ -1,10 +1,25 @@
 import sys
 
+
+def transpile_var(var):
+	var_names = {
+		'_body': 'request.json',
+	}
+
+	indents, var_name = separate_indents_and_content(var)
+
+	if var_name in var_names.keys():
+		return indents + var_names[var_name]
+
+	return False
+
+
 def transpile_function(function):
 	functions = {
 		'respond': 'return jsonify',
 		'deep': 'AskLibrary.deep',
 		'quickPut': 'AskLibrary.quickPut',
+		'status': 'AskLibrary.status'
 	}
 
 	indents, function_name = separate_indents_and_content(function)
@@ -106,9 +121,15 @@ def parser(tokens, current_token):
 		elif token_type == 'KEYWORD':
 			parsed.append(' ' + token_val + ' ')
 		elif token_type in ['STRING', 'DICT_KEY']:
-			parsed.append('\'' + token_val + '\'')
-		elif token_type in ['VAR', 'NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
+			tmp_token_val_indents, tmp_token_val = separate_indents_and_content(token_val)
+			parsed.append(tmp_token_val_indents + '\'' + tmp_token_val + '\'')
+		elif token_type in ['NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
 			parsed.append(token_val)
+		elif token_type == 'VAR':
+			if token_val.replace('\t', '') in ['_body']:
+				parsed.append(transpile_var(token_val))
+			else:
+				parsed.append(token_val)
 		elif token_type in ['DICT_START', 'DICT_END']:
 			parsed.append(token_val)
 
@@ -169,11 +190,11 @@ def tokenizer(line):
 				tokens.append(['VAR', tmp])
 				is_var = False
 				tmp = ''
-			tokens.append(['LIST_START', '['])
+			tokens.append(['LIST_START', char])
 		elif char == ']':
-			tokens.append(['LIST_END', ']'])
+			tokens.append(['LIST_END', char])
 		elif char == '{':
-			tokens.append(['DICT_START', '{'])
+			tokens.append(['DICT_START', char])
 			active_dict = True
 		elif char == '}':
 			if is_var:
@@ -226,7 +247,7 @@ def tokenizer(line):
 					# Checks for keyword
 					tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
 
-					if is_var and len(tmp_tmp) > 2:
+					if is_var and len(tmp_tmp) >= 2:
 						tmp_keyword_lenght = 0
 
 						if tmp_tmp[-2:] in ['in', 'or']:
@@ -237,6 +258,8 @@ def tokenizer(line):
 						if tmp_keyword_lenght:
 							tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_lenght]])
 							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_lenght:]])
+
+							tmp = ''
 
 					elif tmp_tmp in keywords and not is_var:
 						tokens.append(['KEYWORD', tmp_tmp_indents + tmp_tmp])
@@ -256,7 +279,7 @@ vars_used_by_route = ''
 # Start
 is_multi_line_comment = False
 
-is_dev = True
+is_dev = False
 
 flask_boilerplate = '# -- FLASK BOILERPLATE HERE --\n'
 
