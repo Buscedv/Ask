@@ -1,6 +1,34 @@
 import sys
 
 
+class AskLibrary:
+	# Selecting an object from a list of objects, by value.
+	@staticmethod
+	def deep(obj, rule):
+		rule_key = rule.keys()[0]
+		rule_val = rule[rule_key]
+
+		for element in obj:
+			if element[rule_key] == rule_val:
+				return element
+
+	@staticmethod
+	def quickPut(target, source):
+		for key in source.keys():
+			if key in target.keys():
+				target[key] = source[key]
+
+		return target
+
+	@staticmethod
+	def status(code):
+		import jsonify
+
+		return jsonify({
+			'status': code
+		})
+
+
 def transpile_var(var):
 	var_names = {
 		'_body': 'request.json',
