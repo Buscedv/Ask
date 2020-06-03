@@ -18,40 +18,40 @@
 #	respond({tasks: $tasks})
 #}
 
-@get('/todo/api/v1.0/tasks/$task_id') {
-	$response = {}
-
-	/*
-	for ($task in $tasks) {
-		if ($task.id == $task_id) {
-			$response = $task
-		}
-	}
-	*/
-
-	# IDEA! Deep selection, object in array select by value. (26-30)
-    $response = deep($tasks, {id: $task_id})
-    # End IDEA!
-
-    respond ({task: $response})
-}
+#@get('/todo/api/v1.0/tasks/$task_id') {
+#	$response = {}
 #
-#@post('/todo/api/v1.0/tasks') {
-#	if (!$body || !'title' in $body) {
-#		respond status(400)
+#	/*
+#	for ($task in $tasks) {
+#		if ($task.id == $task_id) {
+#			$response = $task
+#		}
 #	}
+#	*/
 #
-#	$task = {
-#		id: $tasks[-1].id + 1,
-#		title: $body.title,
-#		description: $body.description,
-#		done: False
-#	}
+#	# IDEA! Deep selection, object in array select by value. (26-30)
+#    $response = deep($tasks, {id: $task_id})
+#    # End IDEA!
 #
-#	$tasks.append($task)
-#
-#	respond {task: $task}
+#    respond ({task: $response})
 #}
+#
+@post('/todo/api/v1.0/tasks') {
+	if (not $body and not 'title' in $body) {
+		respond (status(400))
+	}
+
+	$task = {
+		id: $tasks[-1].id + 1,
+		title: $body.title,
+		description: $body.description,
+		done: False
+	}
+
+	$tasks.append($task)
+
+	respond ({task: $task})
+}
 
 #@put('/todo/api/v1.0/tasks/$task_id') {
 #	$task = deep($tasks, {id: $task_id})
