@@ -14,11 +14,10 @@ $tasks = [
 ]
 
 
-@GET('/todo/api/v1.0/tasks') {
+@GET('/todo/api/v1.0/tasks'):
 	respond({tasks: $tasks})
-}
 
-@get('/todo/api/v1.0/tasks/$task_id') {
+@get('/todo/api/v1.0/tasks/$task_id'):
 	$response = {}
 
 	/*
@@ -34,12 +33,10 @@ $tasks = [
     # End IDEA!
 
     respond ({task: $response})
-}
 
-@post('/todo/api/v1.0/tasks') {
-	if (not $body and not 'title' in $body) {
+@post('/todo/api/v1.0/tasks'):
+	if (not $body and not 'title' in $body):
 		respond (status(400))
-	}
 
 	$task = {
 		id: $tasks[-1].id + 1,
@@ -53,20 +50,17 @@ $tasks = [
 	respond ({task: $task})
 }
 
-@put('/todo/api/v1.0/tasks/$task_id') {
+@put('/todo/api/v1.0/tasks/$task_id'):
 	$task = deep($tasks, {id: $task_id})
 
-	if ($task.len == 0) {
-		respond status(404)
-	}
+	if ($task.len == 0):
+		respond (status(404))
 
-	if (!$body) {
-		respond status(404)
-	}
+	if (not $body):
+		respond (status(404))
 
-	if (not 'title' in $body or  not 'description' in $body or not 'done' in $body) {
-		respond status(404)
-	}
+	if (not 'title' in $body or  not 'description' in $body or not 'done' in $body):
+		respond (status(404))
 
 	/*
 	$task.title = $body.title
@@ -79,16 +73,14 @@ $tasks = [
 	# End IDEA!
 
 	respond ({task: $task})
-}
 
-@delete('/todo/api/v1.0/tasks/$task_id') {
+
+@delete('/todo/api/v1.0/tasks/$task_id'):
 	$task = deep($tasks, {id: $task_id})
 
-	if (len($task) == 0) {
-		respond status(404)
-	}
+	if (len($task) == 0):
+		respond (status(404))
 
 	$tasks.remove($task)
 
-	respond {result: True}
-}
+	respond ({result: True})

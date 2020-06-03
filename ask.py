@@ -6,8 +6,10 @@ def transpile_keyword(keyword):
 		'def': 'def',
 	}
 
-	if keyword in keywords.keys():
-		return keywords[keyword]
+	indents, keyword_stripped = separate_indents_and_content(keyword)
+
+	if keyword_stripped in keywords.keys():
+		return indents + keywords[keyword_stripped]
 
 	return False
 
@@ -19,8 +21,10 @@ def transpile_function(function):
 		'quickPut': 'AskLibrary.quickPut',
 	}
 
-	if function in functions.keys():
-		return functions[function]
+	indents, function_name = separate_indents_and_content(function)
+
+	if function_name in functions.keys():
+		return indents + functions[function_name]
 
 	return False
 
@@ -65,10 +69,22 @@ def route_url_parser(raw_url):
 	return raw_url
 
 
+def separate_indents_and_content(string):
+	tmp_indents = ''
+	tmp_string = ''
+
+	for tmp_char in string:
+		if tmp_char == '\t':
+			tmp_indents += '\t'
+		else:
+			tmp_string += tmp_char
+
+	return tmp_indents, tmp_string
+
+
 def parser(tokens, current_token):
 	global parsed
 	global return_run
-	global indent_layers
 	global is_route
 	global function_in_route_name
 	global vars_used_by_route
@@ -83,16 +99,16 @@ def parser(tokens, current_token):
 		return token_val
 	else:
 		if token_type == 'FUNCTION':
-			if token_val[0] == '@':
+			if token_val.replace('\t', '')[0] == '@':
 				return_run = True
-				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val[1:].upper() + '\']')
+				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val.replace('\t', '')[1:].upper() + '\']')
 
 				# Prep. for function in route (used by flask)
 				is_route = True
 
 				return_run = True
 				function_in_route_name = parser(tokens, current_token + 1).replace('/', '_').replace('$', '').replace('.', '_')
-				function_in_route_name += token_val[1:]
+				function_in_route_name += token_val.replace('\t', '')[1:]
 
 				return_run = True
 				vars_used_by_route = get_vars_used_by_route(route_url_parser(parser(tokens, current_token + 1)))
@@ -106,35 +122,20 @@ def parser(tokens, current_token):
 			parsed.append(transpile_keyword(token_val))
 		elif token_type == 'KEYWORD':
 			parsed.append(' ' + token_val + ' ')
-		elif token_type == 'START':
-			parsed.append('{')
-			if is_route:
-				is_route = False
-				indent_layers.append('\t')
-				indent_layers.append('\t')
-				parsed.append('\n\tdef ' + function_in_route_name + '(' + vars_used_by_route + '):\n')
-			else:
-				indent_layers.append('\t')
-		elif token_type == 'END':
-			parsed.append('}')
-			indent_layers.pop(-1)
-		elif token_type == 'DICT_KEY':
-			parsed.append('\'' + token_val + '\'')
+		elif token_type in ['STRING', 'DICT_KEY']:
+			tmp_indents, tmp_content = separate_indents_and_content(token_val)
+			parsed.append(tmp_indents + '\'' + tmp_content + '\'')
 		elif token_type in ['VAR', 'NUMBER', 'OPERATOR', 'LIST_START', 'LIST_END', 'PROPERTY']:
 			parsed.append(token_val)
-		elif token_type == 'STRING':
-			parsed.append('\'' + token_val + '\'')
+		elif token_type in ['DICT_START', 'DICT_END']:
+			parsed.append(token_val)
 
 		if token_type == 'LINE':
 			parsed.append('\n')
 
-		if indent_layers and tokens[current_token - 1][0] == 'LINE':
-			parsed[-1] = ''.join(indent_layers) + parsed[-1]
-
 	# Recursively calls parser() when there is more code to parse
 	if len(tokens) - 1 > current_token:
 		parser(tokens, current_token + 1)
-
 
 
 def tokenizer(line):
@@ -146,7 +147,7 @@ def tokenizer(line):
 	is_number = False
 	is_var = False
 	is_property = False
-	global active_start
+	global active_dict
 	global is_waiting_for_function_start
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
@@ -163,28 +164,6 @@ def tokenizer(line):
 				tmp = ''
 		elif char == '$' and is_string is False:
 			is_var = True
-		elif char == '{':
-			tokens.append(['START', char])
-			if not is_waiting_for_function_start:
-				active_start = True
-		elif char == '}':
-
-			if is_waiting_for_function_start:
-				is_waiting_for_function_start = False
-			active_start = False
-			if is_var:
-				if is_property:
-					tokens.append(['PROPERTY', tmp])
-					is_property = False
-					tmp = ''
-					tokens.append(['END', char])
-					continue
-
-				tokens.append(['VAR', tmp])
-				is_var = False
-				tmp = ''
-
-			tokens.append(['END', char])
 		elif char == '(':
 			tokens.append(['FUNCTION', tmp])
 			tmp = ''
@@ -211,6 +190,12 @@ def tokenizer(line):
 			tokens.append(['LIST_START', '['])
 		elif char == ']':
 			tokens.append(['LIST_END', ']'])
+		elif char == '{':
+			tokens.append(['DICT_START', '{'])
+			active_dict = True
+		elif char == '}':
+			tokens.append(['DICT_END', '}'])
+			active_dict = False
 		elif char in operators and is_string is False or char_index == len(line) - 1 and is_string is False:
 			if is_var:
 				is_var = False
@@ -225,7 +210,7 @@ def tokenizer(line):
 
 				tokens.append(['VAR', tmp])
 				tmp = ''
-			elif active_start and char == ':':
+			elif active_dict and char == ':':
 				tokens.append(['DICT_KEY', tmp])
 				tmp = ''
 
@@ -244,16 +229,16 @@ def tokenizer(line):
 
 					# Checks for keyword
 					if is_var and len(tmp) >= 2:
-						tmp_keyword_lenght = 0
+						tamp_keyword_length = 0
 
 						if tmp[-2:] in ['in', 'or']:
-							tmp_keyword_lenght = -2
+							tamp_keyword_length = -2
 						elif tmp[-3:] in ['and']:
-							tmp_keyword_lenght = -3
+							tamp_keyword_length = -3
 
-						if tmp_keyword_lenght:
-							tokens.append(['VAR', tmp[:tmp_keyword_lenght]])
-							tokens.append(['KEYWORD', tmp[tmp_keyword_lenght:]])
+						if tamp_keyword_length:
+							tokens.append(['VAR', tmp[:tamp_keyword_length]])
+							tokens.append(['KEYWORD', tmp[tamp_keyword_length:]])
 							is_var = False
 							tmp = ''
 					elif tmp in keywords and not is_var:
@@ -264,16 +249,11 @@ def tokenizer(line):
 	return tokens
 
 
-def fix_up_line(source_line):
-	return source_line.replace('\t', '')
-
-
 # Global variables set up
-active_start = False
+active_dict = False
 is_waiting_for_function_start = False
 parsed = []
 return_run = False
-indent_layers = []
 is_route = False
 function_in_route_name = ''
 vars_used_by_route = ''
@@ -283,7 +263,7 @@ is_multi_line_comment = False
 
 is_dev = False
 
-flask_boilerplate = 'from __main__ import app\n'
+flask_boilerplate = '# -- FLASK BOILERPLATE HERE --\n'
 
 filename = sys.argv[1]
 
@@ -293,11 +273,11 @@ with open(filename) as f:
 tokenized_lines = []
 
 for line in source_lines:
-	line = fix_up_line(line)
-	if line[:2] == '/*':
+	# Ignores multi-line comments
+	if line.replace('\t', '')[:2] == '/*':
 		is_multi_line_comment = True
 		continue
-	elif line[:2] == '*/':
+	elif line.replace('\t', '')[:2] == '*/':
 		is_multi_line_comment = False
 		continue
 
