@@ -15,13 +15,30 @@ def transpile_keyword(keyword):
 def transpile_function(function):
 	functions = {
 		'respond': 'return jsonify',
-		'deep': 'AskLibrary.deep'
+		'deep': 'AskLibrary.deep',
+		'quickPut': 'AskLibrary.quickPut',
 	}
 
 	if function in functions.keys():
 		return functions[function]
 
 	return False
+
+
+def get_vars_used_by_route(url):
+	var = ''
+	collect = False
+
+	for char in url:
+		if char == '<':
+			collect = True
+		elif collect and char != '>':
+			var += char
+		elif collect and char == '>':
+			collect = False
+			break
+
+	return var
 
 
 def route_url_parser(raw_url):
@@ -52,6 +69,9 @@ def parser(tokens, current_token):
 	global parsed
 	global return_run
 	global indent_layers
+	global is_route
+	global function_in_route_name
+	global vars_used_by_route
 
 	token = tokens[current_token]
 
@@ -66,6 +86,17 @@ def parser(tokens, current_token):
 			if token_val[0] == '@':
 				return_run = True
 				parsed.append('@app.route(\'' + route_url_parser(parser(tokens, current_token + 1)) + '\', methods=[\'' + token_val[1:].upper() + '\']')
+
+				# Prep. for function in route (used by flask)
+				is_route = True
+
+				return_run = True
+				function_in_route_name = parser(tokens, current_token + 1).replace('/', '_').replace('$', '').replace('.', '_')
+				function_in_route_name += token_val[1:]
+
+				return_run = True
+				vars_used_by_route = get_vars_used_by_route(route_url_parser(parser(tokens, current_token + 1)))
+
 				current_token += 1
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
@@ -77,7 +108,13 @@ def parser(tokens, current_token):
 			parsed.append(' ' + token_val + ' ')
 		elif token_type == 'START':
 			parsed.append('{')
-			indent_layers.append('\t')
+			if is_route:
+				is_route = False
+				indent_layers.append('\t')
+				indent_layers.append('\t')
+				parsed.append('\n\tdef ' + function_in_route_name + '(' + vars_used_by_route + '):\n')
+			else:
+				indent_layers.append('\t')
 		elif token_type == 'END':
 			parsed.append('}')
 			indent_layers.pop(-1)
@@ -207,9 +244,16 @@ def tokenizer(line):
 
 					# Checks for keyword
 					if is_var and len(tmp) >= 2:
-						if tmp[-2:] in ['in', '||', '&&']:
-							tokens.append(['VAR', tmp[:-2]])
-							tokens.append(['KEYWORD', tmp[-2:]])
+						tmp_keyword_lenght = 0
+
+						if tmp[-2:] in ['in', 'or']:
+							tmp_keyword_lenght = -2
+						elif tmp[-3:] in ['and']:
+							tmp_keyword_lenght = -3
+
+						if tmp_keyword_lenght:
+							tokens.append(['VAR', tmp[:tmp_keyword_lenght]])
+							tokens.append(['KEYWORD', tmp[tmp_keyword_lenght:]])
 							is_var = False
 							tmp = ''
 					elif tmp in keywords and not is_var:
@@ -230,9 +274,16 @@ is_waiting_for_function_start = False
 parsed = []
 return_run = False
 indent_layers = []
+is_route = False
+function_in_route_name = ''
+vars_used_by_route = ''
 
 # Start
 is_multi_line_comment = False
+
+is_dev = False
+
+flask_boilerplate = 'from __main__ import app\n'
 
 filename = sys.argv[1]
 
@@ -263,9 +314,11 @@ for line in tokenized_lines:
 		tokens.append(token)
 	tokens.append(['LINE', '\n'])
 
-print('--TOKENS:')
-for token in tokens:
-	print(token)
+if is_dev:
+	print('--TOKENS:')
+	for token in tokens:
+		print(token)
+
 parser(tokens, 0)
-print('\n--PARSED:')
+parsed.insert(0, flask_boilerplate)
 print(''.join(parsed))
