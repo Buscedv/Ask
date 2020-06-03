@@ -28,7 +28,7 @@ class AskLibrary:
 		rule_val = rule[rule_key]
 
 		for element in obj:
-			if element[rule_key] == rule_val:
+			if str(element[rule_key]) == str(rule_val):
 				return element
 
 	@staticmethod
@@ -324,42 +324,46 @@ is_multi_line_comment = False
 
 is_dev = False
 
-flask_boilerplate = '# -- FLASK BOILERPLATE HERE --\n'
+if __name__ == '__main__':
+	flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
 
-filename = sys.argv[1]
+	filename = sys.argv[1]
 
-with open(filename) as f:
-	source_lines = f.readlines()
+	with open(filename) as f:
+		source_lines = f.readlines()
 
-tokenized_lines = []
+	tokenized_lines = []
 
-for line in source_lines:
-	# Ignores multi-line comments
-	if line.replace('\t', '')[:2] == '/*':
-		is_multi_line_comment = True
-		continue
-	elif line.replace('\t', '')[:2] == '*/':
-		is_multi_line_comment = False
-		continue
+	for line in source_lines:
+		# Ignores multi-line comments
+		if line.replace('\t', '')[:2] == '/*':
+			is_multi_line_comment = True
+			continue
+		elif line.replace('\t', '')[:2] == '*/':
+			is_multi_line_comment = False
+			continue
 
-	if not is_multi_line_comment:
-		tokenized_line = tokenizer(line)
-		if tokenized_line:
-			tokenized_lines.append(tokenized_line)
+		if not is_multi_line_comment:
+			tokenized_line = tokenizer(line)
+			if tokenized_line:
+				tokenized_lines.append(tokenized_line)
 
 
-tokens = []
+	tokens = []
 
-for line in tokenized_lines:
-	for token in line:
-		tokens.append(token)
-	tokens.append(['LINE', '\n'])
+	for line in tokenized_lines:
+		for token in line:
+			tokens.append(token)
+		tokens.append(['LINE', '\n'])
 
-if is_dev:
-	print('--TOKENS:')
-	for token in tokens:
-		print(token)
+	if is_dev:
+		print('--TOKENS:')
+		for token in tokens:
+			print(token)
 
-parser(tokens, 0)
-parsed.insert(0, flask_boilerplate)
-print(''.join(parsed))
+	parser(tokens, 0)
+	parsed.insert(0, flask_boilerplate)
+	parsed = ''.join(parsed)
+	with open('app.py', 'w+') as f:
+		f.write('')
+		f.write(parsed)

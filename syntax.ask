@@ -3,39 +3,32 @@
 'string'
 $variable
 ['array']
-{'object': 'value'}
+{key: 'value'}
 '\' escaping \''
 
-@[method]('/route') {
+@post('/route'):
 	# this is a route function
-}
 
-function() {
+def function():
 	# this is a function
-}
 
-&('/path/api') {
+&('/path/api'):
 	# this is a request
-}
 
-Name {
+Name:
 	# this is  a class
-	_construct($self) {
+	_construct($self):
 		# class constructor function
-	}
-}
 
-! # not
-& # and
-| # or
+not # not
+and # and
+or # or
 
-for($elemn in $list) {
+for($elemn in $list):
 	# for loop
-}
 
-for ($i in range(0, 11)) {
+for ($i in range(0, 11)):
 	# i in range
-}
 
 # there will be built-in support for abnex.
 
