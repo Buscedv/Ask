@@ -1,41 +1,41 @@
-#$tasks = [
-#    {
-#        id: 1,
-#        title: 'Buy groceries',
-#        description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
-#        done: False
-#    },
-#    {
-#        id: 2,
-#        title: 'Learn Python',
-#        description: 'Need to find a good Python tutorial on the web',
-#        done: False
-#    }
-#]
+$tasks = [
+    {
+        id: 1,
+        title: 'Buy groceries',
+        description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
+        done: False
+    },
+    {
+        id: 2,
+        title: 'Learn Python',
+        description: 'Need to find a good Python tutorial on the web',
+        done: False
+    }
+]
 
 
-#@GET('/todo/api/v1.0/tasks') {
-#	respond({tasks: $tasks})
-#}
+@GET('/todo/api/v1.0/tasks') {
+	respond({tasks: $tasks})
+}
 
-#@get('/todo/api/v1.0/tasks/$task_id') {
-#	$response = {}
-#
-#	/*
-#	for ($task in $tasks) {
-#		if ($task.id == $task_id) {
-#			$response = $task
-#		}
-#	}
-#	*/
-#
-#	# IDEA! Deep selection, object in array select by value. (26-30)
-#    $response = deep($tasks, {id: $task_id})
-#    # End IDEA!
-#
-#    respond ({task: $response})
-#}
-#
+@get('/todo/api/v1.0/tasks/$task_id') {
+	$response = {}
+
+	/*
+	for ($task in $tasks) {
+		if ($task.id == $task_id) {
+			$response = $task
+		}
+	}
+	*/
+
+	# IDEA! Deep selection, object in array select by value. (26-30)
+    $response = deep($tasks, {id: $task_id})
+    # End IDEA!
+
+    respond ({task: $response})
+}
+
 @post('/todo/api/v1.0/tasks') {
 	if (not $body and not 'title' in $body) {
 		respond (status(400))
@@ -53,42 +53,42 @@
 	respond ({task: $task})
 }
 
-#@put('/todo/api/v1.0/tasks/$task_id') {
-#	$task = deep($tasks, {id: $task_id})
-#
-#	if ($task.len == 0) {
-#		respond status(4040)
-#	}
-#
-#	if (!$body) {
-#		respond status(4040)
-#	}
-#
-#	if (!'title' in $body || !'description' in $body || !'done' in $body) {
-#		respond status(4040)
-#	}
-#
-#	/*
-#	$task.title = $body.title
-#	$task.description = $body.description
-#	$task.done = $body.done
-#	*/
-#
-#	# IDEA! Quick put, value(s) update. (62-64)
-#	quickPut($task, $body)
-#	# End IDEA!
-#
-#	respond {task: $task}
-#}
-#
-#@delete('/todo/api/v1.0/tasks/$task_id') {
-#	$task = deep($tasks, {id: $task_id})
-#
-#	if ($task.len == 0) {
-#		respond status(404)
-#	}
-#
-#	$tasks.remove($task)
-#
-#	respond {result: True}
-#}
+@put('/todo/api/v1.0/tasks/$task_id') {
+	$task = deep($tasks, {id: $task_id})
+
+	if ($task.len == 0) {
+		respond status(404)
+	}
+
+	if (!$body) {
+		respond status(404)
+	}
+
+	if (not 'title' in $body or  not 'description' in $body or not 'done' in $body) {
+		respond status(404)
+	}
+
+	/*
+	$task.title = $body.title
+	$task.description = $body.description
+	$task.done = $body.done
+	*/
+
+	# IDEA! Quick put, value(s) update. (62-64)
+	quickPut($task, $body)
+	# End IDEA!
+
+	respond ({task: $task})
+}
+
+@delete('/todo/api/v1.0/tasks/$task_id') {
+	$task = deep($tasks, {id: $task_id})
+
+	if (len($task) == 0) {
+		respond status(404)
+	}
+
+	$tasks.remove($task)
+
+	respond {result: True}
+}
