@@ -1,9 +1,9 @@
 $tasks = [
 	{
-    	id: 1,
-    	title: 'Buy groceries',
-    	description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
-    	done: False
+		id: 1,
+		title: 'Buy groceries',
+		description: 'Milk, Cheese, Pizza, Fruit, Tylenol',
+		done: False
 	},
 	{
 		id: 2,
@@ -34,13 +34,13 @@ $tasks = [
 	respond ({task: $response})
 
 @post('/todo/api/v1.0/tasks'):
-	if (not $body and not 'title' in $body):
+	if (not $_body and not 'title' in $_body):
 		respond (status(400))
 
 	$task = {
 		id: $tasks[-1].id + 1,
-		title: $body.title,
-		description: $body.description,
+		title: $_body.title,
+		description: $_body.description,
 		done: False
 	}
 
@@ -52,23 +52,23 @@ $tasks = [
 @put('/todo/api/v1.0/tasks/$task_id'):
 	$task = deep($tasks, {id: $task_id})
 
-	if ($task.len == 0):
+	if (len($task) == 0):
 		respond (status(404))
 
-	if (not $body):
+	if (not $_body):
 		respond (status(404))
 
-	if (not 'title' in $body or  not 'description' in $body or not 'done' in $body):
+	if (not 'title' in $_body or  not 'description' in $_body or not 'done' in $_body):
 		respond (status(404))
 
 	/*
-	$task.title = $body.title
-	$task.description = $body.description
-	$task.done = $body.done
+	$task.title = $_body.title
+	$task.description = $_body.description
+	$task.done = $_body.done
 	*/
 
 	# IDEA! Quick put, value(s) update. (62-64)
-	quickPut($task, $body)
+	quickPut($task, $_body)
 	# End IDEA!
 
 	respond ({task: $task})
@@ -83,5 +83,3 @@ $tasks = [
 	$tasks.remove($task)
 
 	respond ({result: True})
-
-	return "lol"
