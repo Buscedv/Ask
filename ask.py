@@ -475,9 +475,12 @@ def build():
 
 def parse_and_prepare(tokens):
 	global parsed
+	global flask_boilerplate
+	global flask_end_boilerplate
 
 	parser(tokens, 0)
 	parsed.insert(0, flask_boilerplate)
+	parsed.append(flask_end_boilerplate)
 
 
 def tokenize(lines):
@@ -548,6 +551,7 @@ db_action_indents = ''
 is_multi_line_comment = False
 is_dev = True
 flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
+flask_end_boilerplate = '\nif __name__ == \'__main__\':\n\tapp.run()'
 
 if __name__ == '__main__':
 	print ('🌳' + '\033[92m' + 'Ask' + '\033[0m')

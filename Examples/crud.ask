@@ -26,17 +26,17 @@ db_class Product:
 
 	$_db.add($new_product)
 
-	respond($new_product)
+	respond($new_product.__dict__)
 
 # Get all products
 @get('/product'):
 	$all_products = Product.$_db.all()
-	respond($all_products)
+	respond($all_products.__dict__)
 
 # Get a product
 @get('/product/$id'):
 	$product = Product.$_db.get($id)
-	respond($product)
+	respond($product.__dict__)
 
 # Update a product
 @put('/product/$id'):
@@ -49,11 +49,11 @@ db_class Product:
 
 	$product = quickPut($product, $_body)
 
-	respond($product)
+	respond($product.__dict__)
 
 # Delete a product
 @delete('/product/$id'):
 	$product = Product.$_db.get($id)
 	$_db.delete($product)
 
-	respond($product)
+	respond($product.__dict__)
