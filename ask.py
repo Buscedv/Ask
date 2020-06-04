@@ -1,6 +1,6 @@
 # coding=utf-8
 
-# Ask Beta
+# Ask 1.0
 # Copyright 2020 Edvard Busck-Nielsen
 # This file is part of Ask.
 #
@@ -18,6 +18,8 @@
 #     along with Ask.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
+import os
+import time
 
 
 class AskLibrary:
@@ -41,7 +43,7 @@ class AskLibrary:
 
 	@staticmethod
 	def status(code):
-		import jsonify
+		from flask import jsonify
 
 		return jsonify({
 			'status': code
@@ -311,30 +313,33 @@ def tokenizer(line):
 	return tokens
 
 
-# Global variables set up
-active_dict = False
-is_waiting_for_function_start = False
-parsed = []
-return_run = False
-function_in_route_name = ''
-vars_used_by_route = ''
+def build():
+	global parsed
 
-# Start
-is_multi_line_comment = False
+	str_parsed = ''.join(parsed)
 
-is_dev = False
+	with open('app.py', 'w+') as f:
+		f.write('')
+		f.write(str_parsed)
 
-if __name__ == '__main__':
-	flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
+	parsed = []
 
-	filename = sys.argv[1]
 
-	with open(filename) as f:
-		source_lines = f.readlines()
+def parse_and_prepare(tokens):
+	global parsed
 
+	parser(tokens, 0)
+	parsed.insert(0, flask_boilerplate)
+
+
+def tokenize(lines):
+	global is_multi_line_comment
+	global is_dev
+
+	tokens = []
 	tokenized_lines = []
 
-	for line in source_lines:
+	for line in lines:
 		# Ignores multi-line comments
 		if line.replace('\t', '')[:2] == '/*':
 			is_multi_line_comment = True
@@ -348,9 +353,6 @@ if __name__ == '__main__':
 			if tokenized_line:
 				tokenized_lines.append(tokenized_line)
 
-
-	tokens = []
-
 	for line in tokenized_lines:
 		for token in line:
 			tokens.append(token)
@@ -361,9 +363,50 @@ if __name__ == '__main__':
 		for token in tokens:
 			print(token)
 
-	parser(tokens, 0)
-	parsed.insert(0, flask_boilerplate)
-	parsed = ''.join(parsed)
-	with open('app.py', 'w+') as f:
-		f.write('')
-		f.write(parsed)
+	return tokens
+
+
+def startup(file_name):
+	print('\033[1m' + 'Transpiling...' + '\033[0m')
+
+	# Execution time
+	start_time = time.time()
+
+	with open(file_name) as f:
+		source_lines = f.readlines()
+
+	tokens_list = tokenize(source_lines)
+	if tokens_list:
+		parse_and_prepare(tokens_list)
+		build()
+
+		# Done!
+		end_time = time.time()
+		time_result = round(end_time - start_time, 3)
+		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
+	else:
+		print('\033[91m' + '\t- The file is empty!' + '\033[0m')
+
+
+# Global variables set up
+active_dict = False
+is_waiting_for_function_start = False
+parsed = []
+return_run = False
+function_in_route_name = ''
+vars_used_by_route = ''
+
+is_multi_line_comment = False
+is_dev = False
+flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
+
+if __name__ == '__main__':
+	print ('🌳' + '\033[92m' + 'Ask' + '\033[0m')
+	if len(sys.argv) > 1:
+		source_file_name = sys.argv[1]
+		if os.path.isfile(os.getcwd() + '/' + source_file_name):
+			startup(source_file_name)
+		else:
+			print('\033[91m' + 'The file could not be found!' + '\033[0m')
+	else:
+		print('\033[91m' + 'Please provide a script file!' + '\033[0m')

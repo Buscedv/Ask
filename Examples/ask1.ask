@@ -13,7 +13,7 @@ $tasks = [
 	}
 ]
 
-@GET('/todo/api/v1.0/tasks'):
+@get('/todo/api/v1.0/tasks'):
 	respond({tasks: $tasks})
 
 @get('/todo/api/v1.0/tasks/$task_id'):
