@@ -50,6 +50,27 @@ class AskLibrary:
 		})
 
 
+def transpile_db_action(action):
+	actions = {
+		'col': 'db.Column',
+		'int': 'db.Integer',
+		'pk': 'primary_key=True',
+		'unique': 'unique=True',
+		'str': 'db.String',
+		'float': 'db.Float',
+		'all': '.query.all',
+		'get': '.query.get',
+		'delete': 'db.session.delete'
+	}
+
+	indents, only_action = separate_indents_and_content(action)
+
+	if only_action in actions.keys():
+		return actions[only_action]
+
+	return False
+
+
 def transpile_special_keyword(keyword):
 	keywords = {
 		'db_class': 'class ',
@@ -189,18 +210,42 @@ def parser(tokens, current_token):
 		elif token_type in ['STRING', 'DICT_KEY']:
 			tmp_token_val_indents, tmp_token_val = separate_indents_and_content(token_val)
 			parsed.append(tmp_token_val_indents + '\'' + tmp_token_val + '\'')
-		elif token_type in ['NUMBER', 'OPERATOR', 'PROPERTY']:
+		elif token_type in ['NUMBER', 'OPERATOR', 'PROPERTY', 'DICT_START', 'DICT_END', 'LIST_START', 'LIST_END', 'CLASS_REFERENCE']:
 			parsed.append(token_val)
 		elif token_type == 'VAR':
 			if token_val.replace('\t', '') in ['_body']:
 				parsed.append(transpile_var(token_val))
 			else:
 				parsed.append(token_val)
-		elif token_type in ['DICT_START', 'DICT_END', 'LIST_START', 'LIST_END']:
-			parsed.append(token_val)
 		elif token_type == 'DB_CLASS':
 			return_run = True
 			parsed.append('class ' + parser(tokens, current_token + 1) + '(db.Model)')
+		elif token_type == 'DB_ACTION':
+			if transpile_db_action(token_val):
+				parsed.append(transpile_db_action(token_val))
+			elif token_val.replace('\t', '') in ['add', 'delete']:
+				next_up_collected = ''
+				not_end_yet = True
+
+				tmp_current_token = current_token + 1
+
+				while not_end_yet:
+					tmp_token = tokens[tmp_current_token]
+					if tmp_token[1] != ')':
+						next_up_collected += tmp_token[1]
+					else:
+						not_end_yet = False
+
+					if len(tokens) - 1 > tmp_current_token:
+						tmp_current_token += 1
+					else:
+						break
+
+				current_token = tmp_current_token
+
+				tmp_indents, tmp_token_val = separate_indents_and_content(token_val)
+
+				parsed.append(tmp_indents + 'db.session.' + tmp_token_val + next_up_collected + ')\n' + tmp_indents + 'db.session.commit()\n')
 
 		if token_type == 'LINE':
 			parsed.append('\n')
@@ -223,9 +268,10 @@ def tokenizer(line):
 	is_db_action = False
 	global active_dict
 	global is_waiting_for_function_start
+	global db_action_indents
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def', 'class', 'db_class']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
@@ -242,9 +288,10 @@ def tokenizer(line):
 			if not is_db_action:
 				tokens.append(['FUNCTION', tmp])
 			else:
-				tokens.append(['DB_ACTION', tmp])
+				tokens.append(['DB_ACTION', db_action_indents + tmp])
 				is_db_action = False
 				tmp = ''
+				tokens.append(['OPERATOR', char])
 			tmp = ''
 		elif not is_string and not is_var and char.isnumeric() or char == '-' and not is_number:
 			is_number = True
@@ -258,15 +305,24 @@ def tokenizer(line):
 		elif char == '[':
 			if is_var:
 				if is_property:
-					tokens.append(['PROPERTY', tmp])
-					is_property = False
+					if tmp[-3:] == '_db':
+						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						is_db_action = True
+						is_property = False
+						if len(tokens) >= 2:
+							if tokens[-2][0] == 'OPERATOR' and tokens[-2][1] == '.':
+								tokens.pop(-2)
+					else:
+						tokens.append(['PROPERTY', tmp])
+						is_property = False
 					tmp = ''
 					continue
 
-				if tmp != '_db':
+				if tmp.replace('\t', '') != '_db':
 					tokens.append(['VAR', tmp])
 				else:
 					is_db_action = True
+					db_action_indents, _ = separate_indents_and_content(tmp)
 				is_var = False
 				tmp = ''
 			tokens.append(['LIST_START', char])
@@ -279,14 +335,23 @@ def tokenizer(line):
 			if is_var:
 				is_var = False
 				if is_property:
-					tokens.append(['PROPERTY', tmp])
-					is_property = False
+					if tmp[-3:] == '_db':
+						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						is_db_action = True
+						is_property = False
+						if len(tokens) >= 2:
+							if tokens[-2][0] == 'OPERATOR' and tokens[-2][1] == '.':
+								tokens.pop(-2)
+					else:
+						tokens.append(['PROPERTY', tmp])
+						is_property = False
 					tmp = ''
 
-				if tmp != '_db':
+				if tmp.replace('\t', '') != '_db':
 					tokens.append(['VAR', tmp])
 				else:
 					is_db_action = True
+					db_action_indents, _ = separate_indents_and_content(tmp)
 				tmp = ''
 
 			tokens.append(['DICT_END', char])
@@ -295,18 +360,27 @@ def tokenizer(line):
 			if is_var:
 				is_var = False
 				if is_property:
-					tokens.append(['PROPERTY', tmp])
-					is_property = False
+					if tmp[-3:] == '_db':
+						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						is_db_action = True
+						is_property = False
+						if len(tokens) >= 2:
+							if tokens[-2][0] == 'OPERATOR' and tokens[-2][1] == '.':
+								tokens.pop(-2)
+					else:
+						tokens.append(['PROPERTY', tmp])
+						is_property = False
 					tmp = ''
 
-					if char != '\n':
+					if char != '\n' and not is_db_action:
 						tokens.append(['OPERATOR', char])
 					continue
 
-				if tmp != '_db':
+				if tmp.replace('\t', '') != '_db':
 					tokens.append(['VAR', tmp])
 				else:
 					is_db_action = True
+					db_action_indents, _ = separate_indents_and_content(tmp)
 				tmp = ''
 			elif active_dict and char == ':':
 				tokens.append(['DICT_KEY', tmp])
@@ -321,10 +395,11 @@ def tokenizer(line):
 
 			if char != '\n' and not is_db_action:
 				tokens.append(['OPERATOR', char])
-			elif char == ',' and is_db_action:
-				tokens.append(['DB_ACTION', tmp])
+			elif char in [',', ')'] and is_db_action:
+				tokens.append(['DB_ACTION', db_action_indents + tmp])
 				is_db_action = False
 				tmp = ''
+				tokens.append(['OPERATOR', char])
 		else:
 			if char != ' ' or char == ' ' and is_string:
 				if char == '#':
@@ -348,6 +423,7 @@ def tokenizer(line):
 								tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
 							else:
 								is_db_action = True
+								db_action_indents = tmp_tmp_indents
 							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
 
 							tmp = ''
@@ -446,6 +522,7 @@ parsed = []
 return_run = False
 function_in_route_name = ''
 vars_used_by_route = ''
+db_action_indents = ''
 
 is_multi_line_comment = False
 is_dev = True
