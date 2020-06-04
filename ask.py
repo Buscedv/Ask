@@ -52,7 +52,6 @@ class AskLibrary:
 
 def transpile_special_keyword(keyword):
 	keywords = {
-		'db': 'db',
 		'db_class': 'class ',
 		'class': 'class ',
 	}
@@ -221,6 +220,7 @@ def tokenizer(line):
 	is_var = False
 	is_property = False
 	is_class = False
+	is_db_action = False
 	global active_dict
 	global is_waiting_for_function_start
 
@@ -239,7 +239,12 @@ def tokenizer(line):
 		elif char == '$' and is_string is False:
 			is_var = True
 		elif char == '(':
-			tokens.append(['FUNCTION', tmp])
+			if not is_db_action:
+				tokens.append(['FUNCTION', tmp])
+			else:
+				tokens.append(['DB_ACTION', tmp])
+				is_db_action = False
+				tmp = ''
 			tmp = ''
 		elif not is_string and not is_var and char.isnumeric() or char == '-' and not is_number:
 			is_number = True
@@ -258,7 +263,10 @@ def tokenizer(line):
 					tmp = ''
 					continue
 
-				tokens.append(['VAR', tmp])
+				if tmp != '_db':
+					tokens.append(['VAR', tmp])
+				else:
+					is_db_action = True
 				is_var = False
 				tmp = ''
 			tokens.append(['LIST_START', char])
@@ -275,7 +283,10 @@ def tokenizer(line):
 					is_property = False
 					tmp = ''
 
-				tokens.append(['VAR', tmp])
+				if tmp != '_db':
+					tokens.append(['VAR', tmp])
+				else:
+					is_db_action = True
 				tmp = ''
 
 			tokens.append(['DICT_END', char])
@@ -292,7 +303,10 @@ def tokenizer(line):
 						tokens.append(['OPERATOR', char])
 					continue
 
-				tokens.append(['VAR', tmp])
+				if tmp != '_db':
+					tokens.append(['VAR', tmp])
+				else:
+					is_db_action = True
 				tmp = ''
 			elif active_dict and char == ':':
 				tokens.append(['DICT_KEY', tmp])
@@ -301,12 +315,16 @@ def tokenizer(line):
 				tokens.append(['CLASS_NAME', tmp])
 				tmp = ''
 
-			if char == '.':
+			if char == '.' and not is_db_action:
 				is_property = True
 				is_var = True
 
-			if char != '\n':
+			if char != '\n' and not is_db_action:
 				tokens.append(['OPERATOR', char])
+			elif char == ',' and is_db_action:
+				tokens.append(['DB_ACTION', tmp])
+				is_db_action = False
+				tmp = ''
 		else:
 			if char != ' ' or char == ' ' and is_string:
 				if char == '#':
@@ -320,18 +338,21 @@ def tokenizer(line):
 					if is_var and len(tmp_tmp) >= 2:
 						tmp_keyword_length = 0
 
-						if tmp_tmp[-2:] in ['in', 'or']:
+						if tmp_tmp[-2:] in ['in', 'or'] and not is_db_action:
 							tmp_keyword_length = -2
-						elif tmp_tmp[-3:] in ['and']:
+						elif tmp_tmp[-3:] in ['and'] and not is_db_action:
 							tmp_keyword_length = -3
 
 						if tmp_keyword_length:
-							tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+							if tmp_tmp != '_db':
+								tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+							else:
+								is_db_action = True
 							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
 
 							tmp = ''
 
-					elif tmp_tmp in keywords and not is_var:
+					elif tmp_tmp in keywords and not is_var and not is_db_action:
 						if tmp_tmp in ['db_class', 'class']:
 							tokens.append([tmp_tmp.upper(), tmp])
 							tmp = ''
