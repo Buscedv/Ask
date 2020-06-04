@@ -50,6 +50,21 @@ class AskLibrary:
 		})
 
 
+def transpile_special_keyword(keyword):
+	keywords = {
+		'db': 'db',
+		'db_class': 'class ',
+		'class': 'class ',
+	}
+
+	indents, only_keyword = separate_indents_and_content(keyword)
+
+	if only_keyword in keywords.keys():
+		return keywords[only_keyword]
+
+	return False
+
+
 def transpile_var(var):
 	var_names = {
 		'_body': 'request.json',
@@ -168,7 +183,10 @@ def parser(tokens, current_token):
 			else:
 				parsed.append(token_val + '(')
 		elif token_type == 'KEYWORD':
-			parsed.append(' ' + token_val + ' ')
+			if not transpile_special_keyword(token_val):
+				parsed.append(' ' + token_val + ' ')
+			else:
+				parsed.append(transpile_special_keyword(token_val))
 		elif token_type in ['STRING', 'DICT_KEY']:
 			tmp_token_val_indents, tmp_token_val = separate_indents_and_content(token_val)
 			parsed.append(tmp_token_val_indents + '\'' + tmp_token_val + '\'')
@@ -181,6 +199,9 @@ def parser(tokens, current_token):
 				parsed.append(token_val)
 		elif token_type in ['DICT_START', 'DICT_END', 'LIST_START', 'LIST_END']:
 			parsed.append(token_val)
+		elif token_type == 'DB_CLASS':
+			return_run = True
+			parsed.append('class ' + parser(tokens, current_token + 1) + '(db.Model)')
 
 		if token_type == 'LINE':
 			parsed.append('\n')
@@ -199,11 +220,12 @@ def tokenizer(line):
 	is_number = False
 	is_var = False
 	is_property = False
+	is_class = False
 	global active_dict
 	global is_waiting_for_function_start
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def', 'class', 'db_class']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
@@ -275,6 +297,9 @@ def tokenizer(line):
 			elif active_dict and char == ':':
 				tokens.append(['DICT_KEY', tmp])
 				tmp = ''
+			elif is_class:
+				tokens.append(['CLASS_NAME', tmp])
+				tmp = ''
 
 			if char == '.':
 				is_property = True
@@ -307,8 +332,13 @@ def tokenizer(line):
 							tmp = ''
 
 					elif tmp_tmp in keywords and not is_var:
-						tokens.append(['KEYWORD', tmp_tmp_indents + tmp_tmp])
-						tmp = ''
+						if tmp_tmp in ['db_class', 'class']:
+							tokens.append([tmp_tmp.upper(), tmp])
+							tmp = ''
+							is_class = True
+						else:
+							tokens.append(['KEYWORD', tmp])
+							tmp = ''
 
 	return tokens
 
@@ -397,7 +427,7 @@ function_in_route_name = ''
 vars_used_by_route = ''
 
 is_multi_line_comment = False
-is_dev = False
+is_dev = True
 flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
 
 if __name__ == '__main__':

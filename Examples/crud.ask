@@ -1,12 +1,10 @@
-db = 'db'
-
 # Product class/model
 db_class Product:
-	$id = db.col(db.int, db.pk)
-	$name = db.col(db.str(100), db.unique)
-	$description = db.col(db.str(200))
-	$price = db.col(db.float)
-	$qty = db.col(db.int)
+	$id = $_db.col($_db.int, $_db.pk)
+	$name = $_db.col($_db.str(100), $_db.unique)
+	$description = $_db.col($_db.str(200))
+	$price = $_db.col($_db.float)
+	$qty = $_db.col($_db.int)
 
 	def __init__($self, $name, $description, $price, $qty):
 		$self.$name = $name
@@ -23,23 +21,23 @@ db_class Product:
 
 	$new_product = Product($name, $description, $price, $qty)
 
-	db.add(new_product)
+	$_db.add($new_product)
 
-	respond(new_product)
+	respond($new_product)
 
 # Get all products
 @get('/product'):
-	$all_products = Product.db.all()
-	respond(all_products)
+	$all_products = Product.$_db.all()
+	respond($all_products)
 
 # Get a product
 @get('/product/$id'):
-	$product = Product.db.get($id)
-	respond(product)
+	$product = Product.$_db.get($id)
+	respond($product)
 
 # Update a product
 @put('/product/$id'):
-	$product = Product.db.get($id)
+	$product = Product.$_db.get($id)
 
 	$name = $_body['name']
 	$description = $_body['description']
@@ -48,11 +46,11 @@ db_class Product:
 
 	$product = quickPut($product, $_body)
 
-	respond(product)
+	respond($product)
 
 # Delete a product
 @delete('/product/$id'):
-	$product = Product.db.get($id)
-	db.delete($product)
+	$product = Product.$_db.get($id)
+	$_db.delete($product)
 
-	respond(product)
+	respond($product)
