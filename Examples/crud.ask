@@ -1,4 +1,5 @@
-$_db.init('db')
+# Initialize database
+$_db.init()
 
 # Product class/model
 db_class Product:
@@ -8,7 +9,7 @@ db_class Product:
 	$price = $_db.col($_db.float)
 	$qty = $_db.col($_db.int)
 
-	def __init__($self, $name, $description, $price, $qty):
+	def _init($self, $name, $description, $price, $qty):
 		$self.$name = $name
 		$self.$description = $description
 		$self.$price = $price

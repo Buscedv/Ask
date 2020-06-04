@@ -60,7 +60,6 @@ def transpile_db_action(action):
 		'float': 'db.Float',
 		'all': '.query.all',
 		'get': '.query.get',
-		'delete': 'db.session.delete'
 	}
 
 	indents, only_action = separate_indents_and_content(action)
@@ -75,6 +74,7 @@ def transpile_special_keyword(keyword):
 	keywords = {
 		'db_class': 'class ',
 		'class': 'class ',
+		'def': 'def ',
 	}
 
 	indents, only_keyword = separate_indents_and_content(keyword)
@@ -198,6 +198,9 @@ def parser(tokens, current_token):
 				parsed.append('\ndef ' + function_in_route_name + '(' + vars_used_by_route)
 
 				current_token += 1
+			elif token_val.replace('\t', '') == '_init':
+				parsed[-1] = '\t' + parsed[-1]
+				parsed.append('__init__(')
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
 			else:
@@ -210,8 +213,10 @@ def parser(tokens, current_token):
 		elif token_type in ['STRING', 'DICT_KEY']:
 			tmp_token_val_indents, tmp_token_val = separate_indents_and_content(token_val)
 			parsed.append(tmp_token_val_indents + '\'' + tmp_token_val + '\'')
-		elif token_type in ['NUMBER', 'OPERATOR', 'PROPERTY', 'DICT_START', 'DICT_END', 'LIST_START', 'LIST_END', 'CLASS_REFERENCE']:
+		elif token_type in ['NUMBER', 'OPERATOR', 'PROPERTY', 'DICT_START', 'DICT_END', 'LIST_START', 'LIST_END']:
 			parsed.append(token_val)
+		elif token_type == 'CLASS_REFERENCE':
+			parsed.append(token_val.replace('\t', ''))
 		elif token_type == 'VAR':
 			if token_val.replace('\t', '') in ['_body']:
 				parsed.append(transpile_var(token_val))
@@ -246,6 +251,22 @@ def parser(tokens, current_token):
 				tmp_indents, tmp_token_val = separate_indents_and_content(token_val)
 
 				parsed.append(tmp_indents + 'db.session.' + tmp_token_val + next_up_collected + ')\n' + tmp_indents + 'db.session.commit()\n')
+			elif token_val == 'init':
+				global flask_boilerplate
+
+				flask_app_init = 'app = Flask(__name__)\n'
+
+				flask_boilerplate = flask_boilerplate.replace(flask_app_init, '')
+				flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
+				flask_boilerplate += 'import os\n'
+				flask_boilerplate += flask_app_init
+				flask_boilerplate += 'basedir = os.path.abspath(os.path.dirname(__file__))\n'
+				flask_boilerplate += 'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'sqlite:///\' + os.path.join(basedir, \'db.sqlite\')\n'
+				flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
+				flask_boilerplate += 'db = SQLAlchemy(app)\n'
+
+				tokens.pop(current_token + 1)
+				tokens.pop(current_token + 1)
 
 		if token_type == 'LINE':
 			parsed.append('\n')
@@ -306,7 +327,7 @@ def tokenizer(line):
 			if is_var:
 				if is_property:
 					if tmp[-3:] == '_db':
-						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						tokens.append(['CLASS_REFERENCE', db_action_indents + tmp[:-3]])
 						is_db_action = True
 						is_property = False
 						if len(tokens) >= 2:
@@ -336,7 +357,7 @@ def tokenizer(line):
 				is_var = False
 				if is_property:
 					if tmp[-3:] == '_db':
-						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						tokens.append(['CLASS_REFERENCE', db_action_indents + tmp[:-3]])
 						is_db_action = True
 						is_property = False
 						if len(tokens) >= 2:
@@ -361,7 +382,7 @@ def tokenizer(line):
 				is_var = False
 				if is_property:
 					if tmp[-3:] == '_db':
-						tokens.append(['CLASS_REFERENCE', tmp[:-3]])
+						tokens.append(['CLASS_REFERENCE', db_action_indents + tmp[:-3]])
 						is_db_action = True
 						is_property = False
 						if len(tokens) >= 2:
