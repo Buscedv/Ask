@@ -32,8 +32,4 @@ for ($i in range(0, 11)):
 
 # there will be built-in support for abnex.
 
-import # whatever library
-export # whatever value
-use # catches exports
-
 

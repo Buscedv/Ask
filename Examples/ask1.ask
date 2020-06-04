@@ -36,9 +36,9 @@ $tasks = [
 		respond (status(400))
 
 	$task = {
-		id: $tasks[-1].id + 1,
-		title: $_body.title,
-		description: $_body.description,
+		id: $tasks[-1]['id'] + 1,
+		title: $_body['title'],
+		description: $_body['description'],
 		done: False
 	}
 
