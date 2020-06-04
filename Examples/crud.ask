@@ -1,0 +1,58 @@
+db = 'db'
+
+# Product class/model
+db_class Product:
+	$id = db.col(db.int, db.pk)
+	$name = db.col(db.str(100), db.unique)
+	$description = db.col(db.str(200))
+	$price = db.col(db.float)
+	$qty = db.col(db.int)
+
+	def __init__($self, $name, $description, $price, $qty):
+		$self.$name = $name
+		$self.$description = $description
+		$self.$price = $price
+		$self.$qty = $qty
+
+# Create a product
+@post('/product'):
+	$name = $_body['name']
+	$description = $_body['name']
+	$price = $_body['price']
+	$qty = $_body['qty']
+
+	$new_product = Product($name, $description, $price, $qty)
+
+	db.add(new_product)
+
+	respond(new_product)
+
+# Get all products
+@get('/product'):
+	$all_products = Product.db.all()
+	respond(all_products)
+
+# Get a product
+@get('/product/$id'):
+	$product = Product.db.get($id)
+	respond(product)
+
+# Update a product
+@put('/product/$id'):
+	$product = Product.db.get($id)
+
+	$name = $_body['name']
+	$description = $_body['description']
+	$price= $_body['price']
+	$qty = $_body['qty']
+
+	$product = quickPut($product, $_body)
+
+	respond(product)
+
+# Delete a product
+@delete('/product/$id'):
+	$product = Product.db.get($id)
+	db.delete($product)
+
+	respond(product)
