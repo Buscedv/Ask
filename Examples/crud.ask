@@ -1,3 +1,5 @@
+$_db.init('db')
+
 # Product class/model
 db_class Product:
 	$id = $_db.col($_db.int, $_db.pk)
