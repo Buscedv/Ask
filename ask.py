@@ -34,7 +34,7 @@ class AskLibrary:
 				return element
 
 	@staticmethod
-	def quickPut(target, source):
+	def quickSet(target, source):
 		for key in source.keys():
 			if key in target.keys():
 				target[key] = source[key]
@@ -60,6 +60,7 @@ def transpile_db_action(action):
 		'float': 'db.Float',
 		'all': '.query.all',
 		'get': '.query.get',
+		'save': 'db.session.commit'
 	}
 
 	indents, only_action = separate_indents_and_content(action)
@@ -75,12 +76,18 @@ def transpile_special_keyword(keyword):
 		'db_class': 'class ',
 		'class': 'class ',
 		'def': 'def ',
+		'if': 'if ',
+		'elif': 'elif ',
+		'else': 'else ',
+		'for': 'for ',
+		'while': 'while ',
+		'return': 'return '
 	}
 
 	indents, only_keyword = separate_indents_and_content(keyword)
 
 	if only_keyword in keywords.keys():
-		return keywords[only_keyword]
+		return indents + keywords[only_keyword]
 
 	return False
 
@@ -102,8 +109,9 @@ def transpile_function(function):
 	functions = {
 		'respond': 'return jsonify',
 		'deep': 'AskLibrary.deep',
-		'quickPut': 'AskLibrary.quickPut',
-		'status': 'AskLibrary.status'
+		'quickPut': 'AskLibrary.quickSet',
+		'status': 'AskLibrary.status',
+		'_init': '__init__'
 	}
 
 	indents, function_name = separate_indents_and_content(function)
@@ -198,9 +206,6 @@ def parser(tokens, current_token):
 				parsed.append('\ndef ' + function_in_route_name + '(' + vars_used_by_route)
 
 				current_token += 1
-			elif token_val.replace('\t', '') == '_init':
-				parsed[-1] = '\t' + parsed[-1]
-				parsed.append('__init__(')
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
 			else:
@@ -227,7 +232,10 @@ def parser(tokens, current_token):
 			parsed.append('class ' + parser(tokens, current_token + 1) + '(db.Model)')
 		elif token_type == 'DB_ACTION':
 			if transpile_db_action(token_val):
-				parsed.append(transpile_db_action(token_val))
+				tmp_indents = ''
+				if token_val.replace('\t', '') in ['save']:
+					tmp_indents, _ = separate_indents_and_content(token_val)
+				parsed.append(tmp_indents + transpile_db_action(token_val))
 			elif token_val.replace('\t', '') in ['add', 'delete']:
 				next_up_collected = ''
 				not_end_yet = True
@@ -292,7 +300,7 @@ def tokenizer(line):
 	global db_action_indents
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'else', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'if', 'elif' 'else', 'for', 'while', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
