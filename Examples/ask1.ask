@@ -19,21 +19,13 @@ $tasks = [
 @get('/todo/api/v1.0/tasks/$task_id'):
 	$response = {}
 
-	/*
-	for ($task in $tasks):
-		if ($task.id == $task_id):
-			$response = $task
-	*/
-
-	# IDEA! Deep selection, object in array select by value. (26-30)
 	$response = deep($tasks, {id: $task_id})
-    # End IDEA!
 
 	respond ({task: $response})
 
 @post('/todo/api/v1.0/tasks'):
 	if (not $_body and not 'title' in $_body):
-		respond (status(400))
+		status(400)
 
 	$task = {
 		id: $tasks[-1]['id'] + 1,
@@ -50,23 +42,15 @@ $tasks = [
 	$task = deep($tasks, {id: $task_id})
 
 	if (len($task) == 0):
-		respond (status(404))
+		status(404)
 
 	if (not $_body):
-		respond (status(404))
+		status(404)
 
 	if (not 'title' in $_body or  not 'description' in $_body or not 'done' in $_body):
-		respond (status(404))
+		status(404)
 
-	/*
-	$task.title = $_body.title
-	$task.description = $_body.description
-	$task.done = $_body.done
-	*/
-
-	# IDEA! Quick put, value(s) update. (62-64)
-	$task = quickPut($task, $_body)
-	# End IDEA!
+	$task = quickSet($task, $_body)
 
 	respond ({task: $task})
 
@@ -75,7 +59,7 @@ $tasks = [
 	$task = deep($tasks, {id: $task_id})
 
 	if (len($task) == 0):
-		respond (status(404))
+		status(404)
 
 	$tasks.remove($task)
 
