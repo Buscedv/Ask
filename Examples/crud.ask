@@ -15,6 +15,15 @@ db_class Product:
 		$self.$price = $price
 		$self.$qty = $qty
 
+	# Serialization
+	def s($self):
+		return {
+			name: $self.$name,
+			description: $self.$description,
+			price: $self.$price,
+			qty: $self.$qty
+		}
+
 # Create a product
 @post('/product'):
 	$name = $_body['name']
@@ -26,34 +35,37 @@ db_class Product:
 
 	$_db.add($new_product)
 
-	respond($new_product.__dict__)
+	respond($new_product.s())
 
 # Get all products
 @get('/product'):
 	$all_products = Product.$_db.all()
-	respond($all_products.__dict__)
+	$response = []
+	for $product in $all_products:
+		$response.append($product.s())
+	respond($response)
 
 # Get a product
 @get('/product/$id'):
 	$product = Product.$_db.get($id)
-	respond($product.__dict__)
+	respond($product.s())
 
 # Update a product
 @put('/product/$id'):
 	$product = Product.$_db.get($id)
 
-	$name = $_body['name']
-	$description = $_body['description']
-	$price= $_body['price']
-	$qty = $_body['qty']
+	$product.name = $_body['name']
+	$product.description = $_body['description']
+	$product.price= $_body['price']
+	$product.qty = $_body['qty']
 
-	$product = quickPut($product, $_body)
+	$_db.save()
 
-	respond($product.__dict__)
+	respond($product.s())
 
 # Delete a product
 @delete('/product/$id'):
 	$product = Product.$_db.get($id)
 	$_db.delete($product)
 
-	respond($product.__dict__)
+	respond($product.s())
