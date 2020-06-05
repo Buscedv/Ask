@@ -3,7 +3,6 @@ A backend programming language. Ask makes it incredibly easy to create REST apis
 
 # Example (Ask vs Flask)
 Here is the same basic app with one GET route written in Ask and in Python with Flask.
-YOu can clearly see the difference in how much code is needed for the Flask app compared to the Ask app.
 
 ### Ask
 ```php
