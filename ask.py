@@ -41,14 +41,6 @@ class AskLibrary:
 
 		return target
 
-	@staticmethod
-	def status(code):
-		from flask import jsonify
-
-		return jsonify({
-			'status': code
-		})
-
 
 def transpile_db_action(action):
 	actions = {
@@ -110,7 +102,7 @@ def transpile_function(function):
 		'respond': 'return jsonify',
 		'deep': 'AskLibrary.deep',
 		'quickPut': 'AskLibrary.quickSet',
-		'status': 'AskLibrary.status',
+		'status': 'abort',
 		'_init': '__init__'
 	}
 
