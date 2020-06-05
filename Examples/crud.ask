@@ -26,6 +26,8 @@ db_class Product:
 
 # Create a product
 @post('/product'):
+	if not $_body or 'name' not in $_body or 'description' not in $_body or 'price' not in $_body or 'qty' not in $_body:
+		status(400)
 	$name = $_body['name']
 	$description = $_body['name']
 	$price = $_body['price']
