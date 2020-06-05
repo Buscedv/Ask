@@ -6,7 +6,7 @@ Here is the same basic app with one GET route written in Ask and in Python with 
 YOu can clearly see the difference in how much code is needed for the Flask app compared to the Ask app.
 
 ### Ask
-`
+```php
 $products = [
   {
     name: 'Product 1',
@@ -22,9 +22,9 @@ $products = [
 
 @get('/api/v1/products'):
   respond({products: $products})
-`php
+```
 ### Flask
-`
+```python3
 from flask import Flask, jsonify
 
 app = Flask(__name__)
@@ -48,4 +48,4 @@ def get_products():
   
 if __name__ == '__main__':
   app.run()
-`python3
+```
