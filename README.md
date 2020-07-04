@@ -58,5 +58,7 @@ if __name__ == '__main__':
 - Transpile your code to Flask (Python) with `python3 ask.py [your file].ask`
 - (Optional) If you want to use the watcher: `python3 ask-watcher.py [your file].ask`, the watcher by default uses a 5 second time out between checking your file, you can change this with an optional argument: `python3 flask-watcher.py [your file].ask [number of seconds, ex. 3]`
 
+<!--
 # Documentation
 You can find the full documentation on [ask.edvard.dev](https://ask.edvard.dev)
+-->
