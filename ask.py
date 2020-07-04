@@ -535,7 +535,7 @@ def startup(file_name):
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
 		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
-		print('\033[1m' + 'Running Flask app...' + '\033[0m')
+		print('\33[1m' + 'Running Flask app...' + '\033[0m')
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
