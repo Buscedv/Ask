@@ -209,6 +209,7 @@
         width: 100%;
         padding: 10px;
         background-color: var(--white);
+        color: var(--dark);
         border: 1px solid var(--light-hover);
         border-radius: 10px;
         font-size: 1.1em;
