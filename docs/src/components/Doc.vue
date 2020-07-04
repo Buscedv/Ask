@@ -118,6 +118,7 @@
         padding-top: 10px;
         margin-bottom: 120px;
         max-width: 95%;
+        background-color: var(--white) !important;
     }
 
     #content h1, #content h2 {
@@ -200,7 +201,7 @@
         padding: 10px;
         font-size: 16px;
         background-color: var(--code-bg);
-        color: var(--light);
+        color: var(--dark);
         border-radius: 5px;
         display: flex;
         align-items: center;

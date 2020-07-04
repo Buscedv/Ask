@@ -52,7 +52,7 @@
 <style scoped>
     nav {
         height: 70px;
-        background-color: #fff;
+        background-color: var(--white);
         position: fixed;
         top: 0;
         left: 0;
@@ -75,7 +75,7 @@
     }
 
     #logo-holder img {
-        max-height: 22px;
+        max-height: 50px;
         margin-left: auto;
     }
 
