@@ -1,0 +1,13 @@
+:root {
+    --light: #eff2f5;
+    --code-bg: #eff2f5;
+    --dark: #01252c;
+    --almost-dark: #3f3f3f;
+    --light-dark: #666;
+    --accent: #80ee91;
+    --accent-hover: #60b36d;
+    --white: #fff;
+    --medium: #1c2023;
+    --medium-two: #3e4145;
+    --light-hover: rgba(224, 230, 235, 0.4);
+}
