@@ -101,7 +101,7 @@ def transpile_function(function):
 	functions = {
 		'respond': 'return jsonify',
 		'deep': 'AskLibrary.deep',
-		'quickPut': 'AskLibrary.quickSet',
+		'quickSet': 'AskLibrary.quickSet',
 		'status': 'abort',
 		'_init': '__init__'
 	}
@@ -535,6 +535,9 @@ def startup(file_name):
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
 		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
+		print('\033[1m' + 'Running Flask app...' + '\033[0m')
+		os.system('export FLASK_APP=app.py')
+		os.system('flask run')
 	else:
 		print('\033[91m' + '\t- The file is empty!' + '\033[0m')
 
@@ -549,12 +552,12 @@ vars_used_by_route = ''
 db_action_indents = ''
 
 is_multi_line_comment = False
-is_dev = True
+is_dev = False
 flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
 flask_end_boilerplate = '\nif __name__ == \'__main__\':\n\tapp.run()'
 
 if __name__ == '__main__':
-	print ('🌳' + '\033[92m' + 'Ask' + '\033[0m')
+	print('🌳' + '\033[92m' + 'Ask' + '\033[0m')
 	if len(sys.argv) > 1:
 		source_file_name = sys.argv[1]
 		if os.path.isfile(os.getcwd() + '/' + source_file_name):
