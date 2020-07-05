@@ -52,14 +52,14 @@
 <style scoped>
     nav {
         height: 70px;
-        background-color: var(--white);
+        background-color: var(--light);
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         display: flex;
         align-items: center;
-        border-bottom: 2px solid var(--light);
+        border-bottom: 2px solid var(--white);
         z-index: 99;
     }
 
