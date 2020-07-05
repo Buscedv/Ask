@@ -51,7 +51,7 @@ if __name__ == '__main__':
   app.run()
 ```
 
-**You can find more examples in the "Examples/" folder.**
+**You can find more examples in the `Examples/` folder.**
 
 # Get started
 - Download the `aks.py` file. You can also download `ask-watcher.py` if you want to use live transpilation.
