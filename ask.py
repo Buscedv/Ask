@@ -558,7 +558,7 @@ vars_used_by_route = ''
 db_action_indents = ''
 
 is_multi_line_comment = False
-is_dev = True
+is_dev = False
 flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
 flask_end_boilerplate = '\nif __name__ == \'__main__\':\n\tapp.run()'
 
