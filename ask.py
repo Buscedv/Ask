@@ -26,7 +26,7 @@ class AskLibrary:
 	# Selecting an object from a list of objects, by value.
 	@staticmethod
 	def deep(obj, rule):
-		rule_key = rule.keys()[0]
+		rule_key = list(rule.keys())[0]
 		rule_val = rule[rule_key]
 
 		for element in obj:
@@ -307,6 +307,11 @@ def tokenizer(line):
 			is_var = True
 		elif char == '(':
 			if not is_db_action:
+				if tokens:
+					if tokens[-1][0] == 'KEYWORD' and tokens[-1][1] == 'in':
+						tokens.pop(-1)
+						tmp = 'in' + tmp
+
 				tokens.append(['FUNCTION', tmp])
 			else:
 				tokens.append(['DB_ACTION', db_action_indents + tmp])
@@ -428,35 +433,36 @@ def tokenizer(line):
 				else:
 					tmp += char
 
-					# Checks for keyword
-					tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
+					if is_string is False:
+						# Checks for keyword
+						tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
 
-					if is_var and len(tmp_tmp) >= 2:
-						tmp_keyword_length = 0
+						if is_var and len(tmp_tmp) >= 2:
+							tmp_keyword_length = 0
 
-						if tmp_tmp[-2:] in ['in', 'or'] and not is_db_action:
-							tmp_keyword_length = -2
-						elif tmp_tmp[-3:] in ['and'] and not is_db_action:
-							tmp_keyword_length = -3
+							if tmp_tmp[-2:] in ['in', 'or'] and not is_db_action:
+								tmp_keyword_length = -2
+							elif tmp_tmp[-3:] in ['and'] and not is_db_action:
+								tmp_keyword_length = -3
 
-						if tmp_keyword_length:
-							if tmp_tmp != '_db':
-								tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+							if tmp_keyword_length:
+								if tmp_tmp != '_db':
+									tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+								else:
+									is_db_action = True
+									db_action_indents = tmp_tmp_indents
+								tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
+
+								tmp = ''
+
+						elif tmp_tmp in keywords and not is_var and not is_db_action:
+							if tmp_tmp in ['db_class', 'class']:
+								tokens.append([tmp_tmp.upper(), tmp])
+								tmp = ''
+								is_class = True
 							else:
-								is_db_action = True
-								db_action_indents = tmp_tmp_indents
-							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
-
-							tmp = ''
-
-					elif tmp_tmp in keywords and not is_var and not is_db_action:
-						if tmp_tmp in ['db_class', 'class']:
-							tokens.append([tmp_tmp.upper(), tmp])
-							tmp = ''
-							is_class = True
-						else:
-							tokens.append(['KEYWORD', tmp])
-							tmp = ''
+								tokens.append(['KEYWORD', tmp])
+								tmp = ''
 
 	return tokens
 
@@ -552,7 +558,7 @@ vars_used_by_route = ''
 db_action_indents = ''
 
 is_multi_line_comment = False
-is_dev = False
+is_dev = True
 flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
 flask_end_boilerplate = '\nif __name__ == \'__main__\':\n\tapp.run()'
 
