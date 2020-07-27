@@ -292,7 +292,7 @@ def tokenizer(line):
 	global db_action_indents
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'if', 'elif' 'else', 'for', 'while', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'if', 'elif', 'else', 'for', 'while', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
