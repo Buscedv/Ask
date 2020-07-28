@@ -15,7 +15,7 @@ $_auth.secret_key = 'test'
 
 @post('/login'):
 	if $_body['username'] and $_body['password'] == 'password':
-		$_auth.login($_body['username'], 'secretKey', 30)
+		$_auth.login($_body['username'], 30)
 
 		respond({token: $_auth.token.decode('utf-8')})
 	else:
