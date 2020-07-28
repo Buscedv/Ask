@@ -114,6 +114,19 @@ def transpile_function(function):
 	return False
 
 
+def transpile_decorator(decorator):
+	decorators = {
+		'protected': 'check_for_token',
+	}
+
+	_, decorator_name = separate_indents_and_content(decorator)
+
+	if decorator_name in decorators.keys():
+		return '\n@' + decorators[decorator_name]
+
+	return False
+
+
 def get_vars_used_by_route(url):
 	var = ''
 	collect = False
@@ -172,6 +185,8 @@ def parser(tokens, current_token):
 	global return_run
 	global function_in_route_name
 	global vars_used_by_route
+	global append_decorator
+	global tmp_cache
 
 	token = tokens[current_token]
 
@@ -196,7 +211,6 @@ def parser(tokens, current_token):
 				vars_used_by_route = get_vars_used_by_route(route_url_parser(parser(tokens, current_token + 1)))
 
 				parsed.append('\ndef ' + function_in_route_name + '(' + vars_used_by_route)
-
 				current_token += 1
 			elif transpile_function(token_val):
 				parsed.append(transpile_function(token_val) + '(')
@@ -267,9 +281,18 @@ def parser(tokens, current_token):
 
 				tokens.pop(current_token + 1)
 				tokens.pop(current_token + 1)
+		elif token_type == 'DECORATOR':
+			append_decorator = True
+			tmp_cache = transpile_decorator(token_val)
 
 		if token_type == 'LINE':
 			parsed.append('\n')
+			if append_decorator and len(parsed) >= 6:
+				if len(parsed[-5]) >= 12:
+					if [parsed[-5][:12], parsed[-4][-1], parsed[-3], parsed[-2], parsed[-1]] == ['@app.route(\'', '(', ')', ':', '\n']:
+						append_decorator = False
+						parsed.insert(len(parsed) - 4, tmp_cache)
+						tmp_cache = ''
 
 	# Recursively calls parser() when there is more code to parse
 	if len(tokens) - 1 > current_token:
@@ -287,6 +310,7 @@ def tokenizer(line):
 	is_property = False
 	is_class = False
 	is_db_action = False
+	is_decorator = False
 	global active_dict
 	global is_waiting_for_function_start
 	global db_action_indents
@@ -303,6 +327,16 @@ def tokenizer(line):
 			else:
 				is_string = True
 				tmp = ''
+		elif char == '&' and is_string is False:
+			is_decorator = True
+			tmp = ''
+		elif is_decorator:
+			if char == '\n':
+				tokens.append(['DECORATOR', tmp])
+				tmp = ''
+				is_decorator = False
+			else:
+				tmp += char
 		elif char == '$' and is_string is False:
 			is_var = True
 		elif char == '(':
@@ -313,6 +347,7 @@ def tokenizer(line):
 						tmp = 'in' + tmp
 
 				tokens.append(['FUNCTION', tmp])
+				is_property = False
 			else:
 				tokens.append(['DB_ACTION', db_action_indents + tmp])
 				is_db_action = False
@@ -420,7 +455,12 @@ def tokenizer(line):
 				is_var = True
 
 			if char != '\n' and not is_db_action:
+				if is_property and tmp:
+					tokens.append(['PROPERTY', tmp])
+					tmp = ''
+					is_property = False
 				tokens.append(['OPERATOR', char])
+				is_var = False
 			elif char in [',', ')'] and is_db_action:
 				tokens.append(['DB_ACTION', db_action_indents + tmp])
 				is_db_action = False
@@ -556,10 +596,46 @@ return_run = False
 function_in_route_name = ''
 vars_used_by_route = ''
 db_action_indents = ''
+append_decorator = False
+tmp_cache = ''
 
 is_multi_line_comment = False
-is_dev = False
-flask_boilerplate = 'from flask import Flask, jsonify, abort, request\nfrom ask import AskLibrary\napp = Flask(__name__)\n'
+is_dev = True
+
+flask_boilerplate = ''
+flask_boilerplate += 'from flask import Flask, jsonify, abort, request\n'
+flask_boilerplate += 'from ask import AskLibrary\n'
+flask_boilerplate += 'from functools import wraps\n'
+flask_boilerplate += 'import jwt\n'
+flask_boilerplate += 'import datetime\n'
+flask_boilerplate += "class Auth:\n"
+flask_boilerplate += "\tdef __init__(self):\n"
+flask_boilerplate += "\t\tself.status = False\n"
+flask_boilerplate += "\t\tself.secret_key = ''\n"
+flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
+flask_boilerplate += "\tdef login(self, user, expiry):\n"
+flask_boilerplate += "\t\tself.status = True\n"
+flask_boilerplate += "\t\tself.token = jwt.encode({\n"
+flask_boilerplate += "\t\t\t'user': user,\n"
+flask_boilerplate += "\t\t\t'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)\n"
+flask_boilerplate += "\t\t},\n"
+flask_boilerplate += "\t\t\tself.secret_key\n"
+flask_boilerplate += "\t\t)\n"
+flask_boilerplate += "_auth = Auth()\n"
+flask_boilerplate += "def check_for_token(func):\n"
+flask_boilerplate += "\t@wraps(func)\n"
+flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
+flask_boilerplate += "\t\ttoken = request.args.get('token')\n"
+flask_boilerplate += "\t\tif not token:\n"
+flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing Token'}), 403\n"
+flask_boilerplate += "\t\ttry:\n"
+flask_boilerplate += "\t\t\tdata = jwt.decode(token, _auth.secret_key)\n"
+flask_boilerplate += "\t\texcept:\n"
+flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token'}), 403\n"
+flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
+flask_boilerplate += "\treturn wrapped\n"
+flask_boilerplate += "app = Flask(__name__)\n"
+
 flask_end_boilerplate = '\nif __name__ == \'__main__\':\n\tapp.run()'
 
 if __name__ == '__main__':
