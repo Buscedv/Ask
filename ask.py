@@ -316,7 +316,7 @@ def tokenizer(line):
 	global db_action_indents
 
 	operators = ['+', '-', '*', '/', '%', '<', '>', '=', '!', '.', ':', ',', ')', ';']
-	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'if', 'elif', 'else', 'for', 'while', 'and', 'or', 'global', 'def', 'class', 'db_class', 'use']
+	keywords = ['True', 'False', 'in', 'break', 'continue', 'return', 'not', 'pass', 'if', 'elif', 'else', 'for', 'while', 'and', 'or', 'global', 'def', 'class', 'db_class']
 
 	for char_index, char in enumerate(line):
 		if char == '"' or char == '\'':
@@ -600,7 +600,7 @@ append_decorator = False
 tmp_cache = ''
 
 is_multi_line_comment = False
-is_dev = True
+is_dev = False
 
 flask_boilerplate = ''
 flask_boilerplate += 'from flask import Flask, jsonify, abort, request\n'
@@ -614,13 +614,23 @@ flask_boilerplate += "\t\tself.status = False\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
 flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
 flask_boilerplate += "\tdef login(self, user, expiry):\n"
-flask_boilerplate += "\t\tself.status = True\n"
-flask_boilerplate += "\t\tself.token = jwt.encode({\n"
-flask_boilerplate += "\t\t\t'user': user,\n"
-flask_boilerplate += "\t\t\t'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)\n"
-flask_boilerplate += "\t\t},\n"
-flask_boilerplate += "\t\t\tself.secret_key\n"
+flask_boilerplate += "\t\tpayload = {\n"
+flask_boilerplate += "\t\t	'user': user,\n"
+flask_boilerplate += "\t\t	'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)\n"
+flask_boilerplate += "\t\t}\n"
+flask_boilerplate += "\t\tself.encode(payload)\n"
+flask_boilerplate += "\tdef encode(self, payload):\n"
+flask_boilerplate += "\t\tself.token = jwt.encode(\n"
+flask_boilerplate += "\t\t	payload, self.secret_key\n"
 flask_boilerplate += "\t\t)\n"
+flask_boilerplate += "\tdef decode(self):\n"
+flask_boilerplate += "\t\treturn jwt.decode(self.token, self.secret_key)\n"
+flask_boilerplate += "\tdef is_valid(self):\n"
+flask_boilerplate += "\t\ttry:\n"
+flask_boilerplate += "\t\t\t_ = self.decode()\n"
+flask_boilerplate += "\t\t\treturn True\n"
+flask_boilerplate += "\t\texcept:\n"
+flask_boilerplate += "\t\t\treturn False\n"
 flask_boilerplate += "_auth = Auth()\n"
 flask_boilerplate += "def check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
