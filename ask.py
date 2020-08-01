@@ -608,6 +608,10 @@ flask_boilerplate += 'from ask import AskLibrary\n'
 flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
+flask_boilerplate += 'import os\n'
+flask_boilerplate += "class Env:\n"
+flask_boilerplate += "\tdef get(self, key):\n"
+flask_boilerplate += "\t\treturn os.environ.get(key)\n"
 flask_boilerplate += "class Auth:\n"
 flask_boilerplate += "\tdef __init__(self):\n"
 flask_boilerplate += "\t\tself.status = False\n"
@@ -632,6 +636,7 @@ flask_boilerplate += "\t\t\treturn True\n"
 flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn False\n"
 flask_boilerplate += "_auth = Auth()\n"
+flask_boilerplate += "_env = Env()\n"
 flask_boilerplate += "def check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
