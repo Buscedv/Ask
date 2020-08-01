@@ -11,6 +11,7 @@ $_auth.secret_key = 'test'
 
 &protected
 @get('/auth'):
+	print ($_auth.decode())
 	respond('This is only viewable with a token')
 
 @post('/login'):
