@@ -363,7 +363,7 @@ def tokenizer(line):
 				tmp = ''
 				is_number = False
 
-		elif char == '[':
+		elif char in '[':
 			if is_var:
 				if is_property:
 					if tmp[-3:] == '_db':
@@ -438,7 +438,30 @@ def tokenizer(line):
 					continue
 
 				if tmp.replace('\t', '') != '_db':
-					tokens.append(['VAR', tmp])
+					tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
+
+					if len(tmp_tmp) >= 2:
+
+						tmp_keyword_length = 0
+
+						print(tmp_tmp)
+
+						if tmp_tmp[-2:] in ['in', 'or'] and not is_db_action:
+							tmp_keyword_length = -2
+						elif tmp_tmp[-3:] in ['and'] and not is_db_action:
+							tmp_keyword_length = -3
+
+						if tmp_keyword_length:
+							if tmp_tmp != '_db':
+								tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
+							else:
+								is_db_action = True
+								db_action_indents = tmp_tmp_indents
+							tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
+
+							tmp = ''
+					else:
+						tokens.append(['VAR', tmp])
 				else:
 					is_db_action = True
 					db_action_indents, _ = separate_indents_and_content(tmp)
@@ -477,25 +500,7 @@ def tokenizer(line):
 						# Checks for keyword
 						tmp_tmp_indents, tmp_tmp = separate_indents_and_content(tmp)
 
-						if is_var and len(tmp_tmp) >= 2:
-							tmp_keyword_length = 0
-
-							if tmp_tmp[-2:] in ['in', 'or'] and not is_db_action:
-								tmp_keyword_length = -2
-							elif tmp_tmp[-3:] in ['and'] and not is_db_action:
-								tmp_keyword_length = -3
-
-							if tmp_keyword_length:
-								if tmp_tmp != '_db':
-									tokens.append(['VAR', tmp_tmp_indents + tmp_tmp[:tmp_keyword_length]])
-								else:
-									is_db_action = True
-									db_action_indents = tmp_tmp_indents
-								tokens.append(['KEYWORD', tmp_tmp[tmp_keyword_length:]])
-
-								tmp = ''
-
-						elif tmp_tmp in keywords and not is_var and not is_db_action:
+						if tmp_tmp in keywords and not is_var and not is_db_action:
 							if tmp_tmp in ['db_class', 'class']:
 								tokens.append([tmp_tmp.upper(), tmp])
 								tmp = ''
