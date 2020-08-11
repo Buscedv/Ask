@@ -2,163 +2,55 @@ import sys
 from pprint import pprint
 
 
-def clean(string):
-	return string.replace('\t', '').replace(' ', '')
+def transpile_var(var):
+	vars = {
+		'_auth': '_auth',
+		'_env': '_env',
+		'_db': 'db'
+	}
+
+	try:
+		return vars[var]
+	except Exception:
+		return ''
 
 
-def keyword_at_end_lexer(tmp, tokens):
-	global variables
+def parser(tokens):
+	global built_in_vars
 
-	tmp = clean(tmp)
-	if len(tmp) > 2:
-		if tmp[-2:] in ['or', 'in']:
-			if tmp[:-2] in variables:
-				tokens.append(['VAR', tmp[:-2]])
-				tokens.append(['KEYWORD', tmp[-2:]])
+	parsed = ''
 
-	return tokens
+	for token in tokens:
+		token_type = token[0]
+		token_val = token[1]
 
+		if token_type in ['FORMAT', 'OP']:
+			parsed += token_val
+		elif token_type == 'STR':
+			parsed += '"' + token_val + '" '
+		elif token_type == 'KEYWORD':
+			prefix = ' '
 
-def lex(raw):
-	is_string = False
-	is_dict = []
-	is_list = []
-	is_route = False
-	is_route_path = False
-	tmp = ''
-	tmp_2 = ''
-
-	global variables
-
-	operators = ['=', '-', '+', '*', '/', '%', ',', ')', '.', ':', '{', '}', '[', ']']
-	keywords = ['if', 'else', 'elif', 'not', 'and', 'or', 'return', 'in', 'for']
-
-	tokens = []
-
-	for line in raw:
-		for char_index, char in enumerate(line):
-			if char_index == len(line) - 1 and tmp:
-				if clean(tmp) in variables:
-					tokens.append(['VAR', tmp])
-					tmp = ''
-					continue
-
-			if is_route:
-				if is_route_path:
-					if char in ['"', '\'']:
-						if is_string:
-							is_string = False
-							is_route_path = False
-							is_route = False
-							tokens.append([tmp_2.upper() + '_ROUTE', tmp])
-							tmp = ''
-							tmp_2 = ''
-						else:
-							is_string = True
-					else:
-						tmp += char
-				else:
-					if char != '(':
-						tmp += char
-					else:
-						tmp_2 = tmp
-						tmp = ''
-						is_route_path = True
+			if parsed:
+				if parsed[-1] == '\n':
+					prefix = ''
+			parsed += prefix + token_val + ' '
+		elif token_type == 'VAR':
+			if token_val not in built_in_vars:
+				parsed += token_val
 			else:
-				if is_dict and char == ':' and is_string is False:
-					tokens.append(['KEY', tmp])
-					tmp = ''
-				if char == '#' and is_string is False:
-					break
-				elif char == '@':
-					is_route = True
-					tmp = ''
-				elif char in ['"', '\''] and is_string is False:
-					is_string = True
-					if tmp:
-						if clean(tmp) in operators:
-							tokens.append(['OPERATOR', tmp])
-						elif clean(tmp) in keywords:
-							tokens.append(['KEYWORD', tmp])
-						tmp = ''
-				elif char in ['"', '\''] and is_string:
-					is_string = False
-					tokens.append(['STRING', tmp])
-					tmp = ''
-				elif is_string is False and char == '(':
-					if clean(tmp)[:3] == 'def':
-						tmp = clean(tmp)[3:]
-						tokens.append(['KEYWORD', 'def'])
-					tokens.append(['FUNCTION', tmp])
-					tmp = ''
-				elif is_string is False and char in operators:
-					if clean(tmp) in keywords:
-						tokens.append(['KEYWORD', tmp])
-						tmp = ''
+				parsed += transpile_var(token_val)
+		elif token_type == 'FUNC':
+			parsed += token_val + '('
+		elif token_type == 'DB_CLASS':
+			parsed += 'class ' + token_val
+		elif token_type == 'FUNC_DEF':
+			parsed += 'def ' + token_val + '('
+		elif token_type == 'KEY':
+			parsed += '\'' + token_val + '\''
 
-					if char == '=':
-						if tokens:
-							if tokens[-1][1] == '==' and tokens[-1][0] == 'OPERATOR':
-								continue
+	return parsed
 
-						if char_index < len(line):
-							if line[char_index + 1] == '=':
-								tokens.append(['VAR', tmp])
-								variables.append(clean(tmp))
-								tmp = ''
-								tokens.append(['OPERATOR', '=='])
-								continue
-						tokens.append(['VAR', tmp])
-						variables.append(clean(tmp))
-					if char in [',', ')', '.'] and tmp:
-						tokens.append(['VAR', tmp])
-						variables.append(clean(tmp))
-					elif char == ':' and is_dict == []:
-						if tmp[:8] == 'db_class':
-							tmp_tmp = tmp[8:]
-							tokens.append(['DB_CLASS', tmp_tmp])
-						else:
-							if tmp:
-								if clean(tmp) in keywords:
-									tokens.append(['KEYWORD', tmp])
-								elif clean(tmp) in variables:
-									tokens.append(['VAR', tmp])
-					elif char == '{':
-						is_dict.append(True)
-					elif char == '}' and is_dict:
-						is_dict.pop(-1)
-					elif char == '[':
-						if tmp:
-							if clean(tmp) in variables:
-								tokens.append(['VAR', tmp])
-						is_list.append(True)
-					elif char == ']' and is_list:
-						is_list.pop(-1)
-					tmp = ''
-					tokens.append(['OPERATOR', char])
-				else:
-					if char == ' ' and is_string is False:
-						if tmp:
-							if clean(tmp) in keywords:
-								tokens.append(['KEYWORD', tmp])
-							elif clean(tmp) in variables:
-								tokens.append(['VAR', tmp])
-							elif len(clean(tmp)) > 2:
-								tokens = keyword_at_end_lexer(tmp, tokens)
-					if is_string or is_string is False and char not in ['\n', '']:
-						tmp += char
-
-					elif len(clean(tmp)) > 2:
-						tokens = keyword_at_end_lexer(tmp, tokens)
-					else:
-						if char_index == len(line) - 1 and tmp:
-							if clean(tmp) in keywords:
-								tokens.append(['KEYWORD', tmp])
-							elif clean(tmp) in variables:
-								tokens.append(['VAR', tmp])
-							tmp = ''
-
-	return tokens
 
 
 def lex_var_keyword(tokens, tmp):
@@ -223,7 +115,6 @@ def lexer(raw):
 					tokens.append(['FUNC', tmp])
 					tmp = ''
 			elif char == '=':
-				print(tmp)
 				if tmp:
 					tokens.append(['VAR', tmp])
 					tokens.append(['ASSIGN', char])
@@ -242,8 +133,10 @@ def lexer(raw):
 				tokens.append(['STR', ''])
 			elif char == '{':
 				is_dict.append(True)
+				tokens.append(['OP', char])
 			elif char == '}':
 				is_dict.pop(0)
+				tokens.append(['OP', char])
 			elif char.isdigit():
 				tmp = ''
 				if tokens:
@@ -271,8 +164,9 @@ def lexer(raw):
 	return tokens
 
 
-variables = ['_body', '_auth', '_env', '_db', 'int', 'pk', 'unique']
-keywords = ['if', 'in', 'return']
+built_in_vars = ['_body', '_auth', '_env', '_db', 'int', 'pk', 'unique']
+variables = built_in_vars
+keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or']
 special_keywords = {
 	'db_class': {
 		'type': 'DB_CLASS',
@@ -287,7 +181,7 @@ special_keywords = {
 		'include_collect_end': False
 	}
 }
-operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',']
+operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']']
 
 file_name = sys.argv[1]
 
@@ -295,3 +189,5 @@ with open(file_name) as f:
 	raw_code = f.readlines()
 
 pprint(lexer(raw_code))
+
+print(parser(lexer(raw_code)))
