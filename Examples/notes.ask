@@ -1,5 +1,4 @@
 # Setup
-
 _db.init()
 _auth.secret_key = _env.get('SECRET_KEY')
 
@@ -28,11 +27,10 @@ db_class User:
 		self.username = username
 		self.password = _hash.hash(password)
 
-    def check_password(self, password_to_check):
-        return _hash.check(self.password, password_to_check)
+	def check_password(self, password_to_check):
+		return _hash.check(self.password, password_to_check)
 
 # Note
-
 @post('/note'):
 	if not _body or 'title' not in _body or 'note' not in _body:
 		respond(400)
@@ -43,6 +41,7 @@ db_class User:
 
 	respond(note.s())
 
+&protected
 @get('/notes'):
 	raw_notes = Note._db.all()
 
@@ -53,18 +52,18 @@ db_class User:
 
 	respond(notes)
 
-@get('/note/id'):
+@get('/note/<id>'):
 	note = Note._db.get(id)
 
 	respond(note.s())
 
-@delete('/note/id'):
-  note = Note._db.get(id)
-  _db.delete(note)
+@delete('/note/<id>'):
+	note = Note._db.get(id)
+	_db.delete(note)
 
-  respond(note.s())
+	respond(note.s())
 
-@put('/note/id'):
+@put('/note/<id>/<lol>'):
 	if not _body or 'title' not in _body or 'note' not in _body:
 		respond(400)
 
@@ -77,7 +76,6 @@ db_class User:
 	respond(note.s())
 
 # Login
-
 @post('/login'):
 	if not _body['username'] and not _body['password']:
 		respond(400)
