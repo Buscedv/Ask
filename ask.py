@@ -148,9 +148,10 @@ def parser(tokens):
 
 						parsed += '\n@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])\n'
 
-						parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
 						if is_decorator:
 							parsed += decorator
+
+						parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
 						is_skip = True
 						is_decorator = False
 			elif token_val in ['quickSet', 'deep']:
