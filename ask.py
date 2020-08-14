@@ -103,6 +103,8 @@ def parser(tokens):
 
 	is_skip = False
 	needs_db_commit = False
+	is_decorator = False
+	decorator = ''
 
 	parsed = ''
 
@@ -147,7 +149,10 @@ def parser(tokens):
 						parsed += '\n@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])\n'
 
 						parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
+						if is_decorator:
+							parsed += decorator
 						is_skip = True
+						is_decorator = False
 			elif token_val in ['quickSet', 'deep']:
 				parsed += 'AskLibrary.' + token_val + '('
 			elif token_val == 'respond':
@@ -163,7 +168,8 @@ def parser(tokens):
 		elif token_type == 'KEY':
 			parsed += '\'' + token_val + '\''
 		elif token_type == 'DEC':
-			parsed += transpile_decorator(token_val)
+			is_decorator = True
+			decorator = transpile_decorator(token_val)
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
 			parsed += transpiled[0]
