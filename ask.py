@@ -177,6 +177,12 @@ def parser(tokens):
 			if transpiled[1]:
 				needs_db_commit = True
 
+		if len(parsed) > 3:
+			if parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
+				parsed = parsed[:-4]
+				parsed += ' == '
+
+
 	return parsed
 
 
