@@ -78,13 +78,14 @@ def transpile_db_action(action):
 		'int': 'db.Integer',
 		'pk': 'primary_key=True',
 		'unique': 'unique=True',
+		'nullable': 'nullable=True',
 		'str': 'db.String',
 		'float': 'db.Float',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
 		'delete': 'db.delete',
-		'get_by': 'query.filter',
+		'get_by': 'query.filter_by',
 		'add': 'db.session.add'
 	}
 
@@ -145,15 +146,19 @@ def parser(tokens):
 
 						parsed += '\n@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])\n'
 
-						parsed += 'def ' + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
+						parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
 						is_skip = True
-			elif token_val in ['respond', 'quickSet', 'deep']:
+			elif token_val in ['quickSet', 'deep']:
 				parsed += 'AskLibrary.' + token_val + '('
+			elif token_val == 'respond':
+				parsed += 'return jsonify('
 			else:
 				parsed += token_val + '('
 		elif token_type == 'DB_CLASS':
-			parsed += '\nclass ' + token_val
+			parsed += '\nclass ' + token_val + '(db.Model)'
 		elif token_type == 'FUNC_DEF':
+			if token_val == '_init':
+				token_val = '__init__'
 			parsed += 'def ' + token_val + '('
 		elif token_type == 'KEY':
 			parsed += '\'' + token_val + '\''
@@ -367,12 +372,16 @@ flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
 flask_boilerplate += 'import os\n'
+flask_boilerplate += 'import hashlib\n'
 flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
-flask_boilerplate += "\n\napp = Flask(__name__)\n"
-flask_boilerplate += 'basedir = os.path.abspath(os.path.dirname(__file__))\n'
-flask_boilerplate += 'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'sqlite:///\' + os.path.join(basedir, \'db.sqlite\')\n'
+
+flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
+flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "db.db"))\n'
+flask_boilerplate += 'app = Flask(__name__)\n'
+flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 flask_boilerplate += 'db = SQLAlchemy(app)\n'
+
 flask_boilerplate += '\n\nclass AskLibrary:\n'
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += '\tdef deep(obj, rule):\n'
@@ -396,7 +405,6 @@ flask_boilerplate += "\tdef get(key):\n"
 flask_boilerplate += "\t\treturn os.environ.get(key)\n"
 flask_boilerplate += "\n\nclass Auth:\n"
 flask_boilerplate += "\tdef __init__(self):\n"
-flask_boilerplate += "\t\tself.status = False\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
 flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
 flask_boilerplate += "\n\tdef login(self, user, expiry):\n"
@@ -407,18 +415,26 @@ flask_boilerplate += "\t\t}\n"
 flask_boilerplate += "\t\tself.encode(payload)\n"
 flask_boilerplate += "\n\tdef encode(self, payload):\n"
 flask_boilerplate += "\t\tself.token = jwt.encode(\n"
-flask_boilerplate += "\t\t	payload, self.secret_key\n"
+flask_boilerplate += "\t\t	payload, str(self.secret_key)\n"
 flask_boilerplate += "\t\t)\n"
 flask_boilerplate += "\n\tdef decode(self):\n"
-flask_boilerplate += "\t\treturn jwt.decode(self.token, self.secret_key)\n"
+flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key))\n'
 flask_boilerplate += "\n\tdef is_valid(self):\n"
 flask_boilerplate += "\t\ttry:\n"
 flask_boilerplate += "\t\t\t_ = self.decode()\n"
 flask_boilerplate += "\t\t\treturn True\n"
 flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn False\n"
+flask_boilerplate += '\n\nclass Hash:\n'
+flask_boilerplate += '\t@staticmethod\n'
+flask_boilerplate += '\tdef hash(to_hash):\n'
+flask_boilerplate += '\t\treturn hashlib.sha256(to_hash.encode(\'utf-8\')).hexdigest()\n'
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
+flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
 flask_boilerplate += "\n\n_auth = Auth()\n"
 flask_boilerplate += "_env = Env()\n"
+flask_boilerplate += "_hash = Hash()\n"
 flask_boilerplate += "\n\ndef check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
