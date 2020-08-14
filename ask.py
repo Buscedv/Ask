@@ -328,7 +328,6 @@ def startup(file_name):
 		source_lines = f.readlines()
 
 	tokens_list = lexer(source_lines)
-	pprint(tokens_list)
 	if tokens_list:
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
@@ -367,7 +366,6 @@ operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
 # Setup
 flask_boilerplate = ''
 flask_boilerplate += 'from flask import Flask, jsonify, abort, request\n'
-flask_boilerplate += 'from ask import AskLibrary\n'
 flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
