@@ -71,6 +71,8 @@ def route_params(route_path):
 
 
 def transpile_db_action(action):
+	needs_commit = ['add', 'delete']
+
 	actions = {
 		'col': 'db.Column',
 		'int': 'db.Integer',
@@ -82,11 +84,15 @@ def transpile_db_action(action):
 		'get': 'query.get',
 		'save': 'db.session.commit',
 		'delete': 'db.delete',
-		'get_by': 'query.filter'
+		'get_by': 'query.filter',
+		'add': 'db.session.add'
 	}
 
 	try:
-		return actions[action]
+		if action in needs_commit:
+			return [actions[action], True]
+
+		return [actions[action], False]
 	except KeyError:
 		return ''
 
@@ -95,6 +101,7 @@ def parser(tokens):
 	global built_in_vars
 
 	is_skip = False
+	needs_db_commit = False
 
 	parsed = ''
 
@@ -117,6 +124,10 @@ def parser(tokens):
 
 			if token_val in [',', '=']:
 				parsed += ' '
+
+			if needs_db_commit and token_val == ')':
+				needs_db_commit = False
+				parsed += '\n\tdb.session.commit()'
 		elif token_type == 'STR':
 			parsed += '"' + token_val + '"'
 		elif token_type == 'KEYWORD':
@@ -149,7 +160,10 @@ def parser(tokens):
 		elif token_type == 'DEC':
 			parsed += transpile_decorator(token_val)
 		elif token_type == 'DB_ACTION':
-			parsed += transpile_db_action(token_val)
+			transpiled = transpile_db_action(token_val)
+			parsed += transpiled[0]
+			if transpiled[1]:
+				needs_db_commit = True
 
 	return parsed
 
