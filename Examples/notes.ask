@@ -1,5 +1,4 @@
 # Setup
-_db.init()
 _auth.secret_key = _env.get('SECRET_KEY')
 
 # DB
@@ -63,7 +62,7 @@ db_class User:
 
 	respond(note.s())
 
-@put('/note/<id>/<lol>'):
+@put('/note/<id>'):
 	if not _body or 'title' not in _body or 'note' not in _body:
 		respond(400)
 
