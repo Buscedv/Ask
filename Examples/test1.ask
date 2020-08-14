@@ -1,5 +1,0 @@
-hej = "test"
-input = 5
-if "t" != hej:
-	lol = 3
-	print(input+4-3/lol%5)
