@@ -1,0 +1,103 @@
+# Setup
+_auth.secret_key = _env.get('SECRET_KEY')
+
+# DB
+db_class Note:
+	id = _db.col(_db.int, _db.pk)
+	title = _db.col(_db.str(100))
+	note = _db.col(_db.str(300))
+
+	def _init(self, title, note):
+		self.title = title
+		self.note = note
+
+	def s(self):
+		return {
+			title: self.title,
+			note: self.note
+		}
+
+db_class User:
+	id = _db.col(_db.int, _db.pk)
+	username = _db.col(_db.str(100))
+	password = _db.col(_db.str(256))
+
+	def _init(self, username, password):
+		self.username = username
+		self.password = _hash.hash(password)
+
+	def check_password(self, password_to_check):
+		return _hash.check(self.password, password_to_check)
+
+# Note
+&protected
+@post('/note'):
+	if not _body or 'title' not in _body or 'note' not in _body:
+		respond(400)
+
+	note = Note(_body['title'], _body['note'])
+
+	_db.add(note)
+
+	respond(note.s())
+
+&protected
+@get('/notes'):
+
+	respond(_auth.decode())
+
+#	raw_notes = Note._db.get_by(user=_auth.)
+
+#	notes = []
+#
+#	for note in raw_notes:
+#		notes.append(note.s())
+#
+#	respond(notes)
+
+&protected
+@get('/note/<id>'):
+	note = Note._db.get(id)
+
+	respond(note.s())
+
+&protected
+@delete('/note/<id>'):
+	note = Note._db.get(id)
+	_db.delete(note)
+
+	respond(note.s())
+
+&protected
+@put('/note/<id>'):
+	if not _body or 'title' not in _body or 'note' not in _body:
+		respond(400)
+
+	note = Note._db.get(id)
+
+	note = quickSet(note, _body)
+
+	_db.save()
+
+	respond(note.s())
+
+# Login
+@get('/login'):
+	if not _body['username'] and not _body['password']:
+		respond(400)
+
+	user = User._db.get_by(username=_body['username']).first()
+	if user.check_password(_body['password']):
+		_auth.login(_body['username'], 60)
+		respond({token: _auth.token.decode('utf-8')})
+	else:
+		respond('Unable to verify!')
+
+@post('/register'):
+	if not _body['username'] and not _body['password']:
+		respond(400)
+
+	user = User(_body['username'], _body['password'])
+	_db.add(user)
+
+	respond('User created')
