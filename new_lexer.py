@@ -70,6 +70,27 @@ def route_params(route_path):
 	return params_str
 
 
+def transpile_db_action(action):
+	actions = {
+		'col': 'db.Column',
+		'int': 'db.Integer',
+		'pk': 'primary_key=True',
+		'unique': 'unique=True',
+		'str': 'db.String',
+		'float': 'db.Float',
+		'all': 'query.all',
+		'get': 'query.get',
+		'save': 'db.session.commit',
+		'delete': 'db.delete',
+		'get_by': 'query.filter'
+	}
+
+	try:
+		return actions[action]
+	except KeyError:
+		return ''
+
+
 def parser(tokens):
 	global built_in_vars
 
@@ -115,6 +136,8 @@ def parser(tokens):
 
 						parsed += 'def ' + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
 						is_skip = True
+			elif token_val in ['respond', 'quickSet', 'deep']:
+				parsed += 'AskLibrary.' + token_val + '('
 			else:
 				parsed += token_val + '('
 		elif token_type == 'DB_CLASS':
@@ -124,8 +147,9 @@ def parser(tokens):
 		elif token_type == 'KEY':
 			parsed += '\'' + token_val + '\''
 		elif token_type == 'DEC':
-			# Might need to move if decorators need to be specified after the @app.route decorator.
 			parsed += transpile_decorator(token_val)
+		elif token_type == 'DB_ACTION':
+			parsed += transpile_db_action(token_val)
 
 	return parsed
 
@@ -243,6 +267,16 @@ def lexer(raw):
 			else:
 				tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
 
+			if len(tokens) > 2:
+				if tokens[-2][0] == 'VAR' and tokens[-2][1] == '_db':
+					# Removes both the VAR: _db and the OP: .
+					tokens.pop(-1)
+					tokens.pop(-1)
+					is_collector = True
+					collector_ends = ['(', ',', ')']
+					include_collector_end = True
+					tmp = ''
+					tokens.append(['DB_ACTION', ''])
 	return tokens
 
 
@@ -292,7 +326,7 @@ def startup(file_name):
 
 
 # Globals
-built_in_vars = ['_body', '_auth', '_env', '_db', 'int', 'pk', 'unique']
+built_in_vars = ['_body', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or']
 special_keywords = {
@@ -307,7 +341,7 @@ special_keywords = {
 		'collect': True,
 		'collect_ends': ['('],
 		'include_collect_end': False
-	}
+	},
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
 
@@ -319,35 +353,59 @@ flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
 flask_boilerplate += 'import os\n'
-flask_boilerplate += "class Env:\n"
-flask_boilerplate += "\tdef get(self, key):\n"
+flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
+flask_boilerplate += "\n\napp = Flask(__name__)\n"
+flask_boilerplate += 'basedir = os.path.abspath(os.path.dirname(__file__))\n'
+flask_boilerplate += 'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'sqlite:///\' + os.path.join(basedir, \'db.sqlite\')\n'
+flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
+flask_boilerplate += 'db = SQLAlchemy(app)\n'
+flask_boilerplate += '\n\nclass AskLibrary:\n'
+flask_boilerplate += '\t@staticmethod\n'
+flask_boilerplate += '\tdef deep(obj, rule):\n'
+flask_boilerplate += '\t\trule_key = list(rule.keys())[0]\n'
+flask_boilerplate += '\t\trule_val = rule[rule_key]\n'
+flask_boilerplate += '\n\t\tfor element in obj:\n'
+flask_boilerplate += '\t\t\tif str(element[rule_key]) == str(rule_val):\n'
+flask_boilerplate += '\t\t\t\treturn element\n'
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef quickSet(target, source):\n'
+flask_boilerplate += '\t\tfor key in source.keys():\n'
+flask_boilerplate += '\t\t\tif key in target.keys():\n'
+flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
+flask_boilerplate += '\n\t\treturn target\n'
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef respond(response):\n'
+flask_boilerplate += '\t\treturn jsonify(response)\n'
+flask_boilerplate += "\n\nclass Env:\n"
+flask_boilerplate += '\t@staticmethod\n'
+flask_boilerplate += "\tdef get(key):\n"
 flask_boilerplate += "\t\treturn os.environ.get(key)\n"
-flask_boilerplate += "class Auth:\n"
+flask_boilerplate += "\n\nclass Auth:\n"
 flask_boilerplate += "\tdef __init__(self):\n"
 flask_boilerplate += "\t\tself.status = False\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
 flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
-flask_boilerplate += "\tdef login(self, user, expiry):\n"
+flask_boilerplate += "\n\tdef login(self, user, expiry):\n"
 flask_boilerplate += "\t\tpayload = {\n"
 flask_boilerplate += "\t\t	'user': user,\n"
 flask_boilerplate += "\t\t	'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)\n"
 flask_boilerplate += "\t\t}\n"
 flask_boilerplate += "\t\tself.encode(payload)\n"
-flask_boilerplate += "\tdef encode(self, payload):\n"
+flask_boilerplate += "\n\tdef encode(self, payload):\n"
 flask_boilerplate += "\t\tself.token = jwt.encode(\n"
 flask_boilerplate += "\t\t	payload, self.secret_key\n"
 flask_boilerplate += "\t\t)\n"
-flask_boilerplate += "\tdef decode(self):\n"
+flask_boilerplate += "\n\tdef decode(self):\n"
 flask_boilerplate += "\t\treturn jwt.decode(self.token, self.secret_key)\n"
-flask_boilerplate += "\tdef is_valid(self):\n"
+flask_boilerplate += "\n\tdef is_valid(self):\n"
 flask_boilerplate += "\t\ttry:\n"
 flask_boilerplate += "\t\t\t_ = self.decode()\n"
 flask_boilerplate += "\t\t\treturn True\n"
 flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn False\n"
-flask_boilerplate += "_auth = Auth()\n"
+flask_boilerplate += "\n\n_auth = Auth()\n"
 flask_boilerplate += "_env = Env()\n"
-flask_boilerplate += "def check_for_token(func):\n"
+flask_boilerplate += "\n\ndef check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
 flask_boilerplate += "\t\ttoken = request.args.get('token')\n"
@@ -358,11 +416,9 @@ flask_boilerplate += "\t\t\tdata = jwt.decode(token, _auth.secret_key)\n"
 flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token'}), 403\n"
 flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
-flask_boilerplate += "\treturn wrapped\n"
-flask_boilerplate += "app = Flask(__name__)\n"
+flask_boilerplate += "\treturn wrapped\n\n"
 
 flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
-
 
 # Start
 if __name__ == '__main__':
