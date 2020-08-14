@@ -1,4 +1,0 @@
-$users = ['user1', 'user2', 'user3']
-
-@get('/users'):
-	respond($users.index('user1'))

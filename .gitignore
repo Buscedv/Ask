@@ -133,3 +133,4 @@ dmypy.json
 
 app.py
 db.sqlite
+db.db
