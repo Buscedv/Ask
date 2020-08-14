@@ -30,6 +30,7 @@ db_class User:
 		return _hash.check(self.password, password_to_check)
 
 # Note
+&protected
 @post('/note'):
 	if not _body or 'title' not in _body or 'note' not in _body:
 		respond(400)
@@ -42,26 +43,32 @@ db_class User:
 
 &protected
 @get('/notes'):
-	raw_notes = Note._db.all()
 
-	notes = []
+	respond(_auth.decode())
 
-	for note in raw_notes:
-		notes.append(note.s())
+#	raw_notes = Note._db.get_by(user=_auth.)
 
-	respond(notes)
+#	notes = []
+#
+#	for note in raw_notes:
+#		notes.append(note.s())
+#
+#	respond(notes)
 
+&protected
 @get('/note/<id>'):
 	note = Note._db.get(id)
 
 	respond(note.s())
 
+&protected
 @delete('/note/<id>'):
 	note = Note._db.get(id)
 	_db.delete(note)
 
 	respond(note.s())
 
+&protected
 @put('/note/<id>'):
 	if not _body or 'title' not in _body or 'note' not in _body:
 		respond(400)
@@ -75,7 +82,7 @@ db_class User:
 	respond(note.s())
 
 # Login
-@post('/login'):
+@get('/login'):
 	if not _body['username'] and not _body['password']:
 		respond(400)
 
@@ -85,3 +92,12 @@ db_class User:
 		respond({token: _auth.token.decode('utf-8')})
 	else:
 		respond('Unable to verify!')
+
+@post('/register'):
+	if not _body['username'] and not _body['password']:
+		respond(400)
+
+	user = User(_body['username'], _body['password'])
+	_db.add(user)
+
+	respond('User created')
