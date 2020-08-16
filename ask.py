@@ -371,7 +371,6 @@ def startup(file_name):
 		source_lines = f.readlines()
 
 	tokens_list = lexer(source_lines)
-	pprint(tokens_list)
 	if tokens_list:
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
@@ -416,7 +415,7 @@ uses_db = False
 
 # Setup
 flask_boilerplate = ''
-flask_boilerplate += 'from flask import Flask, jsonify, abort, request\n'
+flask_boilerplate += 'from flask import Flask, jsonify, abort, request, Response\n'
 flask_boilerplate += 'from flask_limiter import Limiter\n'
 flask_boilerplate += 'from flask_limiter.util import get_remote_address\n'
 flask_boilerplate += 'from functools import wraps\n'
@@ -451,6 +450,9 @@ flask_boilerplate += '\n\t\treturn target\n'
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef respond(response):\n'
 flask_boilerplate += '\t\treturn jsonify(response)\n'
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef status(code):\n'
+flask_boilerplate += '\t\treturn Response(status=code)\n'
 
 flask_boilerplate += "\n\nclass Env:\n"
 flask_boilerplate += '\t@staticmethod\n'
@@ -505,7 +507,7 @@ flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token'}), 403\n"
 flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 flask_boilerplate += "\treturn wrapped\n\n"
 
-flask_boilerplate += 'limiter = Limiter(app, key_func=get_remote_address)\n'
+flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n'
 
 flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
