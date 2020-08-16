@@ -452,7 +452,10 @@ flask_boilerplate += '\tdef respond(response):\n'
 flask_boilerplate += '\t\treturn jsonify(response)\n'
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef status(code):\n'
-flask_boilerplate += '\t\treturn Response(status=code)\n'
+flask_boilerplate += '\t\treturn Response(code)\n'
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef halt(message, code):\n'
+flask_boilerplate += '\t\tabort(Response(message, code))\n'
 
 flask_boilerplate += "\n\nclass Env:\n"
 flask_boilerplate += '\t@staticmethod\n'
