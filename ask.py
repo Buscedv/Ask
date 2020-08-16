@@ -1,6 +1,5 @@
 import sys
 import os
-from pprint import pprint
 
 
 def transpile_var(var):
