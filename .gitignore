@@ -130,7 +130,7 @@ dmypy.json
 
 # Specific (user)
 .idea/
-
+Examples/
 app.py
 db.sqlite
 db.db
