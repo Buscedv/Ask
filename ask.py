@@ -39,12 +39,16 @@ def maybe_place_space_before(parsed, token_val):
 
 def transpile_decorator(decorator):
 	decorators = {
-		'protected': 'check_for_token'
+		'protected': 'check_for_token',
+		'limit': 'limiter.limit',
 	}
 
 	try:
 		return '\n@' + decorators[decorator]
 	except KeyError:
+		for key in decorators.keys():
+			if decorator[:len(key)] == key:
+				return '\n@' + decorators[key] + decorator[len(key):]
 		return ''
 
 
@@ -84,7 +88,7 @@ def transpile_db_action(action):
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
-		'delete': 'db.delete',
+		'delete': 'db.session.delete',
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add'
 	}
@@ -96,6 +100,20 @@ def transpile_db_action(action):
 		return [actions[action], False]
 	except KeyError:
 		return ''
+
+
+def get_current_tab_level(parsed):
+	parsed = parsed[::-1]
+
+	indents = ''
+
+	for char in parsed:
+		if char == '\t':
+			indents += char
+		elif char == '\n':
+			break
+
+	return indents
 
 
 def parser(tokens):
@@ -130,7 +148,9 @@ def parser(tokens):
 
 			if needs_db_commit and token_val == ')':
 				needs_db_commit = False
-				parsed += '\n\tdb.session.commit()'
+
+				tab_level = get_current_tab_level(parsed)
+				parsed += '\n' + tab_level + 'db.session.commit()'
 		elif token_type == 'STR':
 			parsed += '"' + token_val + '"'
 		elif token_type == 'KEYWORD':
@@ -142,11 +162,17 @@ def parser(tokens):
 				parsed += transpile_var(token_val)
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
+				suffix = '\n'
+
+				if token_index > 2:
+					if tokens[token_index-2][0] == 'DEC':
+						suffix = ''
+
 				if token_index < len(tokens):
 					if tokens[token_index+1][0] == 'STR':
 						next_token_val = tokens[token_index+1][1]
 
-						parsed += '\n@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])\n'
+						parsed += '@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])' + suffix
 
 						if is_decorator:
 							parsed += decorator + '\n'
@@ -181,7 +207,6 @@ def parser(tokens):
 			if parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
 				parsed = parsed[:-4]
 				parsed += ' == '
-
 
 	return parsed
 
@@ -222,6 +247,8 @@ def lexer(raw):
 	global keywords
 	global operators
 	global variables
+
+	global uses_db
 
 	tokens = []
 
@@ -309,6 +336,7 @@ def lexer(raw):
 					include_collector_end = True
 					tmp = ''
 					tokens.append(['DB_ACTION', ''])
+					uses_db = True
 	return tokens
 
 
@@ -332,6 +360,8 @@ def build(parsed):
 def startup(file_name):
 	import time
 
+	global uses_db
+
 	print('\033[1m' + 'Transpiling...' + '\033[0m')
 
 	# Execution time
@@ -341,6 +371,7 @@ def startup(file_name):
 		source_lines = f.readlines()
 
 	tokens_list = lexer(source_lines)
+	pprint(tokens_list)
 	if tokens_list:
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
@@ -349,6 +380,12 @@ def startup(file_name):
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
 		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
+		if uses_db:
+			if not os.path.isfile('db.db'):
+				print('\33[1m' + 'Building database...' + '\033[0m', end='')
+				from app import db
+				db.create_all()
+				print(' DONE')
 		print('\33[1m' + 'Running Flask app...' + '\033[0m')
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
@@ -375,10 +412,13 @@ special_keywords = {
 	},
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
+uses_db = False
 
 # Setup
 flask_boilerplate = ''
 flask_boilerplate += 'from flask import Flask, jsonify, abort, request\n'
+flask_boilerplate += 'from flask_limiter import Limiter\n'
+flask_boilerplate += 'from flask_limiter.util import get_remote_address\n'
 flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
@@ -386,9 +426,10 @@ flask_boilerplate += 'import os\n'
 flask_boilerplate += 'import hashlib\n'
 flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 
+flask_boilerplate += 'app = Flask(__name__)\n'
+
 flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
 flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "db.db"))\n'
-flask_boilerplate += 'app = Flask(__name__)\n'
 flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 flask_boilerplate += 'db = SQLAlchemy(app)\n'
@@ -410,10 +451,12 @@ flask_boilerplate += '\n\t\treturn target\n'
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef respond(response):\n'
 flask_boilerplate += '\t\treturn jsonify(response)\n'
+
 flask_boilerplate += "\n\nclass Env:\n"
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += "\tdef get(key):\n"
 flask_boilerplate += "\t\treturn os.environ.get(key)\n"
+
 flask_boilerplate += "\n\nclass Auth:\n"
 flask_boilerplate += "\tdef __init__(self):\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
@@ -436,6 +479,7 @@ flask_boilerplate += "\t\t\t_ = self.decode()\n"
 flask_boilerplate += "\t\t\treturn True\n"
 flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn False\n"
+
 flask_boilerplate += '\n\nclass Hash:\n'
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += '\tdef hash(to_hash):\n'
@@ -443,9 +487,11 @@ flask_boilerplate += '\t\treturn hashlib.sha256(to_hash.encode(\'utf-8\')).hexdi
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
 flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
+
 flask_boilerplate += "\n\n_auth = Auth()\n"
 flask_boilerplate += "_env = Env()\n"
 flask_boilerplate += "_hash = Hash()\n"
+
 flask_boilerplate += "\n\ndef check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
@@ -458,6 +504,8 @@ flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token'}), 403\n"
 flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 flask_boilerplate += "\treturn wrapped\n\n"
+
+flask_boilerplate += 'limiter = Limiter(app, key_func=get_remote_address)\n'
 
 flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
