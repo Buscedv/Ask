@@ -28,9 +28,8 @@ def route_path_to_func_name(route_str):
 def maybe_place_space_before(parsed, token_val):
 	prefix = ' '
 
-	if parsed:
-		if parsed[-1] in ['\n', '\t', '(', ' ', '.']:
-			prefix = ''
+	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
+		prefix = ''
 	parsed += prefix + token_val + ' '
 
 	return parsed
@@ -45,9 +44,9 @@ def transpile_decorator(decorator):
 	try:
 		return '\n@' + decorators[decorator]
 	except KeyError:
-		for key in decorators.keys():
+		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
-				return '\n@' + decorators[key] + decorator[len(key):]
+				return '\n@' + value + decorator[len(key):]
 		return ''
 
 
@@ -66,9 +65,8 @@ def route_params(route_path):
 		elif is_param and char not in [' ' + '\t', '\n']:
 			tmp += char
 
-	if len(params_str) > 2:
-		if params_str[-2:] == ', ':
-			params_str = params_str[:-2]
+	if len(params_str) > 2 and params_str[-2:] == ', ':
+		params_str = params_str[:-2]
 
 	return params_str
 
@@ -136,9 +134,8 @@ def parser(tokens):
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
 			parsed += token_val
 		elif token_type == 'OP':
-			if token_val in ['.', ')', ',', ':'] and parsed:
-				if parsed[-1] == ' ':
-					parsed = parsed[:-1]
+			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
+				parsed = parsed[:-1]
 
 			parsed += token_val
 
@@ -163,22 +160,21 @@ def parser(tokens):
 			if token_val[0] == '@':
 				suffix = '\n'
 
-				if token_index > 2:
-					if tokens[token_index-2][0] == 'DEC':
-						suffix = ''
+				if token_index > 2 and tokens[token_index - 2][0] == 'DEC':
+					suffix = ''
 
-				if token_index < len(tokens):
-					if tokens[token_index+1][0] == 'STR':
-						next_token_val = tokens[token_index+1][1]
+				if token_index < len(tokens) and tokens[token_index + 1][0] == 'STR':
+					next_token_val = tokens[token_index + 1][1]
 
-						parsed += '@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])' + suffix
+					parsed += '@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])' + suffix
 
-						if is_decorator:
-							parsed += decorator + '\n'
+					if is_decorator:
+						parsed += decorator + '\n'
 
-						parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(next_token_val)
-						is_skip = True
-						is_decorator = False
+					parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(
+						next_token_val)
+					is_skip = True
+					is_decorator = False
 			elif token_val in ['quickSet', 'deep']:
 				parsed += 'AskLibrary.' + token_val + '('
 			elif token_val == 'respond':
@@ -202,10 +198,9 @@ def parser(tokens):
 			if transpiled[1]:
 				needs_db_commit = True
 
-		if len(parsed) > 3:
-			if parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
-				parsed = parsed[:-4]
-				parsed += ' == '
+		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
+			parsed = parsed[:-4]
+			parsed += ' == '
 
 	return parsed
 
@@ -222,17 +217,14 @@ def lex_var_keyword(tokens, tmp):
 	if tmp:
 		if tmp in keywords:
 			tokens.append(['KEYWORD', tmp])
-			tmp = ''
 		elif tmp in special_keywords.keys():
 			tokens.append([special_keywords[tmp]['type'], tmp])
 			collect = special_keywords[tmp]['collect']
 			collect_ends = special_keywords[tmp]['collect_ends']
 			include_collect_end = special_keywords[tmp]['include_collect_end']
-			tmp = ''
 		else:
 			tokens.append(['VAR', tmp])
-			tmp = ''
-
+		tmp = ''
 	return tokens, tmp, collect, collect_ends, include_collect_end
 
 
@@ -298,10 +290,9 @@ def lexer(raw):
 				tokens.append(['OP', char])
 			elif char.isdigit():
 				tmp = ''
-				if tokens:
-					if tokens[-1][0] == 'NUM':
-						tokens[-1][1] += char
-						continue
+				if tokens and tokens[-1][0] == 'NUM':
+					tokens[-1][1] += char
+					continue
 				tokens.append(['NUM', char])
 			elif char == '&':
 				is_collector = True
@@ -325,17 +316,16 @@ def lexer(raw):
 			else:
 				tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
 
-			if len(tokens) > 2:
-				if tokens[-2][0] == 'VAR' and tokens[-2][1] == '_db':
-					# Removes both the VAR: _db and the OP: .
-					tokens.pop(-1)
-					tokens.pop(-1)
-					is_collector = True
-					collector_ends = ['(', ',', ')']
-					include_collector_end = True
-					tmp = ''
-					tokens.append(['DB_ACTION', ''])
-					uses_db = True
+			if len(tokens) > 2 and tokens[-2][0] == 'VAR' and tokens[-2][1] == '_db':
+				# Removes both the VAR: _db and the OP: .
+				tokens.pop(-1)
+				tokens.pop(-1)
+				is_collector = True
+				collector_ends = ['(', ',', ')']
+				include_collector_end = True
+				tmp = ''
+				tokens.append(['DB_ACTION', ''])
+				uses_db = True
 	return tokens
 
 
@@ -377,13 +367,13 @@ def startup(file_name):
 		# Done!
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
-		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
-		if uses_db:
-			if not os.path.isfile('db.db'):
-				print('\33[1m' + 'Building database...' + '\033[0m', end='')
-				from app import db
-				db.create_all()
-				print(' DONE')
+		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(
+			time_result) + '\033[0m' + ' seconds')
+		if uses_db and not os.path.isfile('db.db'):
+			print('\33[1m' + 'Building database...' + '\033[0m', end='')
+			from app import db
+			db.create_all()
+			print(' DONE')
 		print('\33[1m' + 'Running Flask app...' + '\033[0m')
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
