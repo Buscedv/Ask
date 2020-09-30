@@ -246,6 +246,7 @@ def lexer(raw):
 	for line in raw:
 		for char_index, char in enumerate(line):
 			if char == '#':
+				tokens.append(['FORMAT', '\n'])
 				break
 
 			if is_collector:
