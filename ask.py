@@ -120,7 +120,7 @@ def parser(tokens):
 	needs_db_commit = False
 	is_decorator = False
 	decorator = ''
-	add_parenthasese_at_en_of_line = False
+	add_parenthesese_at_en_of_line = False
 	parsed = ''
 
 	for token_index, token in enumerate(tokens):
@@ -132,8 +132,9 @@ def parser(tokens):
 		token_val = token[1]
 
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
-			if token_val == '\n' and add_parenthasese_at_en_of_line:
+			if token_val == '\n' and add_parenthesese_at_en_of_line:
 				parsed += ')'
+				add_parenthesese_at_en_of_line = False
 			parsed += token_val
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
@@ -183,7 +184,7 @@ def parser(tokens):
 				parsed += 'return jsonify('
 			elif token_val == 'status':
 				parsed += 'abort(Response('
-				add_parenthasese_at_en_of_line = True
+				add_parenthesese_at_en_of_line = True
 			else:
 				parsed += token_val + '('
 		elif token_type == 'DB_CLASS':
