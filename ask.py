@@ -120,7 +120,7 @@ def parser(tokens):
 	needs_db_commit = False
 	is_decorator = False
 	decorator = ''
-
+	add_parenthasese_at_en_of_line = False
 	parsed = ''
 
 	for token_index, token in enumerate(tokens):
@@ -132,6 +132,8 @@ def parser(tokens):
 		token_val = token[1]
 
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
+			if token_val == '\n' and add_parenthasese_at_en_of_line:
+				parsed += ')'
 			parsed += token_val
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
@@ -179,6 +181,9 @@ def parser(tokens):
 				parsed += 'AskLibrary.' + token_val + '('
 			elif token_val == 'respond':
 				parsed += 'return jsonify('
+			elif token_val == 'status':
+				parsed += 'abort(Response('
+				add_parenthasese_at_en_of_line = True
 			else:
 				parsed += token_val + '('
 		elif token_type == 'DB_CLASS':
@@ -408,6 +413,7 @@ flask_boilerplate = ''
 flask_boilerplate += 'from flask import Flask, jsonify, abort, request, Response\n'
 flask_boilerplate += 'from flask_limiter import Limiter\n'
 flask_boilerplate += 'from flask_limiter.util import get_remote_address\n'
+flask_boilerplate += 'from flask_cors import CORS\n'
 flask_boilerplate += 'from functools import wraps\n'
 flask_boilerplate += 'import jwt\n'
 flask_boilerplate += 'import datetime\n'
@@ -416,6 +422,8 @@ flask_boilerplate += 'import hashlib\n'
 flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 
 flask_boilerplate += 'app = Flask(__name__)\n'
+
+flask_boilerplate += 'CORS(app)\n'
 
 flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
 flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "db.db"))\n'
