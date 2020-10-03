@@ -1,12 +1,14 @@
 import sys
 import os
-
 from pprint import pprint
 
 
 def transpile_var(var):
 	vars = {
-		'_body': 'request.json'
+		'_body': 'request.json',
+		'_form': 'request.form',
+		'_args': 'request.args',
+		'_req': 'AskLibrary.get_all_req()'
 	}
 
 	try:
@@ -397,7 +399,7 @@ def startup(file_name):
 
 
 # Globals
-built_in_vars = ['_body', '_auth', '_env', '_db']
+built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or']
 special_keywords = {
@@ -441,6 +443,7 @@ flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
 flask_boilerplate += '\n\nclass AskLibrary:\n'
+
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += '\tdef deep(obj, rule):\n'
 flask_boilerplate += '\t\trule_key = list(rule.keys())[0]\n'
@@ -448,21 +451,39 @@ flask_boilerplate += '\t\trule_val = rule[rule_key]\n'
 flask_boilerplate += '\n\t\tfor element in obj:\n'
 flask_boilerplate += '\t\t\tif str(element[rule_key]) == str(rule_val):\n'
 flask_boilerplate += '\t\t\t\treturn element\n'
+
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef quickSet(target, source):\n'
 flask_boilerplate += '\t\tfor key in source.keys():\n'
 flask_boilerplate += '\t\t\tif key in target.keys():\n'
 flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
 flask_boilerplate += '\n\t\treturn target\n'
+
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef respond(response):\n'
 flask_boilerplate += '\t\treturn jsonify(response)\n'
+
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef status(message, code):\n'
 flask_boilerplate += '\t\treturn Response(message, status=code)\n'
+
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef halt(message, code):\n'
 flask_boilerplate += '\t\tabort(Response(message, code))\n'
+
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef get_all_req():\n'
+flask_boilerplate += '\t\treq = {}\n'
+flask_boilerplate += '\t\tif request.json:\n'
+flask_boilerplate += '\t\t\tfor thing in request.json.keys():\n'
+flask_boilerplate += '\t\t\t\treq[thing] = request.json[thing]\n\n'
+flask_boilerplate += '\t\tif request.form:\n'
+flask_boilerplate += '\t\t\tfor thing in request.form.keys():\n'
+flask_boilerplate += '\t\t\t\treq[thing] = request.form[thing]\n\n'
+flask_boilerplate += '\t\tif request.args:\n'
+flask_boilerplate += '\t\t\tfor thing in request.args.keys():\n'
+flask_boilerplate += '\t\t\t\treq[thing] = request.args[thing]\n\n'
+flask_boilerplate += '\t\treturn req\n'
 
 flask_boilerplate += "\n\nclass Env:\n"
 flask_boilerplate += '\t@staticmethod\n'
