@@ -360,6 +360,7 @@ def startup(file_name):
 	import time
 
 	global uses_db
+	global is_dev
 
 	print('\033[1m' + 'Transpiling...' + '\033[0m')
 
@@ -370,7 +371,10 @@ def startup(file_name):
 		source_lines = f.readlines()
 
 	tokens_list = lexer(source_lines)
-	pprint(tokens_list)
+
+	if is_dev:
+		pprint(tokens_list)
+
 	if tokens_list:
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
@@ -517,10 +521,18 @@ flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n'
 
 flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
+is_dev = False
+
 # Start
 if __name__ == '__main__':
 	print('🌳' + '\033[92m' + 'Ask' + '\033[0m')
 	if len(sys.argv) > 1:
+
+		if len(sys.argv) > 2:
+			flag = sys.argv[2]
+			if flag == '-d':
+				is_dev = True
+
 		source_file_name = sys.argv[1]
 		if os.path.isfile(os.getcwd() + '/' + source_file_name):
 			startup(source_file_name)
