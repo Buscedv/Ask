@@ -8,7 +8,7 @@ Here is the same basic app with one GET route written in Ask and in Python with 
 
 ### Ask
 ```php
-$products = [
+products = [
   {
     name: 'Product 1',
     price: 30.0,
@@ -22,7 +22,7 @@ $products = [
 ]
 
 @get('/api/v1/products'):
-  respond({products: $products})
+  respond({products: products})
 ```
 ### Flask
 ```python3
