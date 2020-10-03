@@ -251,6 +251,47 @@ def lex_var_keyword(tokens, tmp):
 	return tokens, tmp, collect, collect_ends, include_collect_end
 
 
+def add_part(parts, is_string, code):
+	parts.append({
+		'is_string': is_string,
+		'code': code
+	})
+
+	is_string = True
+
+	if code[-1] == '\n':
+		is_string = False
+
+	return parts, '', is_string
+
+
+def fix_up_code_line(statement):
+	statement = statement.replace("'", '"')
+
+	# Remove spaces between function names and '('.
+	# Replaces four & two spaces with tab.
+	parts = []
+	is_string = False
+	tmp = ''
+
+	for char in statement:
+		tmp += char
+
+		if char == '"' and is_string:
+			parts, tmp, is_string = add_part(parts, True, tmp)
+			is_string = False
+		elif char in ['"', '\n']:
+			parts, tmp, is_string = add_part(parts, False, tmp)
+
+	statement = ''
+	for part in parts:
+		if not part['is_string']:
+			part['code'] = part['code'].replace('    ', '\t').replace('  ', '\t').replace(' (', '(')
+		statement += part['code']
+
+	return statement
+
+
 def lexer(raw):
 	tmp = ''
 	is_collector = False
@@ -267,6 +308,7 @@ def lexer(raw):
 	tokens = []
 
 	for line in raw:
+		line = fix_up_code_line(line)
 		for char_index, char in enumerate(line):
 			if char == '#':
 				tokens.append(['FORMAT', '\n'])
@@ -287,7 +329,7 @@ def lexer(raw):
 
 			elif char == '(':
 				if tmp:
-					tokens.append(['FUNC', tmp])
+					tokens.append(['FUNC', tmp.replace(' ', '')])
 					tmp = ''
 			elif char == '=':
 				if tmp:
@@ -314,8 +356,7 @@ def lexer(raw):
 
 				is_dict.pop(0)
 				tokens.append(['OP', char])
-			elif char.isdigit():
-				tmp = ''
+			elif char.isdigit() and not tmp:
 				if tokens and tokens[-1][0] == 'NUM':
 					tokens[-1][1] += char
 					continue
