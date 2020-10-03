@@ -12,6 +12,8 @@
     "@fortawesome/free-solid-svg-icons": "^5.15.0",
     "@fortawesome/vue-fontawesome": "^0.1.10",
     "core-js": "^3.6.4",
+    "node-forge": "^0.10.0",
+    "serialize-javascript": "^5.0.1",
     "showdown": "^1.9.1",
     "vue": "^2.6.12"
   },
