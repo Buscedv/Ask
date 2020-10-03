@@ -522,6 +522,9 @@ flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key))\n'
 flask_boilerplate += "\n\tdef user(self):\n"
 flask_boilerplate += '\t\treturn self.decode()[\'user\']\n'
 
+flask_boilerplate += "\n\tdef get_token(self):\n"
+flask_boilerplate += '\t\treturn self.token.decode(\'utf-8\')\n'
+
 flask_boilerplate += "\n\tdef is_valid(self):\n"
 flask_boilerplate += "\t\ttry:\n"
 flask_boilerplate += "\t\t\t_ = self.decode()\n"
