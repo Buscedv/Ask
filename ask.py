@@ -1,6 +1,8 @@
 import sys
 import os
 
+from pprint import pprint
+
 
 def transpile_var(var):
 	vars = {
@@ -155,7 +157,7 @@ def parser(tokens):
 		elif token_type == 'KEYWORD':
 			parsed = maybe_place_space_before(parsed, token_val)
 		elif token_type == 'VAR':
-			if token_val not in built_in_vars:
+			if token_val not in built_in_vars and token_index > 0:
 				parsed = maybe_place_space_before(parsed, token_val)
 			else:
 				parsed += transpile_var(token_val)
@@ -293,6 +295,8 @@ def lexer(raw):
 				is_dict.append(True)
 				tokens.append(['OP', char])
 			elif char == '}':
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
+
 				is_dict.pop(0)
 				tokens.append(['OP', char])
 			elif char.isdigit():
@@ -311,9 +315,8 @@ def lexer(raw):
 				if char == ':' and is_dict and tmp:
 					tokens.append(['KEY', tmp])
 					tmp = ''
-				else:
-					tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
 
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
 				tokens.append(['OP', char])
 			elif char not in ['\n', '\t', ' ']:
 				tmp += char
@@ -367,6 +370,7 @@ def startup(file_name):
 		source_lines = f.readlines()
 
 	tokens_list = lexer(source_lines)
+	pprint(tokens_list)
 	if tokens_list:
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
