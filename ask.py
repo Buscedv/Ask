@@ -495,7 +495,14 @@ flask_boilerplate += '\t\treturn [data.s() for data in db_data]\n'
 
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef exists(query):\n'
-flask_boilerplate += '\t\treturn bool(query.scalar())\n'
+flask_boilerplate += '\t\tif query is not None:\n'
+flask_boilerplate += '\t\t\tresult = False\n'
+flask_boilerplate += '\t\t\ttry:\n'
+flask_boilerplate += '\t\t\t\tresult = bool(query.scalar())\n'
+flask_boilerplate += '\t\t\texcept Exception:\n'
+flask_boilerplate += '\t\t\t\tresult = bool(query)\n'
+flask_boilerplate += '\t\t\treturn result\n'
+flask_boilerplate += '\t\treturn False\n'
 
 flask_boilerplate += "\n\nclass Env:\n"
 
@@ -508,6 +515,9 @@ flask_boilerplate += "\n\nclass Auth:\n"
 flask_boilerplate += "\tdef __init__(self):\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
 flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
+
+flask_boilerplate += "\n\tdef set_token(self, req_token):\n"
+flask_boilerplate += "\t\tself.token = req_token\n"
 
 flask_boilerplate += "\n\tdef login(self, user, expiry):\n"
 flask_boilerplate += "\t\tpayload = {\n"
@@ -555,6 +565,7 @@ flask_boilerplate += "\n\ndef check_for_token(func):\n"
 flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
 flask_boilerplate += "\t\ttoken = request.args.get('token')\n"
+flask_boilerplate += "\t\t_auth.set_token(token)\n"
 flask_boilerplate += "\t\tif not token:\n"
 flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing token!'}), 400\n"
 flask_boilerplate += "\t\ttry:\n"
