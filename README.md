@@ -22,7 +22,7 @@ products = [
 ]
 
 @get('/api/v1/products'):
-  respond({products: products})
+  respond {products: products}
 ```
 ### Flask
 ```python3
