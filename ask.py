@@ -17,6 +17,17 @@ def transpile_var(var):
 		return var
 
 
+def transpile_keyword(keyword):
+	keywords = {
+		'respond': 'return'
+	}
+
+	try:
+		return keywords[keyword]
+	except KeyError:
+		return keyword
+
+
 def route_path_to_func_name(route_str):
 	final = ''
 
@@ -86,6 +97,7 @@ def transpile_db_action(action):
 		'nullable': 'nullable=True',
 		'str': 'db.String',
 		'float': 'db.Float',
+		'bool': 'db.Boolean',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -182,7 +194,7 @@ def parser(tokens):
 						next_token_val)
 					is_skip = True
 					is_decorator = False
-			elif token_val in ['quickSet', 'deep']:
+			elif token_val in ['quickSet', 'deep', 'serialize']:
 				parsed += 'AskLibrary.' + token_val + '('
 			elif token_val == 'respond':
 				parsed += 'return jsonify('
@@ -226,7 +238,7 @@ def lex_var_keyword(tokens, tmp):
 
 	if tmp:
 		if tmp in keywords:
-			tokens.append(['KEYWORD', tmp])
+			tokens.append(['KEYWORD', transpile_keyword(tmp)])
 		elif tmp in special_keywords.keys():
 			tokens.append([special_keywords[tmp]['type'], tmp])
 			collect = special_keywords[tmp]['collect']
@@ -401,7 +413,7 @@ def startup(file_name):
 # Globals
 built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
-keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or']
+keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 special_keywords = {
 	'db_class': {
 		'type': 'DB_CLASS',
@@ -433,7 +445,6 @@ flask_boilerplate += 'import hashlib\n'
 flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 
 flask_boilerplate += 'app = Flask(__name__)\n'
-
 flask_boilerplate += 'CORS(app)\n'
 
 flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
@@ -460,16 +471,8 @@ flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
 flask_boilerplate += '\n\t\treturn target\n'
 
 flask_boilerplate += '\n\t@staticmethod\n'
-flask_boilerplate += '\tdef respond(response):\n'
-flask_boilerplate += '\t\treturn jsonify(response)\n'
-
-flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef status(message, code):\n'
 flask_boilerplate += '\t\treturn Response(message, status=code)\n'
-
-flask_boilerplate += '\n\t@staticmethod\n'
-flask_boilerplate += '\tdef halt(message, code):\n'
-flask_boilerplate += '\t\tabort(Response(message, code))\n'
 
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef get_all_req():\n'
@@ -485,27 +488,37 @@ flask_boilerplate += '\t\t\tfor thing in request.args.keys():\n'
 flask_boilerplate += '\t\t\t\treq[thing] = request.args[thing]\n\n'
 flask_boilerplate += '\t\treturn req\n'
 
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef serialize(db_data):\n'
+flask_boilerplate += '\t\treturn [data.s() for data in db_data]\n'
+
 flask_boilerplate += "\n\nclass Env:\n"
+
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += "\tdef get(key):\n"
 flask_boilerplate += "\t\treturn os.environ.get(key)\n"
 
 flask_boilerplate += "\n\nclass Auth:\n"
+
 flask_boilerplate += "\tdef __init__(self):\n"
 flask_boilerplate += "\t\tself.secret_key = ''\n"
 flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
+
 flask_boilerplate += "\n\tdef login(self, user, expiry):\n"
 flask_boilerplate += "\t\tpayload = {\n"
 flask_boilerplate += "\t\t	'user': user,\n"
 flask_boilerplate += "\t\t	'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=expiry)\n"
 flask_boilerplate += "\t\t}\n"
 flask_boilerplate += "\t\tself.encode(payload)\n"
+
 flask_boilerplate += "\n\tdef encode(self, payload):\n"
 flask_boilerplate += "\t\tself.token = jwt.encode(\n"
-flask_boilerplate += "\t\t	payload, str(self.secret_key)\n"
+flask_boilerplate += "\t\tpayload, str(self.secret_key)\n"
 flask_boilerplate += "\t\t)\n"
+
 flask_boilerplate += "\n\tdef decode(self):\n"
 flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key))\n'
+
 flask_boilerplate += "\n\tdef is_valid(self):\n"
 flask_boilerplate += "\t\ttry:\n"
 flask_boilerplate += "\t\t\t_ = self.decode()\n"
@@ -514,9 +527,11 @@ flask_boilerplate += "\t\texcept:\n"
 flask_boilerplate += "\t\t\treturn False\n"
 
 flask_boilerplate += '\n\nclass Hash:\n'
+
 flask_boilerplate += '\t@staticmethod\n'
 flask_boilerplate += '\tdef hash(to_hash):\n'
 flask_boilerplate += '\t\treturn hashlib.sha256(to_hash.encode(\'utf-8\')).hexdigest()\n'
+
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
 flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
@@ -530,11 +545,11 @@ flask_boilerplate += "\t@wraps(func)\n"
 flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
 flask_boilerplate += "\t\ttoken = request.args.get('token')\n"
 flask_boilerplate += "\t\tif not token:\n"
-flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing Token'}), 403\n"
+flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing token!'}), 400\n"
 flask_boilerplate += "\t\ttry:\n"
 flask_boilerplate += "\t\t\tdata = jwt.decode(token, _auth.secret_key)\n"
 flask_boilerplate += "\t\texcept:\n"
-flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token'}), 403\n"
+flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token!'}), 401\n"
 flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 flask_boilerplate += "\treturn wrapped\n\n"
 
