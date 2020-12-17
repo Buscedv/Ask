@@ -9,15 +9,14 @@ if len(sys.argv) >= 2:
 	file_name = sys.argv[1]
 
 	timeout = 5
-	if len(sys.argv) >= 3:
-		if sys.argv[2].isnumeric():
-			timeout = int(sys.argv[2])
+	if len(sys.argv) >= 3 and sys.argv[2].isnumeric():
+		timeout = int(sys.argv[2])
 
 	previous = ''
 	current = ''
 
 	if os.path.isfile(os.getcwd() + '/' + file_name):
-		print('\033[95m' +'Watching... (timeout ' + str(timeout) + ' seconds)' + '\033[0m')
+		print('\033[95m' + 'Watching... (timeout ' + str(timeout) + ' seconds)' + '\033[0m')
 		print('Press Ctrl+c to exit.\n')
 
 		with open(file_name) as f:

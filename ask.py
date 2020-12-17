@@ -195,8 +195,13 @@ def parser(tokens):
 						next_token_val)
 					is_skip = True
 					is_decorator = False
-			elif token_val in ['quickSet', 'deep', 'serialize']:
-				parsed += 'AskLibrary.' + token_val + '('
+			elif token_val in ['quickSet', 'deep', 'serialize', 'respond']:
+				prefix = 'AskLibrary.'
+
+				if token_val in ['respond']:
+					prefix = 'return ' + prefix
+
+				parsed += prefix + token_val + '('
 			elif token_val == 'respond':
 				parsed += 'return jsonify('
 			elif token_val == 'status':
@@ -515,6 +520,10 @@ flask_boilerplate += '\n\t\treturn target\n'
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef status(message, code):\n'
 flask_boilerplate += '\t\treturn Response(message, status=code)\n'
+
+flask_boilerplate += '\n\t@staticmethod\n'
+flask_boilerplate += '\tdef respond(response):\n'
+flask_boilerplate += '\t\treturn jsonify(response)\n'
 
 flask_boilerplate += '\n\t@staticmethod\n'
 flask_boilerplate += '\tdef get_all_req():\n'
