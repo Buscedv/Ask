@@ -22,8 +22,11 @@ def get_root_from_file_path(file_path):
 def get_ask_config(source_root):
 	import json
 
-	if os.path.isfile(source_root + '/Askfile'):
-		with open(source_root + '/Askfile', 'r') as f:
+	if source_root:
+		source_root += '/'
+
+	if os.path.isfile(source_root + 'Askfile'):
+		with open(source_root + 'Askfile', 'r') as f:
 			return json.loads(''.join(f.readlines()))
 
 	return {}
@@ -482,9 +485,11 @@ def startup(file_name):
 		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
 
 		if uses_db and not os.path.exists(get_db_file_path()):
-			print('\33[1m' + 'Building database...' + '\033[0m', end='')
-			if '/' in get_root_from_file_path(get_db_file_path()):
+			print('\33[1m' + 'Building database... ' + '\033[0m', end='')
+			if get_root_from_file_path(get_db_file_path()) != file_name:
+				print('Building Folder Structure...', end='')
 				os.makedirs(get_root_from_file_path(get_db_file_path()))
+
 			print('DONE')
 		if uses_db:
 			print('\33[1m' + 'Loading database...' + '\033[0m')
