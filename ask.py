@@ -13,6 +13,9 @@ def get_root_from_file_path(file_path):
 		elif char == '/':
 			adder = True
 
+	if not file_path:
+		final_path = file_path
+
 	return final_path[::-1]
 
 
@@ -444,6 +447,7 @@ def parse_and_prepare(tokens):
 
 
 def build(parsed):
+	# Saves the transpiled code to the build/output file
 	with open('app.py', 'w+') as f:
 		f.write('')
 		f.write(parsed)
@@ -479,10 +483,12 @@ def startup(file_name):
 
 		if uses_db and not os.path.exists(get_db_file_path()):
 			print('\33[1m' + 'Building database...' + '\033[0m', end='')
-			os.makedirs(get_root_from_file_path(get_db_file_path()))
-			print(' DONE')
+			if '/' in get_root_from_file_path(get_db_file_path()):
+				os.makedirs(get_root_from_file_path(get_db_file_path()))
+			print('DONE')
 		if uses_db:
 			print('\33[1m' + 'Loading database...' + '\033[0m')
+
 			from app import db
 			db.create_all()
 
