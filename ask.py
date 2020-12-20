@@ -462,7 +462,7 @@ def startup(file_name):
 	global uses_db
 	global is_dev
 
-	print('\033[1m' + 'Transpiling...' + '\033[0m')
+	print('\033[1m' + 'Transpiling... ' + '\033[0m', end='')
 
 	# Execution time
 	start_time = time.time()
@@ -482,22 +482,25 @@ def startup(file_name):
 		# Done
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
+		print('DONE')
 		print('\033[92m' + '\t- Transpiled ' + '\033[0m' + str(len(source_lines)) + ' lines in ~' + '\033[94m' + str(time_result) + '\033[0m' + ' seconds')
 
 		if uses_db and not os.path.exists(get_db_file_path()):
 			print('\33[1m' + 'Building database... ' + '\033[0m', end='')
-			if get_root_from_file_path(get_db_file_path()) != file_name:
-				print('Building Folder Structure...', end='')
-				os.makedirs(get_root_from_file_path(get_db_file_path()))
-
+			db_root = get_root_from_file_path(get_db_file_path())
 			print('DONE')
-		if uses_db:
-			print('\33[1m' + 'Loading database...' + '\033[0m')
 
+			if db_root and db_root != file_name:
+				print('Building Folder Structure... ', end='')
+				os.makedirs(db_root)
+				print('DONE')
+		if uses_db:
+			print('\33[1m' + 'Loading database... ' + '\033[0m', end='')
 			from app import db
 			db.create_all()
+			print('DONE')
 
-		print('\33[1m' + 'Running Flask app...' + '\033[0m')
+		print('\33[1m' + 'Running Flask app:' + '\033[0m')
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
@@ -663,13 +666,15 @@ def set_boilerplate():
 built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
+db_class = {
+	'type': 'DB_CLASS',
+	'collect': True,
+	'collect_ends': [':'],
+	'include_collect_end': True
+}
 special_keywords = {
-	'db_class': {
-		'type': 'DB_CLASS',
-		'collect': True,
-		'collect_ends': [':'],
-		'include_collect_end': True
-	},
+	'db_class': db_class,
+	'db_model': db_class,
 	'def': {
 		'type': 'FUNC_DEF',
 		'collect': True,
