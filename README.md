@@ -1,9 +1,15 @@
 <img src="https://ask.edvard.dev/banner.png" alt="Ask">
 
 # Ask
-A backend programming language. Ask makes it incredibly easy to create REST apis. Ask directly transpiles to Flask so no new deployment procedures. Ask focuses on clear readable code and reduces a lot of boilerplate code when working with ex. databases.
+A backend programming language. Ask makes it incredibly easy to create REST APIs. Ask directly transpiles to Flask so no new deployment procedures are needed. Ask focuses on clear readable code and reduces a lot of boilerplate code when working with ex. databases and JWT authentication.
 
-# Example (Ask vs Flask)
+## Feature Highlights
+- Built in JWT (json web token) authentication.
+- Simple database management.
+- Syntax hevily inspired by Python.
+- Transpiles to plain Flask with no extra modules, libraries, etc. needed.
+
+## Example (Ask vs Flask)
 Here is the same basic app with one GET route written in Ask and in Python with Flask.
 
 ### Ask
@@ -51,14 +57,15 @@ if __name__ == '__main__':
   app.run()
 ```
 
-**You can find more examples in the `Examples/` folder.**
-
-# Get started
+## Get started
 - Download the `aks.py` file. You can also download `ask-watcher.py` if you want to use live transpilation.
 - Write your code in a `.ask` file
 - Download `requirements.txt`, and install the requirements (`pip3 install -r requirements.txt`)
 - Transpile your code to Flask (Python) with `python3 ask.py [your file].ask`
 - (Optional) If you want to use the watcher: `python3 ask-watcher.py [your file].ask`, the watcher by default uses a 5 second time out between checking your file, you can change this with an optional argument: `python3 flask-watcher.py [your file].ask [number of seconds, ex. 3]`
 
-# Documentation
+## Documentation
 You can find the full documentation on [ask.edvard.dev](https://ask.edvard.dev)
+
+## Contributing
+Read more in the `CONTRIBUTING` file.
