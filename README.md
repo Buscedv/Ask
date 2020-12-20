@@ -6,7 +6,7 @@ A backend programming language. Ask makes it incredibly easy to create REST APIs
 ## Feature Highlights
 - Built in JWT (json web token) authentication.
 - Simple database management.
-- Syntax hevily inspired by Python.
+- Syntax heavily inspired by Python.
 - Transpiles to plain Flask with no extra modules, libraries, etc. needed.
 
 ## Example (Ask vs Flask)
