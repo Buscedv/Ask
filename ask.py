@@ -490,7 +490,7 @@ def startup(file_name):
 			db_root = get_root_from_file_path(get_db_file_path())
 			print('DONE')
 
-			if db_root and db_root != file_name:
+			if db_root and db_root != file_name and not os.path.exists(db_root):
 				print('Building Folder Structure... ', end='')
 				os.makedirs(db_root)
 				print('DONE')
