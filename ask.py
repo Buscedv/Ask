@@ -136,7 +136,6 @@ def transpile_db_action(action):
 		'str': 'db.String',
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
-		'bytes': 'db.LargeBinary',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -144,7 +143,6 @@ def transpile_db_action(action):
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add',
 		'exists': 'AskLibrary.exists',
-		'desc': 'db.desc'
 	}
 
 	try:
@@ -492,16 +490,14 @@ def startup(file_name):
 			db_root = get_root_from_file_path(get_db_file_path())
 			print('DONE')
 
-			if db_root and db_root != file_name and not os.path.exists(db_root):
+			if db_root and db_root != file_name:
 				print('Building Folder Structure... ', end='')
 				os.makedirs(db_root)
 				print('DONE')
 		if uses_db:
-			from importlib.machinery import SourceFileLoader
-
 			print('\33[1m' + 'Loading database... ' + '\033[0m', end='')
-			app = SourceFileLoader("app", os.getcwd() + '/' + 'app.py').load_module()
-			app.db.create_all()
+			from app import db
+			db.create_all()
 			print('DONE')
 
 		print('\33[1m' + 'Running Flask app:' + '\033[0m')
@@ -643,36 +639,38 @@ def set_boilerplate():
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
 	flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
- 
+
 	flask_boilerplate += '\n\nclass Random:\n'
 
 	flask_boilerplate += '\t@staticmethod\n'
 	flask_boilerplate += '\tdef int(start, end, count=1):\n'
-	flask_boilerplate += '\t\tif end-start < count:\n'
-	flask_boilerplate += '\t\t\traise ValueError("Count of the integers should not be greater than the input range !")\n'
+	flask_boilerplate += '\t\tif end - start < count:\n'
+	flask_boilerplate += '\t\t\traise ValueError("Integer count greater than the input range!")\n'
 	flask_boilerplate += '\t\tif count > 1:\n'
 	flask_boilerplate += '\t\t\treturn random.sample(range(start, end), count)\n'
-	flask_boilerplate += '\t\telse:\n'
-	flask_boilerplate += '\t\t\treturn random.randint(start, end)\n'
- 
-	flask_boilerplate += '\t@staticmethod\n'
-	flask_boilerplate += '\tdef float(start, end, count=1, decimals=16):\n'
-	flask_boilerplate += '\t\tif count > 1:\n'
-	flask_boilerplate += '\t\t\tunique_floats = set()\n'
-	flask_boilerplate += '\t\t\tfor x in range(1, count+1):\n'
-	flask_boilerplate += '\t\t\t\tn = round(random.uniform(start, end), decimals)\n'
-	flask_boilerplate += '\t\t\t\twhile n in unique_floats:\n'
-	flask_boilerplate += '\t\t\t\t\tn = round(random.uniform(start, end), decimals)\n'
-	flask_boilerplate += '\t\t\t\tunique_floats.add(n)\n'
-	flask_boilerplate += '\t\t\tunique_floats = list(unique_floats)\n'
-	flask_boilerplate += '\t\t\treturn unique_floats\n'
-	flask_boilerplate += '\t\telse:\n'
-	flask_boilerplate += '\t\t\treturn round(random.uniform(start, end), decimals)\n'
- 
-	flask_boilerplate += '\t@staticmethod\n'
-	flask_boilerplate += '\tdef item(iterable, weights=None,count=1):\n'
-	flask_boilerplate += '\t\treturn random.choices(iterable, weights=weights ,k=count)\n'
- 
+	flask_boilerplate += '\n\t\treturn random.randint(start, end)\n'
+
+	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef __random_float(start, end, decimals):\n'
+	flask_boilerplate += '\t\treturn round(random.uniform(start, end), decimals)\n'
+
+	flask_boilerplate += '\n\tdef float(self, start, end, count=1, decimals=16, unique=False):\n'
+	flask_boilerplate += '\t\tif count <= 1:\n'
+	flask_boilerplate += '\t\t\treturn self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\n\t\tfloats = []\n'
+	flask_boilerplate += '\t\tfor _ in range(1, count + 1):\n'
+	flask_boilerplate += '\t\t\tn = self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\t\t\tif unique:\n'
+	flask_boilerplate += '\t\t\t\twhile n in floats:\n'
+	flask_boilerplate += '\t\t\t\t\tn = self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\t\t\tfloats.append(n)\n'
+	flask_boilerplate += '\n\t\treturn floats\n'
+
+	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef element(iterable, count=1, weights=None, unique=False):\n'
+	flask_boilerplate += '\t\tif unique:\n'
+	flask_boilerplate += '\t\t\treturn random.sample(iterable, k=count)\n'
+	flask_boilerplate += '\n\t\treturn random.choices(iterable, weights=weights, k=count)\n'
 
 	flask_boilerplate += "\n\n_auth = Auth()\n"
 	flask_boilerplate += "_env = Env()\n"
@@ -693,7 +691,7 @@ def set_boilerplate():
 	flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 	flask_boilerplate += "\treturn wrapped\n\n"
 
-	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n'
+	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n\n'
 
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
@@ -745,3 +743,4 @@ if __name__ == '__main__':
 			print('\033[91m' + 'The file could not be found!' + '\033[0m')
 	else:
 		print('\033[91m' + 'Please provide a script file!' + '\033[0m')
+
