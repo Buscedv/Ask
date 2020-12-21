@@ -523,6 +523,7 @@ def set_boilerplate():
 	flask_boilerplate += 'import datetime\n'
 	flask_boilerplate += 'import os\n'
 	flask_boilerplate += 'import hashlib\n'
+	flask_boilerplate += 'import random\n'
 	flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 
 	flask_boilerplate += 'app = Flask(__name__)\n'
@@ -641,9 +642,42 @@ def set_boilerplate():
 	flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
 	flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
 
+	flask_boilerplate += '\n\nclass Random:\n'
+
+	flask_boilerplate += '\t@staticmethod\n'
+	flask_boilerplate += '\tdef int(start, end, count=1):\n'
+	flask_boilerplate += '\t\tif end - start < count:\n'
+	flask_boilerplate += '\t\t\traise ValueError("Integer count greater than the input range!")\n'
+	flask_boilerplate += '\t\tif count > 1:\n'
+	flask_boilerplate += '\t\t\treturn random.sample(range(start, end), count)\n'
+	flask_boilerplate += '\n\t\treturn random.randint(start, end)\n'
+
+	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef __random_float(start, end, decimals):\n'
+	flask_boilerplate += '\t\treturn round(random.uniform(start, end), decimals)\n'
+
+	flask_boilerplate += '\n\tdef float(self, start, end, count=1, decimals=16, unique=False):\n'
+	flask_boilerplate += '\t\tif count <= 1:\n'
+	flask_boilerplate += '\t\t\treturn self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\n\t\tfloats = []\n'
+	flask_boilerplate += '\t\tfor _ in range(1, count + 1):\n'
+	flask_boilerplate += '\t\t\tn = self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\t\t\tif unique:\n'
+	flask_boilerplate += '\t\t\t\twhile n in floats:\n'
+	flask_boilerplate += '\t\t\t\t\tn = self.__random_float(start, end, decimals)\n'
+	flask_boilerplate += '\t\t\tfloats.append(n)\n'
+	flask_boilerplate += '\n\t\treturn floats\n'
+
+	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef element(iterable, count=1, weights=None, unique=False):\n'
+	flask_boilerplate += '\t\tif unique:\n'
+	flask_boilerplate += '\t\t\treturn random.sample(iterable, k=count)\n'
+	flask_boilerplate += '\n\t\treturn random.choices(iterable, weights=weights, k=count)\n'
+
 	flask_boilerplate += "\n\n_auth = Auth()\n"
 	flask_boilerplate += "_env = Env()\n"
 	flask_boilerplate += "_hash = Hash()\n"
+	flask_boilerplate += "_random = Random()\n"
 
 	flask_boilerplate += "\n\ndef check_for_token(func):\n"
 	flask_boilerplate += "\t@wraps(func)\n"
@@ -659,7 +693,7 @@ def set_boilerplate():
 	flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 	flask_boilerplate += "\treturn wrapped\n\n"
 
-	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n'
+	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n\n'
 
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
