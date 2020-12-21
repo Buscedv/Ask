@@ -136,6 +136,7 @@ def transpile_db_action(action):
 		'str': 'db.String',
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
+		'bytes': 'db.LargeBinary',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -143,6 +144,7 @@ def transpile_db_action(action):
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add',
 		'exists': 'AskLibrary.exists',
+		'desc': 'db.desc'
 	}
 
 	try:
