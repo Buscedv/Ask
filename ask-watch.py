@@ -4,7 +4,7 @@ import ask
 import os
 
 os.system('clear')
-print('⚡' + '\033[92m' + '️Ask' + '\033[0m' + '-Watcher')
+print('⚡' + '\033[92m' + '️Ask' + '\033[0m' + ' Watcher')
 if len(sys.argv) >= 2:
 	file_name = sys.argv[1]
 
