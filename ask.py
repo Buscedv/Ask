@@ -745,4 +745,3 @@ if __name__ == '__main__':
 			print('\033[91m' + 'The file could not be found!' + '\033[0m')
 	else:
 		print('\033[91m' + 'Please provide a script file!' + '\033[0m')
-
