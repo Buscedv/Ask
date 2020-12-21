@@ -490,14 +490,16 @@ def startup(file_name):
 			db_root = get_root_from_file_path(get_db_file_path())
 			print('DONE')
 
-			if db_root and db_root != file_name:
+			if db_root and db_root != file_name and not os.path.exists(db_root):
 				print('Building Folder Structure... ', end='')
 				os.makedirs(db_root)
 				print('DONE')
 		if uses_db:
+			from importlib.machinery import SourceFileLoader
+
 			print('\33[1m' + 'Loading database... ' + '\033[0m', end='')
-			from app import db
-			db.create_all()
+			app = SourceFileLoader("app", os.getcwd() + '/' + 'app.py').load_module()
+			app.db.create_all()
 			print('DONE')
 
 		print('\33[1m' + 'Running Flask app:' + '\033[0m')
