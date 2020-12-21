@@ -20,7 +20,6 @@
 **When running ask**
 
 4. Get helpful info and debug messages:
-<br />
-Run ask with the `-d` flag.
-<br />
-- `python3 ask.py [my file].ask -d`
+
+- Run ask with the `-d` flag.
+  - `python3 ask.py [my file].ask -d`
