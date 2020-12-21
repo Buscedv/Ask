@@ -495,9 +495,11 @@ def startup(file_name):
 				os.makedirs(db_root)
 				print('DONE')
 		if uses_db:
+			from importlib.machinery import SourceFileLoader
+
 			print('\33[1m' + 'Loading database... ' + '\033[0m', end='')
-			from app import db
-			db.create_all()
+			app = SourceFileLoader("app", os.getcwd() + '/' + 'app.py').load_module()
+			app.db.create_all()
 			print('DONE')
 
 		print('\33[1m' + 'Running Flask app:' + '\033[0m')
