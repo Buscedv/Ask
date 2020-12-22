@@ -5,13 +5,16 @@
 - **Comment** on that issue (if it's an existing one). You'll then get the issue **assigned** to you.
 - **Fork** & **Clone**
 
+
 - **Code**. Make sure to follow our **Code Style** *(see section below this...)*.
+
 
 - Create a new **branch** with a desriptive name.
 - **Commit**, write a detailed but to the point commit message. If you have things to add or questions you can add comments later on the pull request.
 - **Push**
 - Create a **pull request** and choose @buscedv as the **reviewer**.
 - (You can also add **tags** if you want)
+
 
 - If your PR is **approved** it will get merged either into `dev` or `master`.
 - If it gets marked as **Changes requested**, do the chanages, **commit** & **push**, and request **re-review* by @buscedv
