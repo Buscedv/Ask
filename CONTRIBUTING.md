@@ -11,6 +11,7 @@
 - **Commit**, write a detailed but to the point commit message. If you have things to add or questions you can add comments later on the pull request.
 - **Push**
 - Create a **pull request** and choose @buscedv as the **reviewer**.
+- Add a **reference** to the related issue(s) in the pull request as well.
 - (You can also add **tags** if you want)
 
 - If your PR is **approved** it will get merged either into `dev` or `master`.
