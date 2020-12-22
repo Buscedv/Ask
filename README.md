@@ -1,10 +1,10 @@
 <img src="https://ask.edvard.dev/banner.png" alt="Ask">
 
 # Ask
-A backend programming language. Ask makes it incredibly easy to create REST APIs. Ask directly transpiles to Flask so no new deployment procedures are needed. Ask focuses on clear readable code and reduces a lot of boilerplate code when working with ex. databases and JWT authentication.
+A backend programming language. Ask makes it incredibly easy to create REST APIs. Ask directly transpiles to Flask so no new deployment procedures are needed. Ask focuses on clear readable code and reduces a lot of boilerplate code when working with e.g. databases and JWT authentication.
 
 ## Feature Highlights
-- Built in JWT (json web token) authentication.
+- Built-in JWT (JSON web token) authentication.
 - Simple database management.
 - Syntax heavily inspired by Python.
 - Transpiles to plain Flask with no extra modules, libraries, etc. needed.
