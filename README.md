@@ -58,7 +58,7 @@ if __name__ == '__main__':
 ```
 
 ## Get started
-- Download the `aks.py` file. You can also download `ask-watcher.py` if you want to use live transpilation.
+- Download the `ask.py` file. You can also download `ask-watcher.py` if you want to use live transpilation.
 - Write your code in a `.ask` file
 - Download `requirements.txt`, and install the requirements (`pip3 install -r requirements.txt`)
 - Transpile your code to Flask (Python) with `python3 ask.py [your file].ask`
