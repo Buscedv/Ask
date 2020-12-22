@@ -25,7 +25,7 @@ def get_ask_config(source_root):
 	if source_root:
 		source_root += '/'
 
-	if os.path.isfile(f'{source_root}Askfile':
+	if os.path.isfile(f'{source_root}Askfile'):
 		with open(f'{source_root}Askfile', 'r') as f:
 			return json.loads(''.join(f.readlines()))
 
