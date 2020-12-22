@@ -71,6 +71,6 @@ You can find the full documentation on [ask.edvard.dev](https://ask.edvard.dev)
 Read more in the `CONTRIBUTING` file.
 
 ## Project structure
-- ask.py: The main part of this project.
-- ask-watch.py: A file watcher auto transpiler requires ask.py
-- docs/: Ask's documentation website, built with Vue.js.
+- `ask.py`: The main part of this project.
+- `ask-watch.py`: A file watcher auto transpiler requires ask.py
+- `docs/`: Ask's documentation website, built with Vue.js. Fetches the actual documentation from this repo's wiki.
