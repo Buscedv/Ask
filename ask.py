@@ -198,7 +198,7 @@ def get_current_tab_level(parsed):
 
 def parser(tokens):
 	global built_in_vars
-	global ask_library_functions
+	global ask_library_methods
 
 	is_skip = False
 	needs_db_commit = False
@@ -261,7 +261,7 @@ def parser(tokens):
 					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({route_params(next_token_val)}'
 					is_skip = True
 					is_decorator = False
-			elif token_val in ask_library_functions:
+			elif token_val in ask_library_methods:
 				prefix = 'AskLibrary.'
 
 				if token_val in ['respond']:
@@ -514,7 +514,7 @@ def startup(file_name):
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
 
-		# Mark for the 'Transpiling...' message at the start of this method.
+		# Mark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
 
 		# Prints out result and builds the database.
@@ -771,7 +771,7 @@ special_keywords = {
 	},
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_functions = ['quickSet', 'deep', 'serialize', 'respond']  # Functions that are part of the Ask library.
+ask_library_methods = ['quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
