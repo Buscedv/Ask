@@ -3,8 +3,11 @@ import time
 import ask
 import os
 
+
 os.system('clear')
-print('⚡' + '\033[92m' + '️Ask' + '\033[0m' + ' Watcher')
+
+
+ask.style_print('Ask', left_text='⚡', right_text=' Watcher', styles=['red'])
 if len(sys.argv) >= 2:
 	file_name = sys.argv[1]
 
@@ -16,8 +19,9 @@ if len(sys.argv) >= 2:
 	current = ''
 
 	if os.path.isfile(os.getcwd() + '/' + file_name):
-		print('\033[95m' + 'Watching... (timeout ' + str(timeout) + ' seconds)' + '\033[0m')
-		print('Press Ctrl+c to exit.\n')
+
+		ask.style_print('Watching... (timeout ' + str(timeout) + ' seconds)', styles=['pink'])
+		ask.style_print('Press Ctrl+c to exit.', ends_with='\n\n')
 
 		with open(file_name) as f:
 			current = f.read()
@@ -34,4 +38,4 @@ if len(sys.argv) >= 2:
 
 				time.sleep(5)
 else:
-	print('\033[91m' + 'Please provide a script file!' + '\033[0m')
+	ask.style_print('Please provide a script file!', styles=['red'])
