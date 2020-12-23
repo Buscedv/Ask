@@ -66,28 +66,6 @@ def transpile_keyword(keyword):
 		return keyword
 
 
-def route_path_to_func_name(route_str):
-	final = ''
-
-	for char in route_str:
-		if char not in ['/', '<', '>']:
-			final += char
-			continue
-		final += '_'
-
-	return final
-
-
-def maybe_place_space_before(parsed, token_val):
-	prefix = ' '
-
-	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
-		prefix = ''
-	parsed += f'{prefix}{token_val} '
-
-	return parsed
-
-
 def transpile_decorator(decorator):
 	decorators = {
 		'protected': 'check_for_token',
@@ -101,27 +79,6 @@ def transpile_decorator(decorator):
 			if decorator[:len(key)] == key:
 				return f'\n@{value}{decorator[len(key):]}'
 		return ''
-
-
-def route_params(route_path):
-	is_param = False
-	tmp = ''
-	params_str = ''
-
-	for char in route_path:
-		if char == '<':
-			is_param = True
-		elif char == '>':
-			is_param = False
-			params_str += f'{tmp}, '
-			tmp = ''
-		elif is_param and char not in [' ' + '\t', '\n']:
-			tmp += char
-
-	if len(params_str) > 2 and params_str[-2:] == ', ':
-		params_str = params_str[:-2]
-
-	return params_str
 
 
 def transpile_db_action(action):
@@ -154,6 +111,49 @@ def transpile_db_action(action):
 		return ''
 
 
+def route_path_to_func_name(route_str):
+	final = ''
+
+	for char in route_str:
+		if char not in ['/', '<', '>']:
+			final += char
+			continue
+		final += '_'
+
+	return final
+
+
+def maybe_place_space_before(parsed, token_val):
+	prefix = ' '
+
+	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
+		prefix = ''
+	parsed += f'{prefix}{token_val} '
+
+	return parsed
+
+
+def route_params(route_path):
+	is_param = False
+	tmp = ''
+	params_str = ''
+
+	for char in route_path:
+		if char == '<':
+			is_param = True
+		elif char == '>':
+			is_param = False
+			params_str += f'{tmp}, '
+			tmp = ''
+		elif is_param and char not in [' ' + '\t', '\n']:
+			tmp += char
+
+	if len(params_str) > 2 and params_str[-2:] == ', ':
+		params_str = params_str[:-2]
+
+	return params_str
+
+
 def get_current_tab_level(parsed):
 	parsed = parsed[::-1]
 
@@ -170,6 +170,7 @@ def get_current_tab_level(parsed):
 
 def parser(tokens):
 	global built_in_vars
+	global ask_library_functions
 
 	is_skip = False
 	needs_db_commit = False
@@ -232,7 +233,7 @@ def parser(tokens):
 					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({route_params(next_token_val)}'
 					is_skip = True
 					is_decorator = False
-			elif token_val in ['quickSet', 'deep', 'serialize', 'respond']:
+			elif token_val in ask_library_functions:
 				prefix = 'AskLibrary.'
 
 				if token_val in ['respond']:
@@ -270,6 +271,7 @@ def parser(tokens):
 	return parsed
 
 
+# Figures out if a given name should be lexed as a keyword or variable token.
 def lex_var_keyword(tokens, tmp):
 	global variables
 	global keywords
@@ -307,11 +309,11 @@ def add_part(parts, is_string, code):
 	return parts, '', is_string
 
 
+# Remove spaces between function names and '('.
+# Replaces four & two spaces with tab.
 def fix_up_code_line(statement):
 	statement = statement.replace("'", '"')
 
-	# Remove spaces between function names and '('.
-	# Replaces four & two spaces with tab.
 	parts = []
 	is_string = False
 	tmp = ''
@@ -437,6 +439,7 @@ def lexer(raw):
 	return tokens
 
 
+# Parses tokens and adds the end boilerplate to the output code.
 def parse_and_prepare(tokens):
 	global flask_boilerplate
 	global flask_end_boilerplate
@@ -449,7 +452,6 @@ def parse_and_prepare(tokens):
 
 
 def style_print(text, color=None, styles=[], end='\n'):
-
 	prefix = '\033['
 	suffix = prefix + '0m'
 
@@ -491,18 +493,19 @@ def startup(file_name):
 
 	style_print('Transpiling...', styles=['bold'], end='')
 
-	# Execution time
+	# Execution time capture start.
 	start_time = time.time()
 
+	# Lexing.
 	with open(file_name) as f:
 		source_lines = f.readlines()
-
 	tokens_list = lexer(source_lines)
 
 	if is_dev:
 		pprint(tokens_list)
 
 	if tokens_list:
+		# Parsing.
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
 
@@ -510,8 +513,10 @@ def startup(file_name):
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
 
+		# Mark for the 'Transpiling...' message at the start of this method.
 		print('\t✅')
 
+		# Prints out result and builds the database.
 		style_print('\t- Transpiled ', color='green', end='')
 		print(f'{len(source_lines)} lines in ~', end='')
 		style_print(time_result, color='blue', end='')
@@ -535,6 +540,8 @@ def startup(file_name):
 			app.db.create_all()
 			print('\t✅')
 
+		# Stats the local development server.
+		# TODO: ALso support running the app in a production ready server.
 		style_print('\nRunning Flask app:', styles=['bold'])
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
@@ -546,6 +553,7 @@ def set_boilerplate():
 	global flask_boilerplate
 	global flask_end_boilerplate
 
+	# Imports & initial setup
 	flask_boilerplate = ''
 	flask_boilerplate += 'from flask import Flask, jsonify, abort, request, Response\n'
 	flask_boilerplate += 'from flask_limiter import Limiter\n'
@@ -562,12 +570,14 @@ def set_boilerplate():
 	flask_boilerplate += 'app = Flask(__name__)\n'
 	flask_boilerplate += 'CORS(app)\n'
 
+	# Database connection
 	flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
 	flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "' + get_db_file_path() + '"))\n'
 	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
+	# Ask's built-in functions
 	flask_boilerplate += '\n\nclass AskLibrary:\n'
 
 	flask_boilerplate += '\t@staticmethod\n'
@@ -622,12 +632,14 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\treturn result\n'
 	flask_boilerplate += '\t\treturn False\n'
 
+	# Env, Environment variables, etc.
 	flask_boilerplate += "\n\nclass Env:\n"
 
 	flask_boilerplate += '\t@staticmethod\n'
 	flask_boilerplate += "\tdef get(key):\n"
 	flask_boilerplate += "\t\treturn os.environ.get(key)\n"
 
+	# Auth, the JWT authentication system.
 	flask_boilerplate += "\n\nclass Auth:\n"
 
 	flask_boilerplate += "\tdef __init__(self):\n"
@@ -665,6 +677,7 @@ def set_boilerplate():
 	flask_boilerplate += "\t\texcept:\n"
 	flask_boilerplate += "\t\t\treturn False\n"
 
+	# Hash, sha256 hashing.
 	flask_boilerplate += '\n\nclass Hash:\n'
 
 	flask_boilerplate += '\t@staticmethod\n'
@@ -675,6 +688,7 @@ def set_boilerplate():
 	flask_boilerplate += '\tdef check(the_hash, not_hashed_to_check):\n'
 	flask_boilerplate += '\t\treturn Hash.hash(not_hashed_to_check) == the_hash\n'
 
+	# Random, random number & choice generators.
 	flask_boilerplate += '\n\nclass Random:\n'
 
 	flask_boilerplate += '\t@staticmethod\n'
@@ -707,11 +721,13 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\treturn random.sample(iterable, k=count)\n'
 	flask_boilerplate += '\n\t\treturn random.choices(iterable, weights=weights, k=count)\n'
 
+	# Setting up global instances of the library classes.
 	flask_boilerplate += "\n\n_auth = Auth()\n"
 	flask_boilerplate += "_env = Env()\n"
 	flask_boilerplate += "_hash = Hash()\n"
 	flask_boilerplate += "_random = Random()\n"
 
+	# Decorator function for checking & validating the passed in token for protected routes.
 	flask_boilerplate += "\n\ndef check_for_token(func):\n"
 	flask_boilerplate += "\t@wraps(func)\n"
 	flask_boilerplate += "\tdef wrapped(*args, **kwargs):\n"
@@ -726,12 +742,14 @@ def set_boilerplate():
 	flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 	flask_boilerplate += "\treturn wrapped\n\n"
 
+	# Flask limiter setup.
 	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n\n'
 
+	# Boilerplate code a the end of the output file (app.py).
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
 
-# Globals
+# Global variables
 built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
@@ -752,19 +770,21 @@ special_keywords = {
 	},
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
+ask_library_functions = ['quickSet', 'deep', 'serialize', 'respond']  # Functions that are part of the Ask library.
 uses_db = False
-
 ask_config = {}
 flask_boilerplate = ''
 flask_end_boilerplate = ''
+
 is_dev = False
 
-# Start
+# Entrypoint
 if __name__ == '__main__':
 	print('🌳', end='')
 	style_print('Ask', color='green')
-	if len(sys.argv) > 1:
 
+	# DEV mode activation, (-d) flag.
+	if len(sys.argv) > 1:
 		if len(sys.argv) > 2:
 			flag = sys.argv[2]
 			if flag == '-d':
