@@ -3,6 +3,34 @@ import os
 from pprint import pprint
 
 
+# Prints out text colorized and (optionally) as bold.
+def style_print(text, color=None, styles=[], end='\n'):
+	prefix = '\033['
+	suffix = prefix + '0m'
+
+	available_styles = {
+		'bold': '1m'
+	}
+
+	colors = {
+		'red': '91m',
+		'green': '92m',
+		'yellow': '93m',
+		'blue': '94m',
+		'pink': '95m',
+	}
+
+	result = str(text)
+
+	if color in colors:
+		result = prefix + colors[color] + result + suffix
+
+	for style in styles:
+		result = prefix + available_styles[style] + result + suffix
+
+	print(result, end=end)
+
+
 def get_root_from_file_path(file_path):
 	final_path = ''
 	adder = False
@@ -449,33 +477,6 @@ def parse_and_prepare(tokens):
 	parsed += flask_end_boilerplate
 
 	return parsed
-
-
-def style_print(text, color=None, styles=[], end='\n'):
-	prefix = '\033['
-	suffix = prefix + '0m'
-
-	available_styles = {
-		'bold': '1m'
-	}
-
-	colors = {
-		'red': '91m',
-		'green': '92m',
-		'yellow': '93m',
-		'blue': '94m',
-		'pink': '95m',
-	}
-
-	result = str(text)
-
-	if color in colors:
-		result = prefix + colors[color] + result + suffix
-
-	for style in styles:
-		result = prefix + available_styles[style] + result + suffix
-
-	print(result, end=end)
 
 
 def build(parsed):
