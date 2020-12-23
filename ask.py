@@ -25,8 +25,8 @@ def get_ask_config(source_root):
 	if source_root:
 		source_root += '/'
 
-	if os.path.isfile(source_root + 'Askfile'):
-		with open(source_root + 'Askfile', 'r') as f:
+	if os.path.isfile(f'{source_root}Askfile'):
+		with open(f'{source_root}Askfile', 'r') as f:
 			return json.loads(''.join(f.readlines()))
 
 	return {}
@@ -83,7 +83,7 @@ def maybe_place_space_before(parsed, token_val):
 
 	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
 		prefix = ''
-	parsed += prefix + token_val + ' '
+	parsed += f'{prefix}{token_val} '
 
 	return parsed
 
@@ -95,11 +95,11 @@ def transpile_decorator(decorator):
 	}
 
 	try:
-		return '\n@' + decorators[decorator]
+		return f'\n@{decorators[decorator]}'
 	except KeyError:
 		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
-				return '\n@' + value + decorator[len(key):]
+				return f'\n@{value}{decorator[len(key):]}'
 		return ''
 
 
@@ -113,7 +113,7 @@ def route_params(route_path):
 			is_param = True
 		elif char == '>':
 			is_param = False
-			params_str += tmp + ', '
+			params_str += f'{tmp}, '
 			tmp = ''
 		elif is_param and char not in [' ' + '\t', '\n']:
 			tmp += char
@@ -206,7 +206,7 @@ def parser(tokens):
 				tab_level = get_current_tab_level(parsed)
 				parsed += '\n' + tab_level + 'db.session.commit()'
 		elif token_type == 'STR':
-			parsed += '"' + token_val + '"'
+			parsed += f'\"{token_val}\"'
 		elif token_type == 'KEYWORD':
 			parsed = maybe_place_space_before(parsed, token_val)
 		elif token_type == 'VAR':
@@ -224,37 +224,36 @@ def parser(tokens):
 				if token_index < len(tokens) and tokens[token_index + 1][0] == 'STR':
 					next_token_val = tokens[token_index + 1][1]
 
-					parsed += '@app.route(\'' + next_token_val + '\', methods=[\'' + token_val[1:] + '\'])' + suffix
+					parsed += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
 
 					if is_decorator:
 						parsed += decorator + '\n'
 
-					parsed += 'def ' + token_val[1:] + route_path_to_func_name(next_token_val) + '(' + route_params(
-						next_token_val)
+					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({route_params(next_token_val)}'
 					is_skip = True
 					is_decorator = False
 			elif token_val in ['quickSet', 'deep', 'serialize', 'respond']:
 				prefix = 'AskLibrary.'
 
 				if token_val in ['respond']:
-					prefix = 'return ' + prefix
+					prefix = f'return {prefix}'
 
-				parsed += prefix + token_val + '('
+				parsed += f'{prefix}{token_val}('
 			elif token_val == 'respond':
 				parsed += 'return jsonify('
 			elif token_val == 'status':
 				parsed += 'abort(Response('
 				add_parenthesis_at_en_of_line = True
 			else:
-				parsed += token_val + '('
+				parsed += f'{token_val}('
 		elif token_type == 'DB_CLASS':
-			parsed += '\nclass ' + token_val + '(db.Model)'
+			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
 				token_val = '__init__'
-			parsed += 'def ' + token_val + '('
+			parsed += f'def {token_val}('
 		elif token_type == 'KEY':
-			parsed += '\'' + token_val + '\''
+			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
 			is_decorator = True
 			decorator = transpile_decorator(token_val)
@@ -443,7 +442,7 @@ def parse_and_prepare(tokens):
 	global flask_end_boilerplate
 
 	parsed = parser(tokens)
-	parsed = flask_boilerplate + '\n' + parsed
+	parsed = f'{flask_boilerplate}\n{parsed}'
 	parsed += flask_end_boilerplate
 
 	return parsed
@@ -521,7 +520,7 @@ def startup(file_name):
 			from importlib.machinery import SourceFileLoader
 
 			style_print('Loading database... ', styles=['bold'], ends_with='')
-			app = SourceFileLoader("app", os.getcwd() + '/' + 'app.py').load_module()
+			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
 			app.db.create_all()
 			style_print('DONE')
 
@@ -760,7 +759,7 @@ if __name__ == '__main__':
 				is_dev = True
 
 		source_file_name = sys.argv[1]
-		if os.path.isfile(os.getcwd() + '/' + source_file_name):
+		if os.path.isfile(f'{os.getcwd()}/{source_file_name}'):
 			ask_config = get_ask_config(get_root_from_file_path(source_file_name))
 			set_boilerplate()
 			startup(source_file_name)
