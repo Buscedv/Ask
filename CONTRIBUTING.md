@@ -19,7 +19,7 @@
 
 ## Code style
 - Use tabs.
-- Use signle quotes `'` and not double quotes `"`.
+- Use single quotes `'` and not double quotes `"`.
 - If you have to use some sort of string formating use f-strings.
 - Don't put unneccesary comments.
 - Follow the PEP8 guidelines, ex. two empty lines between methods.
