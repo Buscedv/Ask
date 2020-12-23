@@ -448,26 +448,32 @@ def parse_and_prepare(tokens):
 	return parsed
 
 
-def style_print(to_modify_text, left_text='', right_text='', styles=[], ends_with='\n'):
+def style_print(text, color=None, styles=[], end='\n'):
 
 	prefix = '\033['
-	suffix = '\033[0m'
+	suffix = prefix + '0m'
 
-	styles_dict = {
-		'red' : '91m',
-		'green' : '92m',
-		'yellow' : '93m',
-		'blue' : '94m',
-		'pink' : '95m',
-		'bold' : '1m'
+	available_styles = {
+		'bold': '1m'
 	}
 
-	ret = to_modify_text
+	colors = {
+		'red': '91m',
+		'green': '92m',
+		'yellow': '93m',
+		'blue': '94m',
+		'pink': '95m',
+	}
+
+	result = str(text)
+
+	if color in colors:
+		result = prefix + colors[color] + result + suffix
 
 	for style in styles:
-		ret = prefix+ styles_dict[style] + ret + suffix
+		result = prefix + available_styles[style] + result + suffix
 
-	print(left_text + ret + right_text, end=ends_with)
+	print(result, end=end)
 
 
 def build(parsed):
@@ -483,7 +489,7 @@ def startup(file_name):
 	global uses_db
 	global is_dev
 
-	style_print('Transpiling... ', styles=['bold'], ends_with='')
+	style_print('Transpiling... ', styles=['bold'], end='' )
 
 	# Execution time
 	start_time = time.time()
@@ -503,32 +509,35 @@ def startup(file_name):
 		# Done
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
-		style_print('DONE')
-		style_print('\t- Transpiled ', right_text=str(len(source_lines)) + ' lines in ~', styles=['green'], ends_with='')
-		style_print(str(time_result), right_text=' seconds', styles=['blue'])
+		print('✅')
+
+		style_print('Transpiled', color='green', end=' ')
+		print(f'{len(source_lines)} lines in ~', end='')
+		style_print(time_result, color='blue', end=' ')
+		print('seconds.')
 
 		if uses_db and not os.path.exists(get_db_file_path()):
-			style_print('Building database... ', styles=['bold'], ends_with='')
+			style_print('Building database... ', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
-			style_print('DONE')
+			print('✅')
 
 			if db_root and db_root != file_name and not os.path.exists(db_root):
-				style_print('Building Folder Structure... ', styles=['bold'], ends_with='')
+				style_print('Building Folder Structure... ', styles=['bold'], end='')
 				os.makedirs(db_root)
-				style_print('DONE')
+				print('✅')
 		if uses_db:
 			from importlib.machinery import SourceFileLoader
 
-			style_print('Loading database... ', styles=['bold'], ends_with='')
+			style_print('Loading database... ', styles=['bold'], end='')
 			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
 			app.db.create_all()
-			style_print('DONE')
+			print('✅')
 
 		style_print('Running Flask app:', styles=['bold'])
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
-		style_print('\t- The file is empty!', styles=['red'])
+		style_print('\t- The file is empty!', color='red')
 
 
 def set_boilerplate():
@@ -750,7 +759,8 @@ is_dev = False
 
 # Start
 if __name__ == '__main__':
-	style_print('Ask', left_text= '🌳', styles=['grren'])
+	print('🌳', end='')
+	style_print('Ask', color='green')
 	if len(sys.argv) > 1:
 
 		if len(sys.argv) > 2:
@@ -764,6 +774,6 @@ if __name__ == '__main__':
 			set_boilerplate()
 			startup(source_file_name)
 		else:
-			style_print('The file could not be found!', styles=['red'])
+			style_print('- The file could not be found!', color='red')
 	else:
-		style_print('Please provide a script file!', styles=['red'])
+		style_print('- Please provide a script file!', color='red')
