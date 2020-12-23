@@ -489,7 +489,7 @@ def startup(file_name):
 	global uses_db
 	global is_dev
 
-	style_print('Transpiling... ', styles=['bold'], end='' )
+	style_print('Transpiling...', styles=['bold'], end='')
 
 	# Execution time
 	start_time = time.time()
@@ -506,34 +506,36 @@ def startup(file_name):
 		parsed = parse_and_prepare(tokens_list)
 		build(parsed)
 
-		# Done
+		# Transpilation done.
 		end_time = time.time()
 		time_result = round(end_time - start_time, 3)
-		print('✅')
 
-		style_print('Transpiled', color='green', end=' ')
+		print('\t✅')
+
+		style_print('\t- Transpiled ', color='green', end='')
 		print(f'{len(source_lines)} lines in ~', end='')
-		style_print(time_result, color='blue', end=' ')
-		print('seconds.')
+		style_print(time_result, color='blue', end='')
+		print(' seconds.')
 
 		if uses_db and not os.path.exists(get_db_file_path()):
-			style_print('Building database... ', styles=['bold'], end='')
+			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
-			print('✅')
+			print('\t✅')
 
 			if db_root and db_root != file_name and not os.path.exists(db_root):
-				style_print('Building Folder Structure... ', styles=['bold'], end='')
+				print('\t- Building Folder Structure...', end='')
 				os.makedirs(db_root)
-				print('✅')
+				print('\t✅')
+
 		if uses_db:
 			from importlib.machinery import SourceFileLoader
 
-			style_print('Loading database... ', styles=['bold'], end='')
+			style_print('Loading database...', styles=['bold'], end='')
 			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
 			app.db.create_all()
-			print('✅')
+			print('\t✅')
 
-		style_print('Running Flask app:', styles=['bold'])
+		style_print('\nRunning Flask app:', styles=['bold'])
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
