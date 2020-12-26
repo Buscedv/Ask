@@ -147,7 +147,7 @@ def route_path_to_func_name(route_str):
 	final = ''
 
 	for char in route_str:
-		if char not in ['/', '<', '>']:
+		if char not in ['/', '<', '>', '-']:
 			final += char
 			continue
 		final += '_'
