@@ -121,6 +121,7 @@ def transpile_db_action(action):
 		'str': 'db.String',
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
+		'bytes': 'db.LargeBinary',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -128,6 +129,9 @@ def transpile_db_action(action):
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add',
 		'exists': 'AskLibrary.exists',
+		'desc': 'db.desc',
+		'list_id': 'db.Integer',
+		'list': 'generic_list_factory'
 	}
 
 	try:
@@ -503,6 +507,7 @@ def startup(file_name):
 	tokens_list = lexer(source_lines)
 
 	if is_dev:
+		print('\n')
 		pprint(tokens_list)
 
 	if tokens_list:
@@ -543,7 +548,7 @@ def startup(file_name):
 
 		# Stats the local development server.
 		# TODO: ALso support running the app in a production ready server.
-		style_print('\nRunning Flask app:', styles=['bold'])
+		style_print('Running Flask app:', styles=['bold'])
 		os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
@@ -566,6 +571,7 @@ def set_boilerplate():
 	flask_boilerplate += 'import os\n'
 	flask_boilerplate += 'import hashlib\n'
 	flask_boilerplate += 'import random\n'
+	flask_boilerplate += 'import pickle\n'
 	flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 
 	flask_boilerplate += 'app = Flask(__name__)\n'
@@ -577,6 +583,79 @@ def set_boilerplate():
 	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
+
+	# Generic database list {table(s)}.
+	# Generic list table
+	flask_boilerplate += '\n\nclass GenericList(db.Model):\n'
+	flask_boilerplate += '\tid = db.Column(db.Integer, primary_key=True)\n'
+
+	flask_boilerplate += '\n\tdef set_list(self, entry):\n'
+	flask_boilerplate += '\t\tif entry:\n'
+	flask_boilerplate += '\t\t\tfor item in entry:\n'
+	flask_boilerplate += '\t\t\t\tself.push(item)\n'
+
+	flask_boilerplate += '\n\tdef s(self):\n'
+	flask_boilerplate += '\t\treturn {\n'
+	flask_boilerplate += '\t\t\t\'id\': self.id,\n'
+	flask_boilerplate += '\t\t\t\'list\': self.list()\n'
+	flask_boilerplate += '\t\t}\n'
+
+	flask_boilerplate += '\n\tdef list(self):\n'
+	flask_boilerplate += '\t\treturn [self.get(item.index) for item in GenericListItem.query.filter_by(parent_id=self.id)]\n'
+
+	flask_boilerplate += '\n\tdef push(self, item):\n'
+	flask_boilerplate += '\t\tnew_item = GenericListItem(item, self.id)\n'
+	flask_boilerplate += '\t\tdb.session.add(new_item)\n'
+	flask_boilerplate += '\t\tdb.session.commit()\n'
+	flask_boilerplate += '\n\t\treturn self.s()\n'
+
+	flask_boilerplate += '\n\tdef get(self, index):\n'
+	flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
+	flask_boilerplate += '\n\t\treturn item.in_type()\n'
+
+	flask_boilerplate += '\n\tdef remove(self, index):\n'
+	flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
+	flask_boilerplate += '\t\tdb.session.delete(item)\n'
+	flask_boilerplate += '\t\tdb.session.commit()\n'
+
+	# Generic list item table
+	flask_boilerplate += '\n\nclass GenericListItem(db.Model):\n'
+	flask_boilerplate += '\tid = db.Column(db.Integer, primary_key=True)\n'
+	flask_boilerplate += '\tindex = db.Column(db.Integer)\n'
+	flask_boilerplate += '\titem = db.Column(db.LargeBinary)\n'
+	flask_boilerplate += '\tparent_id = db.Column(db.Integer)\n'
+
+	flask_boilerplate += '\n\tdef __init__(self, item, parent_id):\n'
+	flask_boilerplate += '\t\tself.item = pickle.dumps(item)\n'
+	flask_boilerplate += '\t\tself.parent_id = parent_id\n'
+	flask_boilerplate += '\t\tself.index = self.get_last_index() + 1\n'
+
+	flask_boilerplate += '\n\tdef s(self):\n'
+	flask_boilerplate += '\t\treturn {\n'
+	flask_boilerplate += '\t\t\t\'id\': self.id,\n'
+	flask_boilerplate += '\t\t\t\'index\': self.index,\n'
+	flask_boilerplate += '\t\t\t\'item\': self.in_type(),\n'
+	flask_boilerplate += '\t\t\t\'parent_id\': self.parent_id\n'
+	flask_boilerplate += '\t\t}\n'
+
+	flask_boilerplate += '\n\tdef get_last_index(self):\n'
+	flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first()\n'
+
+	flask_boilerplate += '\n\t\tif AskLibrary.exists(last_item):\n'
+	flask_boilerplate += '\t\t\treturn last_item.index\n'
+	flask_boilerplate += '\n\t\treturn -1\n'
+
+	flask_boilerplate += '\n\tdef in_type(self):\n'
+	flask_boilerplate += '\t\treturn pickle.loads(self.item)\n'
+
+	# GenericList factory function
+	flask_boilerplate += '\n\ndef generic_list_factory(entry=[]):\n'
+	flask_boilerplate += '\tgeneric_list = GenericList()\n'
+	flask_boilerplate += '\tdb.session.add(generic_list)\n'
+	flask_boilerplate += '\tdb.session.commit()\n'
+	flask_boilerplate += '\n\tif entry:\n'
+	flask_boilerplate += '\t\tgeneric_list.set_list(entry)\n'
+	flask_boilerplate += '\n\treturn generic_list\n'
 
 	# Ask's built-in functions
 	flask_boilerplate += '\n\nclass AskLibrary:\n'
@@ -590,11 +669,15 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\t\treturn element\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
-	flask_boilerplate += '\tdef quickSet(target, source):\n'
+	flask_boilerplate += '\tdef quick_set(target, source):\n'
 	flask_boilerplate += '\t\tfor key in source.keys():\n'
 	flask_boilerplate += '\t\t\tif key in target.keys():\n'
 	flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
 	flask_boilerplate += '\n\t\treturn target\n'
+
+	flask_boilerplate += '\n\t# Deprecated method\n'
+	flask_boilerplate += '\tdef quickSet(self, target, source):\n'
+	flask_boilerplate += '\t\treturn self.quick_set(target, source)\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef status(message, code):\n'
@@ -658,9 +741,7 @@ def set_boilerplate():
 	flask_boilerplate += "\t\tself.encode(payload)\n"
 
 	flask_boilerplate += "\n\tdef encode(self, payload):\n"
-	flask_boilerplate += "\t\tself.token = jwt.encode(\n"
-	flask_boilerplate += "\t\tpayload, str(self.secret_key)\n"
-	flask_boilerplate += "\t\t)\n"
+	flask_boilerplate += "\t\tself.token = jwt.encode(payload, str(self.secret_key))\n"
 
 	flask_boilerplate += "\n\tdef decode(self):\n"
 	flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key))\n'
@@ -771,7 +852,7 @@ special_keywords = {
 	},
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_methods = ['quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
