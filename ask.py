@@ -106,7 +106,8 @@ def transpile_decorator(decorator):
 		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
 				return f'\n@{value}{decorator[len(key):]}'
-		return ''
+
+	return ''
 
 
 def transpile_db_action(action):
@@ -165,7 +166,7 @@ def maybe_place_space_before(parsed, token_val):
 	return parsed
 
 
-def route_params(route_path):
+def parse_route_params_str(route_path):
 	is_param = False
 	tmp = ''
 	params_str = ''
@@ -264,7 +265,7 @@ def parser(tokens):
 					if is_decorator:
 						parsed += decorator + '\n'
 
-					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({route_params(next_token_val)}'
+					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({parse_route_params_str(next_token_val)}'
 					is_skip = True
 					is_decorator = False
 			elif token_val in ask_library_methods:
@@ -292,6 +293,8 @@ def parser(tokens):
 		elif token_type == 'DEC':
 			is_decorator = True
 			decorator = transpile_decorator(token_val)
+			if not decorator:
+				parsed += f'@{token_val}'
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
 			parsed += transpiled[0]
@@ -729,7 +732,8 @@ def set_boilerplate():
 	flask_boilerplate += "\n\nclass Auth:\n"
 
 	flask_boilerplate += "\tdef __init__(self):\n"
-	flask_boilerplate += "\t\tself.secret_key = ''\n"
+	flask_boilerplate += "\t\timport uuid\n"
+	flask_boilerplate += "\n\t\tself.secret_key = uuid.uuid4().hex\n"
 	flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
 
 	flask_boilerplate += "\n\tdef set_token(self, req_token):\n"
@@ -837,6 +841,8 @@ def set_boilerplate():
 built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
+
+# "Special" keywords = keywords that require some sort of data after the keyword it self. e.g. Classes have a class name.
 db_class = {
 	'type': 'DB_CLASS',
 	'collect': True,
@@ -852,6 +858,12 @@ special_keywords = {
 		'collect_ends': ['('],
 		'include_collect_end': False
 	},
+	'template': {
+		'type': 'TEMPLATE',
+		'collect': True,
+		'collect_ends': [':'],
+		'include_collect_end': False
+	}
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
 ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
