@@ -301,6 +301,10 @@ def parser(tokens):
 			if transpiled[1]:
 				needs_db_commit = True
 
+		# TODO: Remove this!
+		elif token_type == 'GROUP':
+			parsed += '\n# ' + token_val + '\n'
+
 		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
 			parsed = parsed[:-4]
 			parsed += ' == '
@@ -476,6 +480,40 @@ def lexer(raw):
 	return tokens
 
 
+def insert_indention_group_markers(tokens):
+	marked = []
+
+	collect = False
+	tab_level = 0
+	tmp_tab_level = tab_level
+
+	for token_index, token in enumerate(tokens):
+		marked.append(token)
+		token_type = token[0]
+		token_val = token[1]
+
+		if collect:
+			if token_val == '\t' and token_type == 'FORMAT':
+				tmp_tab_level += 1
+				continue
+			else:
+				collect = False
+
+			if not tmp_tab_level:
+				tmp_tab_level = -1
+
+			if tmp_tab_level > tab_level or tmp_tab_level < tab_level:
+				marked.insert(token_index - (tmp_tab_level + 1), ['GROUP', 'start' if tmp_tab_level > tab_level else 'end'])
+
+			tab_level = tmp_tab_level if tmp_tab_level > -1 else 0
+
+		if token_val == '\n' and token_type == 'FORMAT':
+			collect = True
+			tmp_tab_level = 0
+
+	return marked
+
+
 # Parses tokens and adds the end boilerplate to the output code.
 def parse_and_prepare(tokens):
 	global flask_boilerplate
@@ -510,6 +548,7 @@ def startup(file_name):
 	with open(file_name) as f:
 		source_lines = f.readlines()
 	tokens_list = lexer(source_lines)
+	tokens_list = insert_indention_group_markers(tokens_list)
 
 	if is_dev:
 		print('\n')
@@ -858,8 +897,8 @@ special_keywords = {
 		'collect_ends': ['('],
 		'include_collect_end': False
 	},
-	'template': {
-		'type': 'TEMPLATE',
+	'decorator': {
+		'type': 'DEC_DEF',
 		'collect': True,
 		'collect_ends': [':'],
 		'include_collect_end': False
