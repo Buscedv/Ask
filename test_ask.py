@@ -47,10 +47,55 @@ class TestAsk(unittest.TestCase):
 			'string % ',
 			'string.% ',
 		]
+
 		for index, value in enumerate(parsed):
 			self.assertEqual(expected_result[index], ask.maybe_place_space_before(value, token_val))
 			
+	def test_route_params_empty_string(self):
+		test_value = ''
+		actual = ask.route_params(test_value)
+		expected = ''
+		self.assertEqual(expected, ask.route_params(test_value))
 
+	def test_route_params_no_parameter(self):
+		test_value = 'no parameter given'
+		expected = ''
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_one_parameter(self):
+		test_value = '<param>'
+		expected = 'param'
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_two_parameters(self):
+		test_value = '<param1> and <param2>'
+		expected = 'param1, param2'
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_param_with_line_break(self):
+		test_value = 'string and <param\n>'
+		expected = 'param'
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_opened_not_closed(self):
+		test_value = '<param'
+		expected = ''
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_closed_not_opened(self):
+		test_value = 'param>'
+		expected = ''
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_empty_param(self):
+		test_value = '<>'
+		expected = ''
+		self.assertEqual(expected, ask.route_params(test_value))
+
+	def test_route_params_param_in_param(self):
+		test_value = '<par<param>ram>'
+		expected = 'param'
+		self.assertEqual(expected, ask.route_params(test_value))
 
 if __name__ == '__main__':
     unittest.main()
