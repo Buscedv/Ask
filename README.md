@@ -1,6 +1,9 @@
 <img src="https://ask.edvard.dev/banner.png" alt="Ask">
 
 # Ask
+
+[![CircleCI](https://circleci.com/gh/circleci/circleci-docs.svg?style=svg)](https://circleci.com/gh/Buscedv/Ask)
+
 A backend programming language. Ask makes it incredibly easy to create REST APIs. Ask directly transpiles to Flask so no new deployment procedures are needed. Ask focuses on clear readable code and reduces a lot of boilerplate code when working with e.g. databases and JWT authentication.
 
 ## Feature Highlights
