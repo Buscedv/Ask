@@ -172,11 +172,13 @@ def route_params(route_path):
 
 	for char in route_path:
 		if char == '<':
+			tmp = ''
 			is_param = True
 		elif char == '>':
 			is_param = False
-			params_str += f'{tmp}, '
-			tmp = ''
+			if tmp:
+				params_str += f'{tmp}, '
+				tmp = ''
 		elif is_param and char not in [' ' + '\t', '\n']:
 			tmp += char
 
