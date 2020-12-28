@@ -308,7 +308,6 @@ def parser(tokens):
 			parsed += f'def {token_val}(func):'
 			parsed += f'\n\tdef wrapper(*args, **kwargs):'
 			add_tabs_to_inner_group = True
-			print(get_current_tab_level(parsed))
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
