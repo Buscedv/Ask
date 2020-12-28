@@ -524,6 +524,7 @@ def insert_indention_group_markers(tokens):
 	marked = []
 	previous_line_tabs = 0
 	current_line_tabs = 0
+	group_start_counter = 0
 
 	for line in lines:
 		previous_line_tabs = current_line_tabs
@@ -545,16 +546,22 @@ def insert_indention_group_markers(tokens):
 		# Insert group start/end markings
 		if current_line_tabs < previous_line_tabs:
 			marked.append(['GROUP', 'end'])
+			group_start_counter -= 1
 		elif current_line_tabs > previous_line_tabs:
 			marked.append(['GROUP', 'start'])
+			group_start_counter += 1
 
 		# Inserts the rest of the lines token after the marking(s)
 		for token in line:
 			marked.append(token)
 
-	# Inserts a leading and an ending marking for the whole script
+	# Inserts a leading marker
 	marked.insert(0, ['GROUP', 'start'])
-	marked.append(['GROUP', 'end'])
+	group_start_counter += 1
+
+	# Inserts missing group end markings:
+	for _ in range(group_start_counter):
+		marked.append(['GROUP', 'end'])
 
 	return marked
 
