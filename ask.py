@@ -74,7 +74,8 @@ def transpile_var(var):
 		'_body': 'request.json',
 		'_form': 'request.form',
 		'_args': 'request.args',
-		'_req': 'AskLibrary.get_all_req()'
+		'_req': 'AskLibrary.get_all_req()',
+		'_datetime': 'datetime.datetime'
 	}
 
 	try:
@@ -85,7 +86,7 @@ def transpile_var(var):
 
 def transpile_keyword(keyword):
 	keywords = {
-		'respond': 'return'
+		'respond': 'return',
 	}
 
 	try:
@@ -122,6 +123,7 @@ def transpile_db_action(action):
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
 		'bytes': 'db.LargeBinary',
+		'datetime': 'db.DateTime',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -921,7 +923,7 @@ def set_boilerplate():
 
 
 # Global variables
-built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
+built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db', '_datetime']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 
