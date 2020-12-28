@@ -74,7 +74,7 @@ def transpile_var(var):
 		'_body': 'request.json',
 		'_form': 'request.form',
 		'_args': 'request.args',
-		'_req': 'AskLibrary.get_all_req()'
+		'_req': 'AskLibrary.get_all_req()',
 	}
 
 	try:
@@ -210,6 +210,7 @@ def parser(tokens):
 	is_skip = False
 	needs_db_commit = False
 	is_decorator = False
+	is_decorator_def = False
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	parsed = ''
@@ -222,11 +223,17 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
+		if is_decorator_def and token_type == 'GROUP' and token_val == 'end':
+			is_decorator_def = False
+			parsed += '\n\treturn wrapper'
+
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
 				parsed += ')'
 				add_parenthesis_at_en_of_line = False
 			parsed += token_val
+			if token_type == 'FORMAT' and token_val == '\n' and is_decorator_def:
+				parsed += '\t'
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
 				parsed = parsed[:-1]
@@ -280,6 +287,8 @@ def parser(tokens):
 			elif token_val == 'status':
 				parsed += 'abort(Response('
 				add_parenthesis_at_en_of_line = True
+			elif token_val == '_inner':
+				parsed += 'func(*args, **kwargs'
 			else:
 				parsed += f'{token_val}('
 		elif token_type == 'DB_CLASS':
@@ -288,6 +297,11 @@ def parser(tokens):
 			if token_val == '_init':
 				token_val = '__init__'
 			parsed += f'def {token_val}('
+		elif token_type == 'DEC_DEF':
+			parsed += f'def {token_val}(func):'
+			parsed += f'\n\tdef wrapper(*args, **kwargs):'
+			is_decorator_def = True
+			print(get_current_tab_level(parsed))
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
@@ -300,10 +314,6 @@ def parser(tokens):
 			parsed += transpiled[0]
 			if transpiled[1]:
 				needs_db_commit = True
-
-		# TODO: Remove this!
-		elif token_type == 'GROUP':
-			parsed += '\n# ' + token_val
 
 		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
 			parsed = parsed[:-4]
