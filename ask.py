@@ -303,7 +303,7 @@ def parser(tokens):
 
 		# TODO: Remove this!
 		elif token_type == 'GROUP':
-			parsed += '\n# ' + token_val + '\n'
+			parsed += '\n# ' + token_val
 
 		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
 			parsed = parsed[:-4]
@@ -480,53 +480,69 @@ def lexer(raw):
 	return tokens
 
 
-def insert_indention_group_markers(tokens):
-	marked = []
-
-	collect = False
-	tab_level = 0
-	tmp_tab_level = tab_level
+def tokens_grouped_by_lines(tokens):
+	tmp = []
+	lines = []
 
 	for token_index, token in enumerate(tokens):
-		marked.append(token)
 		token_type = token[0]
 		token_val = token[1]
 
-		if token_type in ['FORMAT', 'OP'] and token_val == '\n' and not collect:
-			collect = True
-			tmp_tab_level = 0
-		elif token_type == 'FORMAT' and token_val == '\t' and collect:
-			tmp_tab_level += 1
-		elif collect:
-			collect = False
+		if token_type == 'OP' and token_val in ['\n', '\t']:
+			token_type = 'FORMAT'
 
-			print(tab_level)
-			print(tmp_tab_level)
+		if token_type == 'FORMAT' and token_val == '\n':
+			lines.append(tmp)
+			tmp = []
 
-			if not tmp_tab_level and tab_level:
-				tmp_tab_level = -1
+		tmp.append([token_type, token_val])
 
-			index_to_insert_at = token_index - (tmp_tab_level + 1)
+	if tmp:
+		lines.append(tmp)
 
-			if tmp_tab_level > tab_level:
-				print('start')
-				marked.insert(index_to_insert_at - 1, ['GROUP', 'start'])
-				print(marked)
-			elif tmp_tab_level < tab_level:
-				print('end')
-				marked.insert(index_to_insert_at, ['GROUP', 'end'])
 
-				if tmp_tab_level == -1:
-					marked.insert(token_index + 1, ['GROUP', 'start'])
+	return lines
 
-				print(marked)
 
-			tab_level = tmp_tab_level
+def insert_indention_group_markers(tokens):
+	lines = tokens_grouped_by_lines(tokens)
 
+	marked = []
+	previous_line_tabs = 0
+	current_line_tabs = 0
+
+	for line in lines:
+		previous_line_tabs = current_line_tabs
+		current_line_tabs = 0
+
+		# Counts the number of indents at the start of the line.
+		for token_index, token in enumerate(line):
+			token_type = token[0]
+			token_val = token[1]
+
+			# The line has "started", meaning no more leading tabs.
+			if token_type != 'FORMAT':
+				break
+
+			# Is FORMAT, meaning \n or \t
+			if token_val == '\t':
+				current_line_tabs += 1
+
+		# Insert group start/end markings
+		if current_line_tabs < previous_line_tabs:
+			marked.append(['GROUP', 'end'])
+		elif current_line_tabs > previous_line_tabs:
+			marked.append(['GROUP', 'start'])
+
+		# Inserts the rest of the lines token after the marking(s)
+		for token in line:
+			marked.append(token)
+
+	# Inserts a leading and an ending marking for the whole script
+	marked.insert(0, ['GROUP', 'start'])
 	marked.append(['GROUP', 'end'])
 
 	return marked
-
 
 # Parses tokens and adds the end boilerplate to the output code.
 def parse_and_prepare(tokens):
