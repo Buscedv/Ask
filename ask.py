@@ -86,7 +86,7 @@ def transpile_var(var):
 
 def transpile_keyword(keyword):
 	keywords = {
-		'respond': 'return',
+		'respond': 'return'
 	}
 
 	try:
@@ -96,10 +96,20 @@ def transpile_keyword(keyword):
 
 
 def transpile_decorator(decorator):
+	global uses_basic_decorator
+	global basic_decorator_collector
+
 	decorators = {
 		'protected': 'check_for_token',
 		'limit': 'limiter.limit',
 	}
+
+	if decorator == 'basic':
+		uses_basic_decorator = True
+		basic_decorator_collector = []
+
+		# "---" is interpreted as an ignored decorator.
+		return '---'
 
 	try:
 		return f'\n@{decorators[decorator]}'
@@ -133,7 +143,7 @@ def transpile_db_action(action):
 		'exists': 'AskLibrary.exists',
 		'desc': 'db.desc',
 		'list_id': 'db.Integer',
-		'list': 'generic_list_factory'
+		'list': 'generic_list_creator'
 	}
 
 	try:
@@ -143,6 +153,38 @@ def transpile_db_action(action):
 		return [actions[action], False]
 	except KeyError:
 		return ''
+
+
+def get_basic_decorator_code_to_insert():
+	global basic_decorator_collector
+
+	print(basic_decorator_collector)
+
+	return ''
+
+
+def is_db_column_in_past_line(tokens):
+	for token in tokens[::-1]:
+		token_type = token[0]
+		token_val = token[1]
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			break
+
+		if token_type == 'DB_ACTION' and token_val == 'col':
+			return True
+
+	return False
+
+
+def get_first_variable_token_value_of_line(tokens):
+	for token in tokens:
+		token_type = token[0]
+		if token_type == 'VAR':
+			# Returns the token value
+			return token[1]
+
+	return None
 
 
 def route_path_to_func_name(route_str):
@@ -199,6 +241,8 @@ def get_current_tab_level(parsed):
 def parser(tokens):
 	global built_in_vars
 	global ask_library_methods
+	global uses_basic_decorator
+	global basic_decorator_collector
 
 	is_skip = False
 	needs_db_commit = False
@@ -207,7 +251,9 @@ def parser(tokens):
 	indention_depth_counter = 0
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
+	basic_decorator_collection_might_end = False
 	parsed = ''
+	past_lines_tokens = []
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -216,6 +262,20 @@ def parser(tokens):
 
 		token_type = token[0]
 		token_val = token[1]
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			past_lines_tokens = []
+		else:
+			past_lines_tokens.append(token)
+
+		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n':
+			if basic_decorator_collection_might_end:
+				if not is_db_column_in_past_line(past_lines_tokens):
+					basic_decorator_collection_might_end = False
+					uses_basic_decorator = False
+					parsed += get_basic_decorator_code_to_insert()
+			else:
+				basic_decorator_collection_might_end = True
 
 		if add_tabs_to_inner_group and token_type == 'GROUP':
 			if token_val == 'end':
@@ -304,12 +364,18 @@ def parser(tokens):
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
-			is_decorator = True
 			decorator = transpile_decorator(token_val)
 			if not decorator:
 				parsed += f'@{token_val}'
+
+			if decorator != '---':
+				is_decorator = True
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
+
+			if transpiled == 'db.Column' and uses_basic_decorator:
+				basic_decorator_collector.append(get_first_variable_token_value_of_line(past_lines_tokens))
+
 			parsed += transpiled[0]
 			if transpiled[1]:
 				needs_db_commit = True
@@ -738,8 +804,8 @@ def set_boilerplate():
 	flask_boilerplate += '\n\tdef in_type(self):\n'
 	flask_boilerplate += '\t\treturn pickle.loads(self.item)\n'
 
-	# GenericList factory function
-	flask_boilerplate += '\n\ndef generic_list_factory(entry=[]):\n'
+	# GenericList creation function
+	flask_boilerplate += '\n\ndef generic_list_creator(entry=[]):\n'
 	flask_boilerplate += '\tgeneric_list = GenericList()\n'
 	flask_boilerplate += '\tdb.session.add(generic_list)\n'
 	flask_boilerplate += '\tdb.session.commit()\n'
@@ -957,6 +1023,8 @@ uses_db = False
 ask_config = {}
 flask_boilerplate = ''
 flask_end_boilerplate = ''
+uses_basic_decorator = False
+basic_decorator_collector = []
 
 is_dev = False
 
