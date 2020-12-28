@@ -106,7 +106,6 @@ def transpile_decorator(decorator):
 		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
 				return f'\n@{value}{decorator[len(key):]}'
-
 	return ''
 
 
