@@ -144,15 +144,7 @@ def transpile_db_action(action):
 
 
 def route_path_to_func_name(route_str):
-	final = ''
-
-	for char in route_str:
-		if char not in ['/', '<', '>', '-']:
-			final += char
-			continue
-		final += '_'
-
-	return final
+	return route_str.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
 def maybe_place_space_before(parsed, token_val):
