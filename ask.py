@@ -492,24 +492,38 @@ def insert_indention_group_markers(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
-		if collect:
-			if token_val == '\t' and token_type == 'FORMAT':
-				tmp_tab_level += 1
-				continue
-			else:
-				collect = False
-
-			if not tmp_tab_level:
-				tmp_tab_level = -1
-
-			if tmp_tab_level > tab_level or tmp_tab_level < tab_level:
-				marked.insert(token_index - (tmp_tab_level + 1), ['GROUP', 'start' if tmp_tab_level > tab_level else 'end'])
-
-			tab_level = tmp_tab_level if tmp_tab_level > -1 else 0
-
-		if token_val == '\n' and token_type == 'FORMAT':
+		if token_type in ['FORMAT', 'OP'] and token_val == '\n' and not collect:
 			collect = True
 			tmp_tab_level = 0
+		elif token_type == 'FORMAT' and token_val == '\t' and collect:
+			tmp_tab_level += 1
+		elif collect:
+			collect = False
+
+			print(tab_level)
+			print(tmp_tab_level)
+
+			if not tmp_tab_level and tab_level:
+				tmp_tab_level = -1
+
+			index_to_insert_at = token_index - (tmp_tab_level + 1)
+
+			if tmp_tab_level > tab_level:
+				print('start')
+				marked.insert(index_to_insert_at - 1, ['GROUP', 'start'])
+				print(marked)
+			elif tmp_tab_level < tab_level:
+				print('end')
+				marked.insert(index_to_insert_at, ['GROUP', 'end'])
+
+				if tmp_tab_level == -1:
+					marked.insert(token_index + 1, ['GROUP', 'start'])
+
+				print(marked)
+
+			tab_level = tmp_tab_level
+
+	marked.append(['GROUP', 'end'])
 
 	return marked
 
