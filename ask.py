@@ -210,10 +210,10 @@ def parser(tokens):
 	needs_db_commit = False
 	is_decorator = False
 	add_tabs_to_inner_group = False
+	indention_depth_counter = 0
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	parsed = ''
-	indention_depth_counter = 0
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -515,7 +515,6 @@ def tokens_grouped_by_lines(tokens):
 	if tmp:
 		lines.append(tmp)
 
-
 	return lines
 
 
@@ -558,6 +557,7 @@ def insert_indention_group_markers(tokens):
 	marked.append(['GROUP', 'end'])
 
 	return marked
+
 
 # Parses tokens and adds the end boilerplate to the output code.
 def parse_and_prepare(tokens):
@@ -926,7 +926,8 @@ built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 
-# "Special" keywords = keywords that require some sort of data after the keyword it self. e.g. Classes have a class name.
+# "Special" keywords = keywords that require some sort of data after the keyword it self.
+# e.g. Classes have a class name.
 db_class = {
 	'type': 'DB_CLASS',
 	'collect': True,
@@ -950,7 +951,7 @@ special_keywords = {
 	}
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
