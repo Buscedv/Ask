@@ -74,7 +74,7 @@ def transpile_var(var):
 		'_body': 'request.json',
 		'_form': 'request.form',
 		'_args': 'request.args',
-		'_req': 'AskLibrary.get_all_req()',
+		'_req': 'AskLibrary.get_all_req()'
 	}
 
 	try:
