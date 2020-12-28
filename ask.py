@@ -210,10 +210,11 @@ def parser(tokens):
 	is_skip = False
 	needs_db_commit = False
 	is_decorator = False
-	is_decorator_def = False
+	add_tabs_to_inner_group = False
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	parsed = ''
+	indention_depth_counter = 0
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -223,16 +224,22 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
-		if is_decorator_def and token_type == 'GROUP' and token_val == 'end':
-			is_decorator_def = False
-			parsed += '\n\treturn wrapper'
+		if add_tabs_to_inner_group and token_type == 'GROUP':
+			if token_val == 'end':
+				indention_depth_counter -= 1
+
+				if indention_depth_counter == 0:
+					add_tabs_to_inner_group = False
+					parsed += '\n\treturn wrapper'
+			elif token_val == 'start':
+				indention_depth_counter += 1
 
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
 				parsed += ')'
 				add_parenthesis_at_en_of_line = False
 			parsed += token_val
-			if token_type == 'FORMAT' and token_val == '\n' and is_decorator_def:
+			if token_type == 'FORMAT' and token_val == '\n' and add_tabs_to_inner_group:
 				parsed += '\t'
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
@@ -300,7 +307,7 @@ def parser(tokens):
 		elif token_type == 'DEC_DEF':
 			parsed += f'def {token_val}(func):'
 			parsed += f'\n\tdef wrapper(*args, **kwargs):'
-			is_decorator_def = True
+			add_tabs_to_inner_group = True
 			print(get_current_tab_level(parsed))
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
