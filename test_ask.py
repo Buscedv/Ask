@@ -31,12 +31,12 @@ class TestAsk(unittest.TestCase):
 
 	def test_route_path_to_func_name_path_char(self):
 		test_value = '/path/<path>'
-		expected = '_path_path'
+		expected = '_path__path_'
 		self.assertEqual(expected, ask.route_path_to_func_name(test_value))
 
 	def test_route_path_to_func_name_path_slash_dash_path(self):
 		test_value = '/path/-path'
-		expected = '_path_path'
+		expected = '_path__path'
 		self.assertEqual(expected, ask.route_path_to_func_name(test_value))
 
 	# maybe_place_space_before
@@ -82,7 +82,7 @@ class TestAsk(unittest.TestCase):
 		expected = 'string.% '
 		self.assertEqual(expected, ask.maybe_place_space_before(test_value, token_val))
 
-	#route_params
+	# route_params
 	def test_route_params_empty_string(self):
 		test_value = ''
 		expected = ''
@@ -128,6 +128,46 @@ class TestAsk(unittest.TestCase):
 		expected = 'param'
 		self.assertEqual(expected, ask.route_params(test_value))
 
+	# get_current_tab_level
+	def test_get_current_tab_level_empty_string(self):
+		test_value = ''
+		expected = ''
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_one_tab(self):
+		test_value = '\t'
+		expected = '\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_two_tabs(self):
+		test_value = '\t\t'
+		expected = '\t\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_tab_after_string(self):
+		test_value = 'parsed string\t'
+		expected = '\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_tab_in_string(self):
+		test_value = 'parsed \t string'
+		expected = '\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_newline(self):
+		test_value = '\n'
+		expected = ''
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_newline_then_tab(self):
+		test_value = '\n\t'
+		expected = '\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+		
+	def test_get_current_tab_level_two_tabs_then_newline(self):
+		test_value = '\tparsed/\tstring\n'
+		expected = '\t\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
 
 if __name__ == '__main__':
-    unittest.main()
+	unittest.main()
