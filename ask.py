@@ -731,15 +731,21 @@ def startup(file_name):
 			from importlib.machinery import SourceFileLoader
 
 			style_print('Loading database...', styles=['bold'], end='')
-			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
-			app.db.create_all()
-			print('\t✅')
+			try:
+				app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
+				app.db.create_all()
+				print('\t✅')
 
-		# Stats the local development server.
-		# TODO: ALso support running the app in a production ready server.
-		style_print('Running Flask app:', styles=['bold'])
-		os.system('export FLASK_APP=app.py')
-		os.system('flask run')
+				# Stats the local development server.
+				# TODO: ALso support running the app in a production ready server.
+				style_print('Running Flask app:', styles=['bold'])
+				os.system('export FLASK_APP=app.py')
+				os.system('flask run')
+			except Exception as e:
+				# Catches e.g. syntax errors.
+				print('Start')
+				print(e)
+				print('End')
 	else:
 		style_print('\t- The file is empty!', color='red')
 
