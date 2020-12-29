@@ -143,7 +143,8 @@ def transpile_db_action(action):
 		'exists': 'AskLibrary.exists',
 		'desc': 'db.desc',
 		'list_id': 'db.Integer',
-		'list': 'generic_list_creator'
+		'list': 'generic_list_creator',
+		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
 	}
 
 	try:
@@ -396,7 +397,7 @@ def parser(tokens):
 			transpiled = transpile_db_action(token_val)
 
 			if uses_basic_decorator:
-				if transpiled[0] == 'primary_key=True':
+				if transpiled[0] in ['primary_key=True', '_ignored']:
 					ignored_due_to_basic_decorator.append(get_first_variable_token_value_of_line(past_lines_tokens))
 
 				if transpiled[0] == 'db.Column':
@@ -407,7 +408,8 @@ def parser(tokens):
 						if ignored in basic_decorator_collector:
 							basic_decorator_collector.remove(ignored)
 
-			parsed += transpiled[0]
+			if transpiled[0] != '_ignored':
+				parsed += transpiled[0]
 			if transpiled[1]:
 				needs_db_commit = True
 
