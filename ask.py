@@ -155,12 +155,22 @@ def transpile_db_action(action):
 		return ''
 
 
-def get_basic_decorator_code_to_insert():
+def get_basic_decorator_code_to_insert(tab_count):
 	global basic_decorator_collector
 
-	print(basic_decorator_collector)
+	code_lines = [f'\ndef __init__'
+				  f'(self, {", ".join(basic_decorator_collector)}):']
+	for var in basic_decorator_collector:
+		code_lines.append(f'\tself.{var} = {var}')
 
-	return ''
+	code_lines.append('\ndef s(self):')
+	code_lines.append('\treturn {')
+	for var_index, var in enumerate(basic_decorator_collector):
+		code_lines.append(f'\t\t\'{var}\': self.{var},')
+	code_lines.append('\t}')
+
+	tab_char = '\t'
+	return f'\n{tab_char * tab_count}'.join(code_lines)
 
 
 def is_db_column_in_past_line(tokens):
@@ -171,7 +181,7 @@ def is_db_column_in_past_line(tokens):
 		if token_type == 'FORMAT' and token_val == '\n':
 			break
 
-		if token_type == 'DB_ACTION' and token_val == 'col':
+		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_CLASS':
 			return True
 
 	return False
@@ -263,19 +273,19 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
-		if token_type == 'FORMAT' and token_val == '\n':
-			past_lines_tokens = []
-		else:
-			past_lines_tokens.append(token)
-
-		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n':
+		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n' and past_lines_tokens:
 			if basic_decorator_collection_might_end:
 				if not is_db_column_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					uses_basic_decorator = False
-					parsed += get_basic_decorator_code_to_insert()
+					parsed += get_basic_decorator_code_to_insert(len(get_current_tab_level(past_lines_tokens)))
 			else:
 				basic_decorator_collection_might_end = True
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			past_lines_tokens = []
+		else:
+			past_lines_tokens.append(token)
 
 		if add_tabs_to_inner_group and token_type == 'GROUP':
 			if token_val == 'end':
@@ -373,7 +383,7 @@ def parser(tokens):
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
 
-			if transpiled == 'db.Column' and uses_basic_decorator:
+			if transpiled[0] == 'db.Column' and uses_basic_decorator:
 				basic_decorator_collector.append(get_first_variable_token_value_of_line(past_lines_tokens))
 
 			parsed += transpiled[0]
