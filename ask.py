@@ -86,7 +86,7 @@ def transpile_var(var):
 
 def transpile_keyword(keyword):
 	keywords = {
-		'respond': 'return',
+		'respond': 'return'
 	}
 
 	try:
@@ -96,10 +96,20 @@ def transpile_keyword(keyword):
 
 
 def transpile_decorator(decorator):
+	global uses_basic_decorator
+	global basic_decorator_collector
+
 	decorators = {
 		'protected': 'check_for_token',
 		'limit': 'limiter.limit',
 	}
+
+	if decorator == 'basic':
+		uses_basic_decorator = True
+		basic_decorator_collector = []
+
+		# "---" is interpreted as an ignored decorator.
+		return '---'
 
 	try:
 		return f'\n@{decorators[decorator]}'
@@ -133,7 +143,8 @@ def transpile_db_action(action):
 		'exists': 'AskLibrary.exists',
 		'desc': 'db.desc',
 		'list_id': 'db.Integer',
-		'list': 'generic_list_factory'
+		'list': 'generic_list_creator',
+		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
 	}
 
 	try:
@@ -143,6 +154,59 @@ def transpile_db_action(action):
 		return [actions[action], False]
 	except KeyError:
 		return ''
+
+
+def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
+	global basic_decorator_collector
+
+	parsed_lines_reversed = parsed.split('\n')[::-1]
+	tab_count = 0
+	line_to_place_code_at = None
+
+	for line_index, line in enumerate(parsed_lines_reversed):
+		if 'db.Column(' in line:
+			tab_count = len(get_current_tab_level(line))
+			line_to_place_code_at = line_index + 1
+			break
+
+	code_lines = [f'def __init__(self, {", ".join(basic_decorator_collector)}):']
+	for var in basic_decorator_collector:
+		code_lines.append(f'\tself.{var} = {var}')
+	code_lines.append('')
+	code_lines.append('def s(self):')
+	code_lines.append('\treturn {')
+	for var_index, var in enumerate(ignored_db_vars + basic_decorator_collector):
+		code_lines.append(f'\t\t\'{var}\': self.{var},')
+	code_lines.append('\t}\n')
+
+	tab_char = '\t'
+	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
+
+	return '\n'.join(parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
+
+
+def is_db_column_in_past_line(tokens):
+	for token in tokens[::-1]:
+		token_type = token[0]
+		token_val = token[1]
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			break
+
+		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_CLASS':
+			return True
+
+	return False
+
+
+def get_first_variable_token_value_of_line(tokens):
+	for token in tokens:
+		token_type = token[0]
+		if token_type == 'VAR':
+			# Returns the token value
+			return token[1]
+
+	return None
 
 
 def route_path_to_func_name(route_str):
@@ -199,6 +263,8 @@ def get_current_tab_level(parsed):
 def parser(tokens):
 	global built_in_vars
 	global ask_library_methods
+	global uses_basic_decorator
+	global basic_decorator_collector
 
 	is_skip = False
 	needs_db_commit = False
@@ -207,7 +273,10 @@ def parser(tokens):
 	indention_depth_counter = 0
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
+	basic_decorator_collection_might_end = False
 	parsed = ''
+	past_lines_tokens = []
+	ignored_due_to_basic_decorator = []
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -216,6 +285,20 @@ def parser(tokens):
 
 		token_type = token[0]
 		token_val = token[1]
+
+		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n' and past_lines_tokens:
+			if basic_decorator_collection_might_end:
+				if not is_db_column_in_past_line(past_lines_tokens):
+					basic_decorator_collection_might_end = False
+					uses_basic_decorator = False
+					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
+			else:
+				basic_decorator_collection_might_end = True
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			past_lines_tokens = []
+		else:
+			past_lines_tokens.append(token)
 
 		if add_tabs_to_inner_group and token_type == 'GROUP':
 			if token_val == 'end':
@@ -304,13 +387,29 @@ def parser(tokens):
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
-			is_decorator = True
 			decorator = transpile_decorator(token_val)
 			if not decorator:
 				parsed += f'@{token_val}'
+
+			if decorator != '---':
+				is_decorator = True
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
-			parsed += transpiled[0]
+
+			if uses_basic_decorator:
+				if transpiled[0] in ['primary_key=True', '_ignored']:
+					ignored_due_to_basic_decorator.append(get_first_variable_token_value_of_line(past_lines_tokens))
+
+				if transpiled[0] == 'db.Column':
+					var = get_first_variable_token_value_of_line(past_lines_tokens)
+					basic_decorator_collector.append(var)
+
+					for ignored in ignored_due_to_basic_decorator:
+						if ignored in basic_decorator_collector:
+							basic_decorator_collector.remove(ignored)
+
+			if transpiled[0] != '_ignored':
+				parsed += transpiled[0]
 			if transpiled[1]:
 				needs_db_commit = True
 
@@ -738,8 +837,8 @@ def set_boilerplate():
 	flask_boilerplate += '\n\tdef in_type(self):\n'
 	flask_boilerplate += '\t\treturn pickle.loads(self.item)\n'
 
-	# GenericList factory function
-	flask_boilerplate += '\n\ndef generic_list_factory(entry=[]):\n'
+	# GenericList creation function
+	flask_boilerplate += '\n\ndef generic_list_creator(entry=[]):\n'
 	flask_boilerplate += '\tgeneric_list = GenericList()\n'
 	flask_boilerplate += '\tdb.session.add(generic_list)\n'
 	flask_boilerplate += '\tdb.session.commit()\n'
@@ -913,10 +1012,10 @@ def set_boilerplate():
 	flask_boilerplate += "\t\texcept:\n"
 	flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token!'}), 401\n"
 	flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
-	flask_boilerplate += "\treturn wrapped\n\n"
+	flask_boilerplate += "\treturn wrapped\n"
 
 	# Flask limiter setup.
-	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n\n'
+	flask_boilerplate += '\n\nlimiter = Limiter(app, key_func=get_remote_address)'
 
 	# Boilerplate code a the end of the output file (app.py).
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
@@ -957,6 +1056,8 @@ uses_db = False
 ask_config = {}
 flask_boilerplate = ''
 flask_end_boilerplate = ''
+uses_basic_decorator = False
+basic_decorator_collector = []
 
 is_dev = False
 
