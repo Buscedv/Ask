@@ -74,7 +74,8 @@ def transpile_var(var):
 		'_body': 'request.json',
 		'_form': 'request.form',
 		'_args': 'request.args',
-		'_req': 'AskLibrary.get_all_req()'
+		'_req': 'AskLibrary.get_all_req()',
+		'_datetime': 'datetime.datetime'
 	}
 
 	try:
@@ -85,7 +86,7 @@ def transpile_var(var):
 
 def transpile_keyword(keyword):
 	keywords = {
-		'respond': 'return'
+		'respond': 'return',
 	}
 
 	try:
@@ -106,7 +107,7 @@ def transpile_decorator(decorator):
 		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
 				return f'\n@{value}{decorator[len(key):]}'
-		return ''
+	return ''
 
 
 def transpile_db_action(action):
@@ -122,6 +123,7 @@ def transpile_db_action(action):
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
 		'bytes': 'db.LargeBinary',
+		'datetime': 'db.DateTime',
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -144,15 +146,7 @@ def transpile_db_action(action):
 
 
 def route_path_to_func_name(route_str):
-	final = ''
-
-	for char in route_str:
-		if char not in ['/', '<', '>', '-']:
-			final += char
-			continue
-		final += '_'
-
-	return final
+	return route_str.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
 def maybe_place_space_before(parsed, token_val):
@@ -165,7 +159,7 @@ def maybe_place_space_before(parsed, token_val):
 	return parsed
 
 
-def route_params(route_path):
+def parse_route_params_str(route_path):
 	is_param = False
 	tmp = ''
 	params_str = ''
@@ -209,6 +203,8 @@ def parser(tokens):
 	is_skip = False
 	needs_db_commit = False
 	is_decorator = False
+	add_tabs_to_inner_group = False
+	indention_depth_counter = 0
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	parsed = ''
@@ -221,11 +217,23 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
+		if add_tabs_to_inner_group and token_type == 'GROUP':
+			if token_val == 'end':
+				indention_depth_counter -= 1
+
+				if indention_depth_counter == 0:
+					add_tabs_to_inner_group = False
+					parsed += '\n\treturn wrapper'
+			elif token_val == 'start':
+				indention_depth_counter += 1
+
 		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
 				parsed += ')'
 				add_parenthesis_at_en_of_line = False
 			parsed += token_val
+			if token_type == 'FORMAT' and token_val == '\n' and add_tabs_to_inner_group:
+				parsed += '\t'
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
 				parsed = parsed[:-1]
@@ -264,7 +272,7 @@ def parser(tokens):
 					if is_decorator:
 						parsed += decorator + '\n'
 
-					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({route_params(next_token_val)}'
+					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({parse_route_params_str(next_token_val)}'
 					is_skip = True
 					is_decorator = False
 			elif token_val in ask_library_methods:
@@ -279,6 +287,8 @@ def parser(tokens):
 			elif token_val == 'status':
 				parsed += 'abort(Response('
 				add_parenthesis_at_en_of_line = True
+			elif token_val == '_inner':
+				parsed += 'func(*args, **kwargs'
 			else:
 				parsed += f'{token_val}('
 		elif token_type == 'DB_CLASS':
@@ -287,11 +297,17 @@ def parser(tokens):
 			if token_val == '_init':
 				token_val = '__init__'
 			parsed += f'def {token_val}('
+		elif token_type == 'DEC_DEF':
+			parsed += f'def {token_val}(func):'
+			parsed += f'\n\tdef wrapper(*args, **kwargs):'
+			add_tabs_to_inner_group = True
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
 			is_decorator = True
 			decorator = transpile_decorator(token_val)
+			if not decorator:
+				parsed += f'@{token_val}'
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
 			parsed += transpiled[0]
@@ -473,6 +489,77 @@ def lexer(raw):
 	return tokens
 
 
+def tokens_grouped_by_lines(tokens):
+	tmp = []
+	lines = []
+
+	for token_index, token in enumerate(tokens):
+		token_type = token[0]
+		token_val = token[1]
+
+		if token_type == 'OP' and token_val in ['\n', '\t']:
+			token_type = 'FORMAT'
+
+		if token_type == 'FORMAT' and token_val == '\n':
+			lines.append(tmp)
+			tmp = []
+
+		tmp.append([token_type, token_val])
+
+	if tmp:
+		lines.append(tmp)
+
+	return lines
+
+
+def insert_indention_group_markers(tokens):
+	lines = tokens_grouped_by_lines(tokens)
+
+	marked = []
+	previous_line_tabs = 0
+	current_line_tabs = 0
+	group_start_counter = 0
+
+	for line in lines:
+		previous_line_tabs = current_line_tabs
+		current_line_tabs = 0
+
+		# Counts the number of indents at the start of the line.
+		for token_index, token in enumerate(line):
+			token_type = token[0]
+			token_val = token[1]
+
+			# The line has "started", meaning no more leading tabs.
+			if token_type != 'FORMAT':
+				break
+
+			# Is FORMAT, meaning \n or \t
+			if token_val == '\t':
+				current_line_tabs += 1
+
+		# Insert group start/end markings
+		if current_line_tabs < previous_line_tabs:
+			marked.append(['GROUP', 'end'])
+			group_start_counter -= 1
+		elif current_line_tabs > previous_line_tabs:
+			marked.append(['GROUP', 'start'])
+			group_start_counter += 1
+
+		# Inserts the rest of the lines token after the marking(s)
+		for token in line:
+			marked.append(token)
+
+	# Inserts a leading marker
+	marked.insert(0, ['GROUP', 'start'])
+	group_start_counter += 1
+
+	# Inserts missing group end markings:
+	for _ in range(group_start_counter):
+		marked.append(['GROUP', 'end'])
+
+	return marked
+
+
 # Parses tokens and adds the end boilerplate to the output code.
 def parse_and_prepare(tokens):
 	global flask_boilerplate
@@ -507,6 +594,7 @@ def startup(file_name):
 	with open(file_name) as f:
 		source_lines = f.readlines()
 	tokens_list = lexer(source_lines)
+	tokens_list = insert_indention_group_markers(tokens_list)
 
 	if is_dev:
 		print('\n')
@@ -729,7 +817,8 @@ def set_boilerplate():
 	flask_boilerplate += "\n\nclass Auth:\n"
 
 	flask_boilerplate += "\tdef __init__(self):\n"
-	flask_boilerplate += "\t\tself.secret_key = ''\n"
+	flask_boilerplate += "\t\timport uuid\n"
+	flask_boilerplate += "\n\t\tself.secret_key = uuid.uuid4().hex\n"
 	flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
 
 	flask_boilerplate += "\n\tdef set_token(self, req_token):\n"
@@ -834,9 +923,12 @@ def set_boilerplate():
 
 
 # Global variables
-built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db']
+built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db', '_datetime']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
+
+# "Special" keywords = keywords that require some sort of data after the keyword it self.
+# e.g. Classes have a class name.
 db_class = {
 	'type': 'DB_CLASS',
 	'collect': True,
@@ -852,9 +944,15 @@ special_keywords = {
 		'collect_ends': ['('],
 		'include_collect_end': False
 	},
+	'decorator': {
+		'type': 'DEC_DEF',
+		'collect': True,
+		'collect_ends': [':'],
+		'include_collect_end': False
+	}
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']  # Methods that are part of the Ask library.
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
