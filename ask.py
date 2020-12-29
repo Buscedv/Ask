@@ -155,22 +155,33 @@ def transpile_db_action(action):
 		return ''
 
 
-def get_basic_decorator_code_to_insert(tab_count):
+def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	global basic_decorator_collector
 
-	code_lines = [f'\ndef __init__'
-				  f'(self, {", ".join(basic_decorator_collector)}):']
+	parsed_lines_reversed = parsed.split('\n')[::-1]
+	tab_count = 0
+	line_to_place_code_at = None
+
+	for line_index, line in enumerate(parsed_lines_reversed):
+		if 'db.Column(' in line:
+			tab_count = len(get_current_tab_level(line))
+			line_to_place_code_at = line_index + 1
+			break
+
+	code_lines = [f'def __init__(self, {", ".join(basic_decorator_collector)}):']
 	for var in basic_decorator_collector:
 		code_lines.append(f'\tself.{var} = {var}')
-
-	code_lines.append('\ndef s(self):')
+	code_lines.append('')
+	code_lines.append('def s(self):')
 	code_lines.append('\treturn {')
-	for var_index, var in enumerate(basic_decorator_collector):
+	for var_index, var in enumerate(ignored_db_vars + basic_decorator_collector):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
-	code_lines.append('\t}')
+	code_lines.append('\t}\n')
 
 	tab_char = '\t'
-	return f'\n{tab_char * tab_count}'.join(code_lines)
+	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
+
+	return '\n'.join(parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
 
 
 def is_db_column_in_past_line(tokens):
@@ -264,6 +275,7 @@ def parser(tokens):
 	basic_decorator_collection_might_end = False
 	parsed = ''
 	past_lines_tokens = []
+	ignored_due_to_basic_decorator = []
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -278,7 +290,7 @@ def parser(tokens):
 				if not is_db_column_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					uses_basic_decorator = False
-					parsed += get_basic_decorator_code_to_insert(len(get_current_tab_level(past_lines_tokens)))
+					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
 			else:
 				basic_decorator_collection_might_end = True
 
@@ -383,8 +395,17 @@ def parser(tokens):
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
 
-			if transpiled[0] == 'db.Column' and uses_basic_decorator:
-				basic_decorator_collector.append(get_first_variable_token_value_of_line(past_lines_tokens))
+			if uses_basic_decorator:
+				if transpiled[0] == 'primary_key=True':
+					ignored_due_to_basic_decorator.append(get_first_variable_token_value_of_line(past_lines_tokens))
+
+				if transpiled[0] == 'db.Column':
+					var = get_first_variable_token_value_of_line(past_lines_tokens)
+					basic_decorator_collector.append(var)
+
+					for ignored in ignored_due_to_basic_decorator:
+						if ignored in basic_decorator_collector:
+							basic_decorator_collector.remove(ignored)
 
 			parsed += transpiled[0]
 			if transpiled[1]:
@@ -989,10 +1010,10 @@ def set_boilerplate():
 	flask_boilerplate += "\t\texcept:\n"
 	flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token!'}), 401\n"
 	flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
-	flask_boilerplate += "\treturn wrapped\n\n"
+	flask_boilerplate += "\treturn wrapped\n"
 
 	# Flask limiter setup.
-	flask_boilerplate += '\nlimiter = Limiter(app, key_func=get_remote_address)\n\n'
+	flask_boilerplate += '\n\nlimiter = Limiter(app, key_func=get_remote_address)'
 
 	# Boilerplate code a the end of the output file (app.py).
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
