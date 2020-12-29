@@ -82,51 +82,51 @@ class TestAsk(unittest.TestCase):
 		expected = 'string.% '
 		self.assertEqual(expected, ask.maybe_place_space_before(test_value, token_val))
 
-	# route_params
-	def test_route_params_empty_string(self):
+	# parse_route_params_str
+	def test_parse_route_params_str_empty_string(self):
 		test_value = ''
 		expected = ''
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_no_parameter(self):
+	def test_parse_route_params_str_no_parameter(self):
 		test_value = 'no parameter given'
 		expected = ''
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_one_parameter(self):
+	def test_parse_route_params_str_one_parameter(self):
 		test_value = '<param>'
 		expected = 'param'
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_two_parameters(self):
+	def test_parse_route_params_str_two_parameters(self):
 		test_value = '<param1> and <param2>'
 		expected = 'param1, param2'
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_param_with_line_break(self):
+	def test_parse_route_params_str_param_with_line_break(self):
 		test_value = 'string and <param\n>'
 		expected = 'param'
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_opened_not_closed(self):
+	def test_parse_route_params_str_opened_not_closed(self):
 		test_value = '<param'
 		expected = ''
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_closed_not_opened(self):
+	def test_parse_route_params_str_closed_not_opened(self):
 		test_value = 'param>'
 		expected = ''
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_empty_param(self):
+	def test_parse_route_params_str_empty_param(self):
 		test_value = '<>'
 		expected = ''
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
-	def test_route_params_param_in_param(self):
+	def test_parse_route_params_str_param_in_param(self):
 		test_value = '<par<param>ram>'
 		expected = 'param'
-		self.assertEqual(expected, ask.route_params(test_value))
+		self.assertEqual(expected, ask.parse_route_params_str(test_value))
 
 	# get_current_tab_level
 	def test_get_current_tab_level_empty_string(self):
@@ -142,6 +142,11 @@ class TestAsk(unittest.TestCase):
 	def test_get_current_tab_level_two_tabs(self):
 		test_value = '\t\t'
 		expected = '\t\t'
+		self.assertEqual(expected, ask.get_current_tab_level(test_value))
+
+	def test_get_current_tab_level_three_tabs(self):
+		test_value = '\t\t\t'
+		expected = '\t\t\t'
 		self.assertEqual(expected, ask.get_current_tab_level(test_value))
 
 	def test_get_current_tab_level_tab_after_string(self):
@@ -164,29 +169,12 @@ class TestAsk(unittest.TestCase):
 		expected = '\t'
 		self.assertEqual(expected, ask.get_current_tab_level(test_value))
 		
-	def test_get_current_tab_level_two_tabs_then_newline(self):
-		test_value = '\tparsed/\tstring\n'
-		expected = '\t\t'
+	def test_get_current_tab_level_tab_then_newline_then_tab(self):
+		test_value = 'parsed \t string \n \t'
+		expected = '\t'
 		self.assertEqual(expected, ask.get_current_tab_level(test_value))
 
-	def test_route_path_to_func_name(self):
-		route_paths = [
-			'/path',
-			'/path/subpath',
-			'/path/subpath/',
-			'/path-path'
-		]
-
-		func_names = [
-			'_path',
-			'_path_subpath',
-			'_path_subpath_',
-			'_path_path'
-		]
-
-		for index, route_path in enumerate(route_paths):
-			self.assertEqual(func_names[index], ask.route_path_to_func_name(route_path))
-
+	# tokens_grouped_by_lines
 	def test_tokens_grouped_by_lines(self):
 		tokens = [
 			['VAR', 'variable'],
@@ -224,6 +212,7 @@ class TestAsk(unittest.TestCase):
 
 		self.assertEqual(excpected, ask.tokens_grouped_by_lines(tokens))
 
+	# insert_indentation_group_markers
 	def test_insert_indention_group_markers(self):
 		tokens = [
 			['FUNC_DEF', 'function'],
@@ -282,6 +271,47 @@ class TestAsk(unittest.TestCase):
 		]
 
 		self.assertEqual(expected, ask.insert_indention_group_markers(tokens))
+
+	# add_part
+	def test_add_part_string_true_code_with_newline(self):
+		is_string = True
+		code = 'code \n'
+		expected = (
+			[{'is_string': True, 'code': 'code \n'}], 
+			'', 
+			False
+		)
+		self.assertEqual(expected, ask.add_part([],is_string, code))
+
+	def test_add_part_string_true_code_without_newline(self):
+		is_string = True
+		code = 'code'
+		expected = (
+			[{'is_string': True, 'code': 'code'}], 
+			'', 
+			True
+		)
+		self.assertEqual(expected, ask.add_part([],is_string, code))
+
+	def test_add_part_string_false_code_with_newline(self):
+		is_string = False
+		code = 'code \n'
+		expected = (
+			[{'is_string': False, 'code': 'code \n'}], 
+			'', 
+			False
+		)
+		self.assertEqual(expected, ask.add_part([],is_string, code))
+
+	def test_add_part_string_false_code_without_newline(self):
+		is_string = False
+		code = 'code'
+		expected = (
+			[{'is_string': False, 'code': 'code'}], 
+			'', 
+			True
+		)
+		self.assertEqual(expected, ask.add_part([],is_string, code))
 
 if __name__ == '__main__':
 	unittest.main()
