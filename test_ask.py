@@ -344,6 +344,16 @@ class TestAsk(unittest.TestCase):
 		self.assertEqual(expected, ask.transpile_var(var))
 
 	# transpile_keyword()
+	def test_transpile_keyword_respond(self):
+		var = 'respond'
+		expected = 'return'
+		self.assertEqual(expected, ask.transpile_keyword(var))
+
+	def test_transpile_keyword_keyError(self):
+		expected = var = 'keyError'
+		self.assertEqual(expected, ask.transpile_keyword(var))
+
+
 	# transpile_decorator()
 	# transpile_db_action()
 
