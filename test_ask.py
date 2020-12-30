@@ -375,6 +375,110 @@ class TestAsk(unittest.TestCase):
 		self.assertEqual(expected, ask.transpile_decorator(var))
 
 	# transpile_db_action()
+	def test_transpile_db_action_add(self):
+		var = 'add'
+		expected = ['db.session.add', True]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_delete(self):
+		var = 'delete'
+		expected = ['db.session.delete', True]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_col(self):
+		var = 'col'
+		expected = ['db.Column', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_int(self):
+		var = 'int'
+		expected = ['db.Integer', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_pk(self):
+		var = 'pk'
+		expected = ['primary_key=True', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_unique(self):
+		var = 'unique'
+		expected = ['unique=True', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_nullable(self):
+		var = 'nullable'
+		expected = ['nullable=True', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_str(self):
+		var = 'str'
+		expected = ['db.String', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_float(self):
+		var = 'float'
+		expected = ['db.Float', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_bool(self):
+		var = 'bool'
+		expected = ['db.Boolean', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_bytes(self):
+		var = 'bytes'
+		expected = ['db.LargeBinary', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_datetime(self):
+		var = 'datetime'
+		expected = ['db.DateTime', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_all(self):
+		var = 'all'
+		expected = ['query.all', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_get(self):
+		var = 'get'
+		expected = ['query.get', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_save(self):
+		var = 'save'
+		expected = ['db.session.commit', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_get_by(self):
+		var = 'get_by'
+		expected = ['query.filter_by', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_exists(self):
+		var = 'exists'
+		expected = ['AskLibrary.exists', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_desc(self):
+		var = 'desc'
+		expected = ['db.desc', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_list_id(self):
+		var = 'list_id'
+		expected = ['db.Integer', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_list(self):
+		var = 'list'
+		expected = ['generic_list_factory', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
+	def test_transpile_db_action_keyError(self):
+		var = 'keyError'
+		expected = ''
+		self.assertEqual(expected, ask.transpile_db_action(var))
 
 
 if __name__ == '__main__':
