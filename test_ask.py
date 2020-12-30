@@ -313,6 +313,40 @@ class TestAsk(unittest.TestCase):
 		)
 		self.assertEqual(expected, ask.add_part([],is_string, code))
 
+	# transpile_var()
+	def test_transpile_var_body(self):
+		var = '_body'
+		expected = 'request.json'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	def test_transpile_var_form(self):
+		var = '_form'
+		expected = 'request.form'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	def test_transpile_var_args(self):
+		var = '_args'
+		expected = 'request.args'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	def test_transpile_var_req(self):
+		var = '_req'
+		expected = 'AskLibrary.get_all_req()'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	def test_transpile_var_datetime(self):
+		var = '_datetime'
+		expected = 'datetime.datetime'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	def test_transpile_var_keyError(self):
+		expected = var = 'keyError'
+		self.assertEqual(expected, ask.transpile_var(var))
+
+	# transpile_keyword()
+	# transpile_decorator()
+	# transpile_db_action()
+
 
 if __name__ == '__main__':
 	unittest.main()
