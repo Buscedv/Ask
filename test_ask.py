@@ -353,8 +353,27 @@ class TestAsk(unittest.TestCase):
 		expected = var = 'keyError'
 		self.assertEqual(expected, ask.transpile_keyword(var))
 
-
 	# transpile_decorator()
+	def test_transpile_decorator_protected(self):
+		var = 'protected'
+		expected = '\n@check_for_token'
+		self.assertEqual(expected, ask.transpile_decorator(var))
+
+	def test_transpile_decorator_limit(self):
+		var = 'limit'
+		expected = '\n@limiter.limit'
+		self.assertEqual(expected, ask.transpile_decorator(var))
+
+	def test_transpile_decorator_key_within_keyError(self):
+		var = 'limit+keyError'
+		expected = '\n@limiter.limit+keyError'
+		self.assertEqual(expected, ask.transpile_decorator(var))
+
+	def test_transpile_decorator_keyError(self):
+		var = 'keyError'
+		expected = ''
+		self.assertEqual(expected, ask.transpile_decorator(var))
+
 	# transpile_db_action()
 
 
