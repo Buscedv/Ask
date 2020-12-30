@@ -189,7 +189,7 @@ class TestAsk(unittest.TestCase):
 			['VAR', 'variable'],
 		]
 
-		excpected = [
+		expected = [
 			[
 				['VAR', 'variable'],
 			],
@@ -210,7 +210,7 @@ class TestAsk(unittest.TestCase):
 			],
 		]
 
-		self.assertEqual(excpected, ask.tokens_grouped_by_lines(tokens))
+		self.assertEqual(expected, ask.tokens_grouped_by_lines(tokens))
 
 	# insert_indentation_group_markers
 	def test_insert_indention_group_markers(self):
@@ -277,8 +277,8 @@ class TestAsk(unittest.TestCase):
 		is_string = True
 		code = 'code \n'
 		expected = (
-			[{'is_string': True, 'code': 'code \n'}], 
-			'', 
+			[{'is_string': True, 'code': code}],
+			'',
 			False
 		)
 		self.assertEqual(expected, ask.add_part([],is_string, code))
@@ -287,8 +287,8 @@ class TestAsk(unittest.TestCase):
 		is_string = True
 		code = 'code'
 		expected = (
-			[{'is_string': True, 'code': 'code'}], 
-			'', 
+			[{'is_string': True, 'code': code}],
+			'',
 			True
 		)
 		self.assertEqual(expected, ask.add_part([],is_string, code))
@@ -297,8 +297,8 @@ class TestAsk(unittest.TestCase):
 		is_string = False
 		code = 'code \n'
 		expected = (
-			[{'is_string': False, 'code': 'code \n'}], 
-			'', 
+			[{'is_string': False, 'code': code}],
+			'',
 			False
 		)
 		self.assertEqual(expected, ask.add_part([],is_string, code))
@@ -307,11 +307,12 @@ class TestAsk(unittest.TestCase):
 		is_string = False
 		code = 'code'
 		expected = (
-			[{'is_string': False, 'code': 'code'}], 
-			'', 
+			[{'is_string': False, 'code': code}],
+			'',
 			True
 		)
 		self.assertEqual(expected, ask.add_part([],is_string, code))
+
 
 if __name__ == '__main__':
 	unittest.main()
