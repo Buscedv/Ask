@@ -480,6 +480,91 @@ class TestAsk(unittest.TestCase):
 		expected = ''
 		self.assertEqual(expected, ask.transpile_db_action(var))
 
+	# lex_var_keywords()
+	def test_lex_var_keywords_if(self):
+		tokens = []
+		tmp = 'if'
+		expected = ([['KEYWORD', 'if']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_else(self):
+		tokens = []
+		tmp = 'else'
+		expected = ([['KEYWORD', 'else']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_elif(self):
+		tokens = []
+		tmp = 'elif'
+		expected = ([['KEYWORD', 'elif']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_in(self):
+		tokens = []
+		tmp = 'in'
+		expected = ([['KEYWORD', 'in']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_return(self):
+		tokens = []
+		tmp = 'return'
+		expected = ([['KEYWORD', 'return']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_not(self):
+		tokens = []
+		tmp = 'not'
+		expected = ([['KEYWORD', 'not']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_or(self):
+		tokens = []
+		tmp = 'or'
+		expected = ([['KEYWORD', 'or']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_respond(self):
+		tokens = []
+		tmp = 'respond'
+		expected = ([['KEYWORD', 'return']], '', False, [], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_def(self):
+		tokens = []
+		tmp = 'def'
+		expected = ([['FUNC_DEF', 'def']], '', True, ['('], False)
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_db_class(self):
+		tokens = []
+		tmp = 'db_class'
+		expected = ([['DB_CLASS', 'db_class']], '', True, [':'], True )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_db_model(self):
+		tokens = []
+		tmp = 'db_model'
+		expected = ([['DB_CLASS', 'db_model']], '', True, [':'], True )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_def(self):
+		tokens = []
+		tmp = 'def'
+		expected = ([['FUNC_DEF', 'def']], '', True, ['('], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_decorator(self):
+		tokens = []
+		tmp = 'decorator'
+		expected = ([['DEC_DEF', 'decorator']], '', True, [':'], False )
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
+	def test_lex_var_keywords_variable(self):
+		tokens = []
+		tmp = 'some other string'
+		expected = ([['VAR', 'some other string']], '', False, [], False)
+		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
+
 
 if __name__ == '__main__':
 	unittest.main()
