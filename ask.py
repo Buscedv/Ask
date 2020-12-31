@@ -698,6 +698,8 @@ def startup(file_name):
 	if is_dev:
 		print('\n')
 		pprint(tokens_list)
+                os.system('export FLASK_ENV=development')
+                #os.environ['FLASK_ENV']="development" #alternative cleaner method. i will let you decide which to keep.
 
 	if tokens_list:
 		# Parsing.
@@ -738,7 +740,7 @@ def startup(file_name):
 		# Stats the local development server.
 		# TODO: ALso support running the app in a production ready server.
 		style_print('Running Flask app:', styles=['bold'])
-		os.system('export FLASK_APP=app.py')
+                os.system('export FLASK_APP=app.py')
 		os.system('flask run')
 	else:
 		style_print('\t- The file is empty!', color='red')
