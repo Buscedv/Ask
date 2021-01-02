@@ -422,7 +422,6 @@ def parser(tokens):
 
 # Figures out if a given name should be lexed as a keyword or variable token.
 def lex_var_keyword(tokens, tmp):
-	global variables
 	global keywords
 	global special_keywords
 
