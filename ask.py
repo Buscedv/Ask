@@ -698,7 +698,7 @@ def startup(file_name):
 	if is_dev:
 		print('\n')
 		pprint(tokens_list)
-                os.environ['FLASK_ENV']='development'
+		os.environ['FLASK_ENV'] = 'development'
 
 	if tokens_list:
 		# Parsing.
@@ -739,7 +739,7 @@ def startup(file_name):
 		# Starts the local development server.
 		# TODO: ALso support running the app in a production ready server.
 		style_print('Running Flask app:', styles=['bold'])
-                os.environ['FLASK_APP']='app.py'
+		os.environ['FLASK_APP'] = 'app.py'
 		os.system('flask run')
 	else:
 		style_print('\t- The file is empty!', color='red')
