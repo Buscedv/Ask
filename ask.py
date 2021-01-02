@@ -422,7 +422,6 @@ def parser(tokens):
 
 # Figures out if a given name should be lexed as a keyword or variable token.
 def lex_var_keyword(tokens, tmp):
-	global variables
 	global keywords
 	global special_keywords
 
@@ -698,6 +697,7 @@ def startup(file_name):
 	if is_dev:
 		print('\n')
 		pprint(tokens_list)
+		os.environ['FLASK_ENV'] = 'development'
 
 	if tokens_list:
 		# Parsing.
@@ -735,11 +735,10 @@ def startup(file_name):
 				app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
 				app.db.create_all()
 				print('\t✅')
-
-				# Stats the local development server.
-				# TODO: ALso support running the app in a production ready server.
+				
+        # TODO: ALso support running the app in a production ready server.
 				style_print('Running Flask app:', styles=['bold'])
-				os.system('export FLASK_APP=app.py')
+				os.environ['FLASK_APP'] = 'app.py'
 				os.system('flask run')
 			except Exception as e:
 				# Catches e.g. syntax errors.
