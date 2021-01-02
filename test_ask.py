@@ -472,7 +472,7 @@ class TestAsk(unittest.TestCase):
 
 	def test_transpile_db_action_list(self):
 		var = 'list'
-		expected = ['generic_list_factory', False]
+		expected = ['generic_list_creator', False]
 		self.assertEqual(expected, ask.transpile_db_action(var))
 
 	def test_transpile_db_action_keyError(self):
