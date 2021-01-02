@@ -158,6 +158,7 @@ def transpile_db_action(action):
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	global basic_decorator_collector
+	global additional_line_count
 
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
@@ -178,6 +179,8 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	for var_index, var in enumerate(ignored_db_vars + basic_decorator_collector):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
 	code_lines.append('\t}\n')
+
+	additional_line_count += len('\n'.join(code_lines).split('\n'))
 
 	tab_char = '\t'
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
@@ -265,6 +268,7 @@ def parser(tokens):
 	global ask_library_methods
 	global uses_basic_decorator
 	global basic_decorator_collector
+	global additional_line_count
 
 	is_skip = False
 	needs_db_commit = False
@@ -307,6 +311,7 @@ def parser(tokens):
 				if indention_depth_counter == 0:
 					add_tabs_to_inner_group = False
 					parsed += '\n\treturn wrapper'
+					additional_line_count += 1
 			elif token_val == 'start':
 				indention_depth_counter += 1
 
@@ -331,6 +336,7 @@ def parser(tokens):
 
 				tab_level = get_current_tab_level(parsed)
 				parsed += '\n' + tab_level + 'db.session.commit()'
+				additional_line_count += 1
 		elif token_type == 'STR':
 			parsed += f'\"{token_val}\"'
 		elif token_type == 'KEYWORD':
@@ -354,6 +360,7 @@ def parser(tokens):
 
 					if is_decorator:
 						parsed += decorator + '\n'
+						additional_line_count += 1
 
 					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({parse_route_params_str(next_token_val)}'
 					is_skip = True
@@ -376,6 +383,7 @@ def parser(tokens):
 				parsed += f'{token_val}('
 		elif token_type == 'DB_CLASS':
 			parsed += f'\nclass {token_val}(db.Model)'
+			additional_line_count += 1
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
 				token_val = '__init__'
@@ -677,6 +685,17 @@ def build(parsed):
 		f.write(parsed)
 
 
+def parse_error(err):
+	global additional_line_count
+
+	message = err['msg'].capitalize()
+	line = err['line'] - (additional_line_count + 1)
+	code = err['code']
+
+	final = f'Error! {message} on line {line}, in: {code}'
+	return f'\n{final}\n'
+
+
 def startup(file_name):
 	import time
 
@@ -717,6 +736,8 @@ def startup(file_name):
 		style_print(time_result, color='blue', end='')
 		print(' seconds.')
 
+		print(additional_line_count)
+
 		if uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
@@ -735,16 +756,20 @@ def startup(file_name):
 				app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
 				app.db.create_all()
 				print('\t✅')
-				
-        # TODO: ALso support running the app in a production ready server.
+
+				# TODO: ALso support running the app in a production ready server.
 				style_print('Running Flask app:', styles=['bold'])
 				os.environ['FLASK_APP'] = 'app.py'
 				os.system('flask run')
 			except Exception as e:
 				# Catches e.g. syntax errors.
-				print('Start')
-				print(e)
-				print('End')
+				msg, data = e.args
+				_, line, _, code = data
+				print(parse_error({
+					'msg': msg,
+					'line': line,
+					'code': code
+				}))
 	else:
 		style_print('\t- The file is empty!', color='red')
 
@@ -752,6 +777,7 @@ def startup(file_name):
 def set_boilerplate():
 	global flask_boilerplate
 	global flask_end_boilerplate
+	global additional_line_count
 
 	# Imports & initial setup
 	flask_boilerplate = ''
@@ -1025,6 +1051,8 @@ def set_boilerplate():
 	# Boilerplate code a the end of the output file (app.py).
 	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
+	additional_line_count += len(flask_boilerplate.split('\n'))
+
 
 # Global variables
 built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db', '_datetime']
@@ -1063,6 +1091,8 @@ flask_boilerplate = ''
 flask_end_boilerplate = ''
 uses_basic_decorator = False
 basic_decorator_collector = []
+# Used in error messages
+additional_line_count = 0
 
 is_dev = False
 
