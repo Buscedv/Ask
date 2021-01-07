@@ -687,10 +687,38 @@ def build(parsed):
 
 def parse_error(err):
 	global additional_line_count
-
+	global source_file_name
+    
 	message = err['msg'].capitalize()
-	line = err['line'] - (additional_line_count + 1)
+	transpiled_line_nr = err['line']
 	code = err['code']
+
+	with open(source_file_name, 'r') as f:
+		raw_lines = f.readlines()
+	
+	most_matching = {
+		'statuses': None
+	}
+	
+	for line_nr, line in enumerate(raw_lines):
+		statuses = []
+		for char in err:
+			if char in line:
+				statuses.append(True)
+		
+		if not most_matching['statuses'] or len(statuses) > len(most_matching['statuses']):
+			most_matching = {
+				'line': line,
+				'line_nr': line_nr,
+				'statuses': statuses
+			}
+	
+	print(most_matching)
+	line = most_matching['line_nr']
+	
+	if is_dev:
+		# Prints out the "real" line number.
+		print(f'Error on line: {transpiled_line_nr}')
 
 	final = f'Error! {message} on line {line}, in: {code}'
 	return f'\n{final}\n'
@@ -736,8 +764,6 @@ def startup(file_name):
 		style_print(time_result, color='blue', end='')
 		print(' seconds.')
 
-		print(additional_line_count)
-
 		if uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
@@ -747,29 +773,34 @@ def startup(file_name):
 				print('\t- Building Folder Structure...', end='')
 				os.makedirs(db_root)
 				print('\t✅')
-
-		if uses_db:
+		
+		# Runs the transpiled code.	
+		try:
+			# Imports app.py for two reasons:
+			# 1. To catch syntax errors.
+			# 2. To load the database (if it's used).
 			from importlib.machinery import SourceFileLoader
-
-			style_print('Loading database...', styles=['bold'], end='')
-			try:
-				app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
+			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
+			
+			if uses_db:
+				style_print('Loading database...', styles=['bold'], end='')
 				app.db.create_all()
 				print('\t✅')
 
-				# TODO: ALso support running the app in a production ready server.
-				style_print('Running Flask app:', styles=['bold'])
-				os.environ['FLASK_APP'] = 'app.py'
-				os.system('flask run')
-			except Exception as e:
-				# Catches e.g. syntax errors.
-				msg, data = e.args
-				_, line, _, code = data
-				print(parse_error({
-					'msg': msg,
-					'line': line,
-					'code': code
-				}))
+			# TODO: ALso support running the app in a production ready server.
+			style_print('Running Flask app:', styles=['bold'])
+			os.environ['FLASK_APP'] = 'app.py'
+			os.system('flask run')
+		except Exception as e:
+			# Catches e.g. syntax errors.
+			msg, data = e.args
+			_, line, _, code = data
+			
+			print(parse_error({
+				'msg': msg,
+				'line': line,
+				'code': code
+			}))
 	else:
 		style_print('\t- The file is empty!', color='red')
 
