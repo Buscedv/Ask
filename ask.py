@@ -685,43 +685,46 @@ def build(parsed):
 		f.write(parsed)
 
 
-def parse_error(err):
+def parse_and_print_error(err):
+	import difflib
+
 	global additional_line_count
 	global source_file_name
-    
+
 	message = err['msg'].capitalize()
 	transpiled_line_nr = err['line']
-	code = err['code']
+	code = err['code'].replace('\t', '')
+
+	line_nr = None
 
 	with open(source_file_name, 'r') as f:
 		raw_lines = f.readlines()
-	
-	most_matching = {
-		'statuses': None
-	}
-	
-	for line_nr, line in enumerate(raw_lines):
-		statuses = []
-		for char in err:
-			if char in line:
-				statuses.append(True)
-		
-		if not most_matching['statuses'] or len(statuses) > len(most_matching['statuses']):
-			most_matching = {
-				'line': line,
-				'line_nr': line_nr,
-				'statuses': statuses
-			}
-	
-	print(most_matching)
-	line = most_matching['line_nr']
-	
+
+	matches = list(difflib.get_close_matches(code, raw_lines))
+	for line_index, line in enumerate(raw_lines):
+		if line == str(matches[0]):
+			line_nr = line_index
+			break
+
 	if is_dev:
 		# Prints out the "real" line number.
-		print(f'Error on line: {transpiled_line_nr}')
+		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: app.py')
 
-	final = f'Error! {message} on line {line}, in: {code}'
-	return f'\n{final}\n'
+	style_print('\t- Error!', color='red', end=' ')
+	style_print(message, styles=['bold'], end=' ')
+	print('on line', end=' ')
+	style_print(line_nr, color='blue', end='')
+	print(', in/at: ', end='')
+	style_print(code, styles=['bold'])
+
+
+def print_transpilation_result(source_lines, time_result, for_error=False):
+	color = 'green' if not for_error else 'red'
+
+	style_print('\t- Transpiled ', color, end='')
+	print(f'{len(source_lines)} lines in ~', end='')
+	style_print(time_result, color='blue', end='')
+	print(' seconds.')
 
 
 def startup(file_name):
@@ -759,10 +762,7 @@ def startup(file_name):
 		print('\t✅')
 
 		# Prints out result and builds the database.
-		style_print('\t- Transpiled ', color='green', end='')
-		print(f'{len(source_lines)} lines in ~', end='')
-		style_print(time_result, color='blue', end='')
-		print(' seconds.')
+		print_transpilation_result(source_lines, time_result)
 
 		if uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
@@ -773,7 +773,7 @@ def startup(file_name):
 				print('\t- Building Folder Structure...', end='')
 				os.makedirs(db_root)
 				print('\t✅')
-		
+
 		# Runs the transpiled code.	
 		try:
 			# Imports app.py for two reasons:
@@ -781,7 +781,7 @@ def startup(file_name):
 			# 2. To load the database (if it's used).
 			from importlib.machinery import SourceFileLoader
 			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
-			
+
 			if uses_db:
 				style_print('Loading database...', styles=['bold'], end='')
 				app.db.create_all()
@@ -795,12 +795,21 @@ def startup(file_name):
 			# Catches e.g. syntax errors.
 			msg, data = e.args
 			_, line, _, code = data
-			
-			print(parse_error({
+
+			# Prints out the error
+			os.system('clear' if os.name != 'nt' else 'cls')
+
+			print('🌳', end='')
+			style_print('Ask', color='green')
+			style_print('Transpiling...', styles=['bold'], end='')
+			print('\t❌ ')
+			print_transpilation_result(source_lines, time_result, True)
+
+			parse_and_print_error({
 				'msg': msg,
 				'line': line,
 				'code': code
-			}))
+			})
 	else:
 		style_print('\t- The file is empty!', color='red')
 
