@@ -123,27 +123,36 @@ def transpile_db_action(action):
 	needs_commit = ['add', 'delete']
 
 	actions = {
+		# Basic
 		'col': 'db.Column',
-		'int': 'db.Integer',
+		'relation': 'db.relationship',
+		# Attributes
 		'pk': 'primary_key=True',
 		'unique': 'unique=True',
 		'nullable': 'nullable=True',
+		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
+		'lazy': 'lazy=True',
+		'link': 'secondary',
+		# Data types
+		'int': 'db.Integer',
 		'str': 'db.String',
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
 		'bytes': 'db.LargeBinary',
 		'datetime': 'db.DateTime',
+		'list_id': 'db.Integer',
+		'foreign_key': 'db.ForeignKey',
+		# Actions
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
 		'delete': 'db.session.delete',
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add',
+		# Other
 		'exists': 'AskLibrary.exists',
 		'desc': 'db.desc',
-		'list_id': 'db.Integer',
 		'list': 'generic_list_creator',
-		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
 	}
 
 	try:
@@ -195,7 +204,7 @@ def is_db_column_in_past_line(tokens):
 		if token_type == 'FORMAT' and token_val == '\n':
 			break
 
-		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_CLASS':
+		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_MODEL':
 			return True
 
 	return False
@@ -215,12 +224,12 @@ def route_path_to_func_name(route_str):
 	return route_str.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
-def maybe_place_space_before(parsed, token_val):
+def maybe_place_space_before(parsed, token_val, force_no_space=False):
 	prefix = ' '
 
-	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
+	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.'] or force_no_space:
 		prefix = ''
-	parsed += f'{prefix}{token_val} '
+	parsed += f'{prefix}{token_val}{"" if force_no_space else " "}'
 
 	return parsed
 
@@ -262,6 +271,9 @@ def get_current_tab_level(parsed):
 	return indents
 
 
+def clean_str(text):
+	return text.lower().replace('-', '_')
+
 def parser(tokens):
 	global built_in_vars
 	global ask_library_methods
@@ -271,6 +283,7 @@ def parser(tokens):
 
 	is_skip = False
 	needs_db_commit = False
+	is_db_relationship = False
 	is_decorator = False
 	add_tabs_to_inner_group = False
 	indention_depth_counter = 0
@@ -280,6 +293,7 @@ def parser(tokens):
 	parsed = ''
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
+	most_recent_db_model_name = ''
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -341,10 +355,17 @@ def parser(tokens):
 		elif token_type == 'KEYWORD':
 			parsed = maybe_place_space_before(parsed, token_val)
 		elif token_type == 'VAR':
+			if is_db_relationship:
+				parsed += '\''
+
 			if token_val not in built_in_vars and token_index > 0:
-				parsed = maybe_place_space_before(parsed, token_val)
+				parsed = maybe_place_space_before(parsed, token_val, is_db_relationship)
 			else:
 				parsed += transpile_var(token_val)
+
+			if is_db_relationship:
+				parsed += f'\', backref=\'{clean_str(most_recent_db_model_name)}\''
+				is_db_relationship = False
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				suffix = '\n'
@@ -380,9 +401,10 @@ def parser(tokens):
 				parsed += 'func(*args, **kwargs'
 			else:
 				parsed += f'{token_val}('
-		elif token_type == 'DB_CLASS':
+		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 			additional_line_count += 1
+			most_recent_db_model_name = token_val
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
 				token_val = '__init__'
@@ -402,6 +424,9 @@ def parser(tokens):
 				is_decorator = True
 		elif token_type == 'DB_ACTION':
 			transpiled = transpile_db_action(token_val)
+
+			if transpiled[0] == 'db.relationship':
+				is_db_relationship = True
 
 			if uses_basic_decorator:
 				if transpiled[0] in ['primary_key=True', '_ignored']:
@@ -1102,7 +1127,7 @@ keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 # "Special" keywords = keywords that require some sort of data after the keyword it self.
 # e.g. Classes have a class name.
 db_class = {
-	'type': 'DB_CLASS',
+	'type': 'DB_MODEL',
 	'collect': True,
 	'collect_ends': [':'],
 	'include_collect_end': True
