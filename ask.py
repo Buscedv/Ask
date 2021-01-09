@@ -15,9 +15,8 @@ def style_print(text, color=None, styles=[], end='\n'):
 	colors = {
 		'red': '91m',
 		'green': '92m',
-		'yellow': '93m',
 		'blue': '94m',
-		'pink': '95m',
+		'gray': '90m'
 	}
 
 	result = str(text)
@@ -711,10 +710,11 @@ def parse_and_print_error(err):
 		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: app.py')
 
 	style_print('\t- Error!', color='red', end=' ')
+	style_print(f'({source_file_name})', color='gray', end=' ')
 	style_print(message, styles=['bold'], end=' ')
 	print('on line', end=' ')
-	style_print(line_nr, color='blue', end='')
-	print(', in/at: ', end='')
+	style_print(f'{line_nr},', color='blue')
+	print('\t\t- in/at: ', end='')
 	style_print(code, styles=['bold'])
 
 
@@ -761,9 +761,9 @@ def startup(file_name):
 		# Mark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
 
-		# Prints out result and builds the database.
 		print_transpilation_result(source_lines, time_result)
 
+		# Database setup & build.
 		if uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
