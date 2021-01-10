@@ -152,7 +152,7 @@ def transpile_db_action(action):
 
 		return [actions[action], False]
 	except KeyError:
-		return ''
+		return ['', False]
 
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
