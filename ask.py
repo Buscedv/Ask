@@ -97,6 +97,7 @@ def transpile_keyword(keyword):
 def transpile_decorator(decorator):
 	global uses_basic_decorator
 	global basic_decorator_collector
+	global previous_basic_decorator_collector
 
 	decorators = {
 		'protected': 'check_for_token',
@@ -104,6 +105,7 @@ def transpile_decorator(decorator):
 	}
 
 	if decorator == 'basic':
+		previous_basic_decorator_collector = basic_decorator_collector
 		uses_basic_decorator = True
 		basic_decorator_collector = []
 
@@ -268,6 +270,7 @@ def parser(tokens):
 	global uses_basic_decorator
 	global basic_decorator_collector
 	global additional_line_count
+	global previous_basic_decorator_collector
 
 	is_skip = False
 	needs_db_commit = False
@@ -277,6 +280,7 @@ def parser(tokens):
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	basic_decorator_collection_might_end = False
+	on_next_run_uses_basic_decorator = False
 	parsed = ''
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
@@ -289,8 +293,16 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
+		if on_next_run_uses_basic_decorator:
+			on_next_run_uses_basic_decorator = False
+			uses_basic_decorator = True
+
 		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n' and past_lines_tokens:
 			if basic_decorator_collection_might_end:
+				if past_lines_tokens == [['DEC', 'basic']]:
+					on_next_run_uses_basic_decorator = True
+					basic_decorator_collector = previous_basic_decorator_collector
+
 				if not is_db_column_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					uses_basic_decorator = False
@@ -700,6 +712,13 @@ def parse_and_print_error(err):
 		raw_lines = f.readlines()
 
 	matches = list(difflib.get_close_matches(code, raw_lines))
+
+	if not matches:
+		style_print('\t- Error!', color='red', end=' ')
+		print('Something went wrong!')
+
+		return
+
 	for line_index, line in enumerate(raw_lines):
 		if line == str(matches[0]):
 			line_nr = line_index
@@ -797,7 +816,7 @@ def startup(file_name):
 			_, line, _, code = data
 
 			# Prints out the error
-			os.system('clear' if os.name != 'nt' else 'cls')
+			os.system('cls' if os.name == 'nt' else 'clear')
 
 			print('🌳', end='')
 			style_print('Ask', color='green')
@@ -1131,6 +1150,7 @@ flask_boilerplate = ''
 flask_end_boilerplate = ''
 uses_basic_decorator = False
 basic_decorator_collector = []
+previous_basic_decorator_collector = []
 # Used in error messages
 additional_line_count = 0
 
