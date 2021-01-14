@@ -65,7 +65,7 @@ def get_db_file_path():
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
 		return ask_config['db']['path']
 
-	return f'{get_output_file_destination_path()[:-7]}db.db'
+	return f'{get_output_file_destination_path()[:-6]}db.db'
 
 
 # Returns the path to be used for the app.py file.
