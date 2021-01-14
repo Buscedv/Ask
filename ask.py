@@ -65,7 +65,18 @@ def get_db_file_path():
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
 		return ask_config['db']['path']
 
-	return 'db.db'
+	return f'{get_output_file_destination_path()[:-7]}db.db'
+
+
+# Returns the path to be used for the app.py file.
+def get_output_file_destination_path():
+	global source_file_name
+
+	prefix = ''
+	if '/' in source_file_name:
+		prefix = f'{get_root_from_file_path(source_file_name)}/'
+
+	return f'{prefix}app.py'
 
 
 def transpile_var(var):
@@ -691,7 +702,7 @@ def parse_and_prepare(tokens):
 
 def build(parsed):
 	# Saves the transpiled code to the build/output file
-	with open('app.py', 'w+') as f:
+	with open(get_output_file_destination_path(), 'w+') as f:
 		f.write('')
 		f.write(parsed)
 
@@ -726,7 +737,7 @@ def parse_and_print_error(err):
 
 	if is_dev:
 		# Prints out the "real" line number.
-		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: app.py')
+		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: {get_output_file_destination_path()}')
 
 	style_print('\t- Error!', color='red', end=' ')
 	style_print(f'({source_file_name})', color='gray', end=' ')
@@ -799,7 +810,7 @@ def startup(file_name):
 			# 1. To catch syntax errors.
 			# 2. To load the database (if it's used).
 			from importlib.machinery import SourceFileLoader
-			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
+			app = SourceFileLoader("app", get_output_file_destination_path()).load_module()
 
 			if uses_db:
 				style_print('Loading database...', styles=['bold'], end='')
@@ -808,7 +819,7 @@ def startup(file_name):
 
 			# TODO: ALso support running the app in a production ready server.
 			style_print('Running Flask app:', styles=['bold'])
-			os.environ['FLASK_APP'] = 'app.py'
+			os.environ['FLASK_APP'] = get_output_file_destination_path()
 			os.system('flask run')
 		except Exception as e:
 			# Catches e.g. syntax errors.
