@@ -1030,7 +1030,10 @@ def set_boilerplate():
 	flask_boilerplate += '\t\treturn self.decode()[\'user\']\n'
 
 	flask_boilerplate += "\n\tdef get_token(self):\n"
-	flask_boilerplate += '\t\treturn self.token.decode(\'utf-8\')\n'
+	flask_boilerplate += '\t\ttry:\n'
+	flask_boilerplate += '\t\t\treturn self.token.decode(\'utf-8\')\n'
+	flask_boilerplate += '\t\texcept Exception:\n'
+	flask_boilerplate += '\t\t\treturn self.token.encode().decode(\'utf-8\')\n'
 
 	flask_boilerplate += "\n\tdef is_valid(self):\n"
 	flask_boilerplate += "\t\ttry:\n"
