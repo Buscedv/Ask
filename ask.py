@@ -59,8 +59,11 @@ def get_ask_config(source_root):
 	return {}
 
 
-def get_db_file_path():
+def get_db_file_path(in_app_boilerplate=False):
 	global ask_config
+
+	if in_app_boilerplate:
+		return 'db.db'
 
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
 		return ask_config['db']['path']
@@ -869,7 +872,7 @@ def set_boilerplate():
 
 	# Database connection
 	flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
-	flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "' + get_db_file_path() + '"))\n'
+	flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "' + get_db_file_path(True) + '"))\n'
 	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
