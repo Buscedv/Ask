@@ -749,7 +749,7 @@ def parse_and_print_error(err):
 	if not matches:
 		style_print('\t- Error!', color='red', end=' ')
 		print('Something went wrong!')
-		print(message)
+		print(f'\t\t- {message}')
 
 		return
 
