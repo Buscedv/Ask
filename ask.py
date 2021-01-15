@@ -851,8 +851,13 @@ def startup(file_name):
 			os.system('flask run')
 		except Exception as e:
 			# Catches e.g. syntax errors.
-			msg, data = e.args
-			_, line, _, code = data
+			try:
+				msg, data = e.args
+				_, line, _, code = data
+			except ValueError:
+				msg = e.args
+				line = ''
+				code = ''
 
 			# Prints out the error
 			os.system('cls' if os.name == 'nt' else 'clear')
