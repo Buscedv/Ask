@@ -959,13 +959,13 @@ def set_boilerplate():
 	flask_boilerplate += '\t\treturn self.quick_set(target, source)\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
-	flask_boilerplate += '\tdef require_keys(requiredDataList, _body):\n'
-	flask_boilerplate += '\t\trequiredValuesPresent = True\n'
-	flask_boilerplate += '\t\tfor element in requiredDataList:\n'
+	flask_boilerplate += '\tdef require_keys(required_data_list, _body):\n'
+	flask_boilerplate += '\t\trequired_values_present = True\n'
+	flask_boilerplate += '\t\tfor element in required_data_list:\n'
 	flask_boilerplate += '\t\t\tif !(element in _body):\n'
-	flask_boilerplate += '\t\t\t\trequiredValuesPresent = False\n'
+	flask_boilerplate += '\t\t\t\trequired_values_present = False\n'
 	flask_boilerplate += '\t\t\t\tbreak\n'
-	flask_boilerplate += '\n\t\treturn requiredValuesPresent\n'
+	flask_boilerplate += '\n\t\treturn required_values_present\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef status(message, code):\n'
