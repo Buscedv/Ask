@@ -962,7 +962,7 @@ def set_boilerplate():
 	flask_boilerplate += '\tdef require_keys(required_data_list, _body):\n'
 	flask_boilerplate += '\t\trequired_values_present = True\n'
 	flask_boilerplate += '\t\tfor element in required_data_list:\n'
-	flask_boilerplate += '\t\t\tif !(element in _body):\n'
+	flask_boilerplate += '\t\t\tif element not in _body:\n'
 	flask_boilerplate += '\t\t\t\trequired_values_present = False\n'
 	flask_boilerplate += '\t\t\t\tbreak\n'
 	flask_boilerplate += '\n\t\treturn required_values_present\n'
