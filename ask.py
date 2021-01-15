@@ -890,8 +890,7 @@ def set_boilerplate():
 	flask_boilerplate += 'CORS(app)\n'
 
 	# Database connection
-	flask_boilerplate += f'database_file = \'{get_full_db_file_path()}\'\n'
-	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
+	flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{get_full_db_file_path()}\'\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
