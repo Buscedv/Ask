@@ -816,7 +816,13 @@ def startup(file_name):
 		print_transpilation_result(source_lines, time_result)
 
 		# Database setup & build.
-		if uses_db and not os.path.exists(get_db_file_path()):
+		status = False
+		try:
+			status = bool(ask_config['db']['custom'])
+		except Exception:
+			status = False
+
+		if not status and uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
 			print('\t✅')
