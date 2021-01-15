@@ -954,6 +954,15 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
 	flask_boilerplate += '\n\t\treturn target\n'
 
+	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef require_keys(requiredDataList, _body):\n'
+	flask_boilerplate += '\t\trequiredValuesPresent = true\n'
+	flask_boilerplate += '\t\tfor element in requiredDataList:\n'
+	flask_boilerplate += '\t\t\tif !_body.has_key(element):\n'
+	flask_boilerplate += '\t\t\t\trequiredValuesPresent = False\n'
+	flask_boilerplate += '\t\t\t\tbreak\n'
+	flask_boilerplate += '\n\t\treturn requiredValuesPresent\n'
+	
 	flask_boilerplate += '\n\t# Deprecated method\n'
 	flask_boilerplate += '\tdef quickSet(self, target, source):\n'
 	flask_boilerplate += '\t\treturn self.quick_set(target, source)\n'
