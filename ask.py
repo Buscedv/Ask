@@ -956,7 +956,7 @@ def set_boilerplate():
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef require_keys(requiredDataList, _body):\n'
-	flask_boilerplate += '\t\trequiredValuesPresent = true\n'
+	flask_boilerplate += '\t\trequiredValuesPresent = True\n'
 	flask_boilerplate += '\t\tfor element in requiredDataList:\n'
 	flask_boilerplate += '\t\t\tif !_body.has_key(element):\n'
 	flask_boilerplate += '\t\t\t\trequiredValuesPresent = False\n'
