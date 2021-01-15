@@ -59,16 +59,33 @@ def get_ask_config(source_root):
 	return {}
 
 
-def get_db_file_path(in_app_boilerplate=False):
+def get_full_db_file_path():
+	prefix = 'sqlite:///'
+
+	if ask_config and 'db' in ask_config and 'custom' in ask_config['db'] and ask_config['db']['custom']:
+		prefix = ''
+
+	return f'{prefix}{get_db_file_path(True)}'
+
+
+def get_db_file_path(is_boilerplate_insertion_use=False):
 	global ask_config
 
-	if in_app_boilerplate:
-		return 'db.db'
+	end = 'db.db'
+
+	path = get_output_file_destination_path()[:-6]
+
+	if is_boilerplate_insertion_use:
+		path = f'{os.getcwd()}{path}'
 
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
-		return ask_config['db']['path']
+		custom_path = ask_config['db']['path']
+		if path[0] != '/':
+			end = custom_path
+		else:
+			return custom_path
 
-	return f'{get_output_file_destination_path()[:-6]}db.db'
+	return path + end
 
 
 # Returns the path to be used for the app.py file.
@@ -200,7 +217,9 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	tab_char = '\t'
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
 
-	return '\n'.join(parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
+	return '\n'.join(
+		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
+		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
 
 
 def is_db_column_in_past_line(tokens):
@@ -871,8 +890,7 @@ def set_boilerplate():
 	flask_boilerplate += 'CORS(app)\n'
 
 	# Database connection
-	flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
-	flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "' + get_db_file_path(True) + '"))\n'
+	flask_boilerplate += f'database_file = \'{get_full_db_file_path()}\'\n'
 	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
@@ -967,7 +985,7 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\tif key in target.keys():\n'
 	flask_boilerplate += '\t\t\t\ttarget[key] = source[key]\n'
 	flask_boilerplate += '\n\t\treturn target\n'
-	
+
 	flask_boilerplate += '\n\t# Deprecated method\n'
 	flask_boilerplate += '\tdef quickSet(self, target, source):\n'
 	flask_boilerplate += '\t\treturn self.quick_set(target, source)\n'
