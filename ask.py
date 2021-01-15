@@ -855,7 +855,7 @@ def startup(file_name):
 				msg, data = e.args
 				_, line, _, code = data
 			except ValueError:
-				msg = e.args
+				msg = e.args[0]
 				line = ''
 				code = ''
 
