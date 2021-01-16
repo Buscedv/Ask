@@ -59,13 +59,13 @@ def get_ask_config(source_root):
 	return {}
 
 
-def get_full_db_file_path():
+def get_full_db_file_path(is_boilerplate_insertion_use=False):
 	prefix = 'sqlite:///'
 
 	if ask_config and 'db' in ask_config and 'custom' in ask_config['db'] and ask_config['db']['custom']:
 		prefix = ''
 
-	return f'{prefix}{get_db_file_path(True)}'
+	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
 
 
 def get_db_file_path(is_boilerplate_insertion_use=False):
@@ -76,7 +76,7 @@ def get_db_file_path(is_boilerplate_insertion_use=False):
 	path = get_output_file_destination_path()[:-6]
 
 	if is_boilerplate_insertion_use:
-		path = f'{os.getcwd()}{path}'
+		path = f'{os.getcwd()}/{path}'
 
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
 		custom_path = ask_config['db']['path']
@@ -907,7 +907,7 @@ def set_boilerplate():
 	flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
-	flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{get_full_db_file_path()}\'\n'
+	flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{get_full_db_file_path(True)}\'\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
