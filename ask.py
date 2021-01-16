@@ -190,7 +190,6 @@ def transpile_db_action(action):
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	global basic_decorator_collector
-	global additional_line_count
 
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
@@ -211,8 +210,6 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	for var_index, var in enumerate(ignored_db_vars + basic_decorator_collector):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
 	code_lines.append('\t}\n')
-
-	additional_line_count += len('\n'.join(code_lines).split('\n'))
 
 	tab_char = '\t'
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
@@ -302,7 +299,6 @@ def parser(tokens):
 	global ask_library_methods
 	global uses_basic_decorator
 	global basic_decorator_collector
-	global additional_line_count
 	global previous_basic_decorator_collector
 
 	is_skip = False
@@ -355,7 +351,6 @@ def parser(tokens):
 				if indention_depth_counter == 0:
 					add_tabs_to_inner_group = False
 					parsed += '\n\treturn wrapper'
-					additional_line_count += 1
 			elif token_val == 'start':
 				indention_depth_counter += 1
 
@@ -380,7 +375,6 @@ def parser(tokens):
 
 				tab_level = get_current_tab_level(parsed)
 				parsed += '\n' + tab_level + 'db.session.commit()'
-				additional_line_count += 1
 		elif token_type == 'STR':
 			parsed += f'\"{token_val}\"'
 		elif token_type == 'KEYWORD':
@@ -392,7 +386,8 @@ def parser(tokens):
 				parsed += transpile_var(token_val)
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
-				suffix = '\n'
+				new_line = '\n'
+				suffix = new_line
 
 				if token_index > 2 and tokens[token_index - 2][0] == 'DEC':
 					suffix = ''
@@ -402,9 +397,20 @@ def parser(tokens):
 
 					parsed += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
 
+					# Flask-selfdoc decorator
+					parsed += f'{new_line if suffix == "" else ""}@auto.doc(\''
+					default_doc_end = f'public\'){suffix}'
+
 					if is_decorator:
+						# Group type for the auto docs decorator. (private if the route is protected else public)
+						if decorator == '\n@check_for_token':
+							parsed += f'private\'){suffix}'
+						else:
+							parsed += default_doc_end
+
 						parsed += decorator + '\n'
-						additional_line_count += 1
+					else:
+						parsed += default_doc_end
 
 					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({parse_route_params_str(next_token_val)}'
 					is_skip = True
@@ -427,7 +433,6 @@ def parser(tokens):
 				parsed += f'{token_val}('
 		elif token_type == 'DB_CLASS':
 			parsed += f'\nclass {token_val}(db.Model)'
-			additional_line_count += 1
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
 				token_val = '__init__'
@@ -732,7 +737,6 @@ def build(parsed):
 def parse_and_print_error(err):
 	import difflib
 
-	global additional_line_count
 	global source_file_name
 
 	message = err['msg'].capitalize()
@@ -881,7 +885,6 @@ def startup(file_name):
 def set_boilerplate():
 	global flask_boilerplate
 	global flask_end_boilerplate
-	global additional_line_count
 
 	# Imports & initial setup
 	flask_boilerplate = ''
@@ -897,9 +900,11 @@ def set_boilerplate():
 	flask_boilerplate += 'import random\n'
 	flask_boilerplate += 'import pickle\n'
 	flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
+	flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
 
 	flask_boilerplate += 'app = Flask(__name__)\n'
 	flask_boilerplate += 'CORS(app)\n'
+	flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
 	flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{get_full_db_file_path()}\'\n'
@@ -1159,9 +1164,15 @@ def set_boilerplate():
 	flask_boilerplate += '\n\nlimiter = Limiter(app, key_func=get_remote_address)'
 
 	# Boilerplate code a the end of the output file (app.py).
-	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
+	flask_end_boilerplate = '\n\n@app.route(\'/docs/\', methods=[\'GET\'], defaults={\'filter_type\': None})\n'
+	flask_end_boilerplate += '@app.route(\'/docs/<filter_type>\', methods=[\'GET\'])\n'
+	flask_end_boilerplate += '@auto.doc(\'public\')\n'
+	flask_end_boilerplate += 'def get_docs(filter_type):\n'
+	flask_end_boilerplate += '\tif filter_type:\n'
+	flask_end_boilerplate += '\t\treturn auto.html(filter_type)\n'
+	flask_end_boilerplate += '\treturn auto.html(groups=[\'public\',\'private\'])\n'
 
-	additional_line_count += len(flask_boilerplate.split('\n'))
+	flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
 
 # Global variables
@@ -1202,8 +1213,6 @@ flask_end_boilerplate = ''
 uses_basic_decorator = False
 basic_decorator_collector = []
 previous_basic_decorator_collector = []
-# Used in error messages
-additional_line_count = 0
 
 is_dev = False
 
