@@ -13,6 +13,9 @@ A backend programming language. Ask makes it incredibly easy to create REST APIs
 - Transpiles to plain Flask with no extra modules, libraries, etc. needed.
 - Built in CORS support.
 - The transpiled code is completely standalone and is not dependent on any other files/modules or the ask.py file.
+- Compatible with Python*
+
+** \*= You can import external Python modules and call them from you Ask code. **
 
 ## Example (Ask vs Flask)
 Here is the same basic app with one GET route written in Ask and in Python with Flask.
