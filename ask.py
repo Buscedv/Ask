@@ -1013,7 +1013,7 @@ def set_boilerplate():
 	flask_boilerplate += '\t\t\tif key not in _dict:\n'
 	flask_boilerplate += '\t\t\t\tstatuses.append(False)\n'
 	flask_boilerplate += '\n\t\t\tstatuses.append(False)\n'
-	flask_boilerplate += '\n\t\treturn False in statuses\n'
+	flask_boilerplate += '\n\t\treturn False not in statuses\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef status(message, code):\n'
