@@ -80,7 +80,7 @@ def get_db_file_path(is_boilerplate_insertion_use=False):
 
 	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
 		custom_path = ask_config['db']['path']
-		if path[0] != '/':
+		if not path or path[0] != '/':
 			end = custom_path
 		else:
 			return custom_path
