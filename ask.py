@@ -1008,10 +1008,12 @@ def set_boilerplate():
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef require_keys(required_keys, _dict):\n'
+	flask_boilerplate += '\t\tstatuses = []\n'
 	flask_boilerplate += '\t\tfor key in required_keys:\n'
 	flask_boilerplate += '\t\t\tif key not in _dict:\n'
-	flask_boilerplate += '\t\t\t\treturn False\n'
-	flask_boilerplate += '\n\t\treturn True\n'
+	flask_boilerplate += '\t\t\t\tstatuses.append(False)\n'
+	flask_boilerplate += '\n\t\t\tstatuses.append(False)\n'
+	flask_boilerplate += '\n\t\treturn False in statuses\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef status(message, code):\n'
