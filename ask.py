@@ -1205,7 +1205,7 @@ special_keywords = {
 	}
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond', 'require_keys']
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
