@@ -1,3 +1,22 @@
+# coding=utf-8
+
+# Ask
+# Copyright 2020, 2021 Edvard Busck-Nielsen
+#
+#     Ask is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     Ask is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with Ask.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import sys
 import os
 from pprint import pprint
@@ -335,7 +354,10 @@ def parser(tokens):
 				if not is_db_column_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					uses_basic_decorator = False
+
 					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
+					basic_decorator_collector = []
+					ignored_due_to_basic_decorator = []
 			else:
 				basic_decorator_collection_might_end = True
 
