@@ -1,3 +1,22 @@
+# coding=utf-8
+
+# Ask
+# Copyright 2020, 2021 Edvard Busck-Nielsen
+#
+#     Ask is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     Ask is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with Ask.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import sys
 import os
 from pprint import pprint
@@ -59,13 +78,44 @@ def get_ask_config(source_root):
 	return {}
 
 
-def get_db_file_path():
+def get_full_db_file_path(is_boilerplate_insertion_use=False):
+	prefix = 'sqlite:///'
+
+	if ask_config and 'db' in ask_config and 'custom' in ask_config['db'] and ask_config['db']['custom']:
+		prefix = ''
+
+	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
+
+
+def get_db_file_path(is_boilerplate_insertion_use=False):
 	global ask_config
 
-	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
-		return ask_config['db']['path']
+	end = 'db.db'
 
-	return 'db.db'
+	path = get_output_file_destination_path()[:-6]
+
+	if is_boilerplate_insertion_use:
+		path = f'{os.getcwd()}/{path}'
+
+	if ask_config and 'db' in ask_config and 'path' in ask_config['db']:
+		custom_path = ask_config['db']['path']
+		if not path or path[0] != '/':
+			end = custom_path
+		else:
+			return custom_path
+
+	return path + end
+
+
+# Returns the path to be used for the app.py file.
+def get_output_file_destination_path():
+	global source_file_name
+
+	prefix = ''
+	if '/' in source_file_name:
+		prefix = f'{get_root_from_file_path(source_file_name)}/'
+
+	return f'{prefix}app.py'
 
 
 def transpile_var(var):
@@ -97,6 +147,7 @@ def transpile_keyword(keyword):
 def transpile_decorator(decorator):
 	global uses_basic_decorator
 	global basic_decorator_collector
+	global previous_basic_decorator_collector
 
 	decorators = {
 		'protected': 'check_for_token',
@@ -104,6 +155,7 @@ def transpile_decorator(decorator):
 	}
 
 	if decorator == 'basic':
+		previous_basic_decorator_collector = basic_decorator_collector
 		uses_basic_decorator = True
 		basic_decorator_collector = []
 
@@ -161,12 +213,11 @@ def transpile_db_action(action):
 
 		return [actions[action], False]
 	except KeyError:
-		return ''
+		return ['', False]
 
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 	global basic_decorator_collector
-	global additional_line_count
 
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
@@ -188,12 +239,12 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
 	code_lines.append('\t}\n')
 
-	additional_line_count += len('\n'.join(code_lines).split('\n'))
-
 	tab_char = '\t'
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
 
-	return '\n'.join(parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
+	return '\n'.join(
+		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
+		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
 
 
 def is_db_column_in_past_line(tokens):
@@ -279,7 +330,7 @@ def parser(tokens):
 	global ask_library_methods
 	global uses_basic_decorator
 	global basic_decorator_collector
-	global additional_line_count
+	global previous_basic_decorator_collector
 
 	is_skip = False
 	needs_db_commit = False
@@ -290,6 +341,7 @@ def parser(tokens):
 	decorator = ''
 	add_parenthesis_at_en_of_line = False
 	basic_decorator_collection_might_end = False
+	on_next_run_uses_basic_decorator = False
 	parsed = ''
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
@@ -303,12 +355,23 @@ def parser(tokens):
 		token_type = token[0]
 		token_val = token[1]
 
+		if on_next_run_uses_basic_decorator:
+			on_next_run_uses_basic_decorator = False
+			uses_basic_decorator = True
+
 		if uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n' and past_lines_tokens:
 			if basic_decorator_collection_might_end:
+				if past_lines_tokens == [['DEC', 'basic']]:
+					on_next_run_uses_basic_decorator = True
+					basic_decorator_collector = previous_basic_decorator_collector
+
 				if not is_db_column_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					uses_basic_decorator = False
+
 					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
+					basic_decorator_collector = []
+					ignored_due_to_basic_decorator = []
 			else:
 				basic_decorator_collection_might_end = True
 
@@ -324,7 +387,6 @@ def parser(tokens):
 				if indention_depth_counter == 0:
 					add_tabs_to_inner_group = False
 					parsed += '\n\treturn wrapper'
-					additional_line_count += 1
 			elif token_val == 'start':
 				indention_depth_counter += 1
 
@@ -349,7 +411,6 @@ def parser(tokens):
 
 				tab_level = get_current_tab_level(parsed)
 				parsed += '\n' + tab_level + 'db.session.commit()'
-				additional_line_count += 1
 		elif token_type == 'STR':
 			parsed += f'\"{token_val}\"'
 		elif token_type == 'KEYWORD':
@@ -368,7 +429,8 @@ def parser(tokens):
 				is_db_relationship = False
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
-				suffix = '\n'
+				new_line = '\n'
+				suffix = new_line
 
 				if token_index > 2 and tokens[token_index - 2][0] == 'DEC':
 					suffix = ''
@@ -378,9 +440,20 @@ def parser(tokens):
 
 					parsed += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
 
+					# Flask-selfdoc decorator
+					parsed += f'{new_line if suffix == "" else ""}@auto.doc(\''
+					default_doc_end = f'public\'){suffix}'
+
 					if is_decorator:
+						# Group type for the auto docs decorator. (private if the route is protected else public)
+						if decorator == '\n@check_for_token':
+							parsed += f'private\'){suffix}'
+						else:
+							parsed += default_doc_end
+
 						parsed += decorator + '\n'
-						additional_line_count += 1
+					else:
+						parsed += default_doc_end
 
 					parsed += f'def {token_val[1:]}{route_path_to_func_name(next_token_val)}({parse_route_params_str(next_token_val)}'
 					is_skip = True
@@ -403,8 +476,6 @@ def parser(tokens):
 				parsed += f'{token_val}('
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
-			additional_line_count += 1
-			most_recent_db_model_name = token_val
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
 				token_val = '__init__'
@@ -704,7 +775,7 @@ def parse_and_prepare(tokens):
 
 def build(parsed):
 	# Saves the transpiled code to the build/output file
-	with open('app.py', 'w+') as f:
+	with open(get_output_file_destination_path(), 'w+') as f:
 		f.write('')
 		f.write(parsed)
 
@@ -712,7 +783,6 @@ def build(parsed):
 def parse_and_print_error(err):
 	import difflib
 
-	global additional_line_count
 	global source_file_name
 
 	message = err['msg'].capitalize()
@@ -725,6 +795,14 @@ def parse_and_print_error(err):
 		raw_lines = f.readlines()
 
 	matches = list(difflib.get_close_matches(code, raw_lines))
+
+	if not matches:
+		style_print('\t- Error!', color='red', end=' ')
+		print('Something went wrong!')
+		print(f'\t\t- {message}')
+
+		return
+
 	for line_index, line in enumerate(raw_lines):
 		if line == str(matches[0]):
 			line_nr = line_index
@@ -732,7 +810,7 @@ def parse_and_print_error(err):
 
 	if is_dev:
 		# Prints out the "real" line number.
-		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: app.py')
+		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: {get_output_file_destination_path()}')
 
 	style_print('\t- Error!', color='red', end=' ')
 	style_print(f'({source_file_name})', color='gray', end=' ')
@@ -789,7 +867,13 @@ def startup(file_name):
 		print_transpilation_result(source_lines, time_result)
 
 		# Database setup & build.
-		if uses_db and not os.path.exists(get_db_file_path()):
+		status = False
+		try:
+			status = bool(ask_config['db']['custom'])
+		except Exception:
+			status = False
+
+		if not status and uses_db and not os.path.exists(get_db_file_path()):
 			style_print('Building database...', styles=['bold'], end='')
 			db_root = get_root_from_file_path(get_db_file_path())
 			print('\t✅')
@@ -805,7 +889,7 @@ def startup(file_name):
 			# 1. To catch syntax errors.
 			# 2. To load the database (if it's used).
 			from importlib.machinery import SourceFileLoader
-			app = SourceFileLoader("app", f'{os.getcwd()}/app.py').load_module()
+			app = SourceFileLoader("app", get_output_file_destination_path()).load_module()
 
 			if uses_db:
 				style_print('Loading database...', styles=['bold'], end='')
@@ -814,15 +898,20 @@ def startup(file_name):
 
 			# TODO: ALso support running the app in a production ready server.
 			style_print('Running Flask app:', styles=['bold'])
-			os.environ['FLASK_APP'] = 'app.py'
+			os.environ['FLASK_APP'] = get_output_file_destination_path()
 			os.system('flask run')
 		except Exception as e:
 			# Catches e.g. syntax errors.
-			msg, data = e.args
-			_, line, _, code = data
+			try:
+				msg, data = e.args
+				_, line, _, code = data
+			except ValueError:
+				msg = e.args[0]
+				line = ''
+				code = ''
 
 			# Prints out the error
-			os.system('clear' if os.name != 'nt' else 'cls')
+			os.system('cls' if os.name == 'nt' else 'clear')
 
 			print('🌳', end='')
 			style_print('Ask', color='green')
@@ -842,7 +931,6 @@ def startup(file_name):
 def set_boilerplate():
 	global flask_boilerplate
 	global flask_end_boilerplate
-	global additional_line_count
 
 	# Imports & initial setup
 	flask_boilerplate = ''
@@ -858,14 +946,14 @@ def set_boilerplate():
 	flask_boilerplate += 'import random\n'
 	flask_boilerplate += 'import pickle\n'
 	flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
+	flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
 
 	flask_boilerplate += 'app = Flask(__name__)\n'
 	flask_boilerplate += 'CORS(app)\n'
+	flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
-	flask_boilerplate += 'project_dir = os.path.dirname(os.path.abspath(__file__))\n'
-	flask_boilerplate += 'database_file = "sqlite:///{}".format(os.path.join(project_dir, "' + get_db_file_path() + '"))\n'
-	flask_boilerplate += 'app.config["SQLALCHEMY_DATABASE_URI"] = database_file\n'
+	flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{get_full_db_file_path(True)}\'\n'
 	flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
@@ -965,6 +1053,15 @@ def set_boilerplate():
 	flask_boilerplate += '\t\treturn self.quick_set(target, source)\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
+	flask_boilerplate += '\tdef require_keys(required_keys, _dict):\n'
+	flask_boilerplate += '\t\tstatuses = []\n'
+	flask_boilerplate += '\t\tfor key in required_keys:\n'
+	flask_boilerplate += '\t\t\tif key not in _dict:\n'
+	flask_boilerplate += '\t\t\t\tstatuses.append(False)\n'
+	flask_boilerplate += '\n\t\t\tstatuses.append(False)\n'
+	flask_boilerplate += '\n\t\treturn False not in statuses\n'
+
+	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef status(message, code):\n'
 	flask_boilerplate += '\t\treturn Response(message, status=code)\n'
 
@@ -1035,6 +1132,7 @@ def set_boilerplate():
 	flask_boilerplate += "\n\tdef user(self):\n"
 	flask_boilerplate += '\t\treturn self.decode()[\'user\']\n'
 
+	# If decode AttributeError here, make sure that PyJWT is on 1.7.1.
 	flask_boilerplate += "\n\tdef get_token(self):\n"
 	flask_boilerplate += '\t\treturn self.token.decode(\'utf-8\')\n'
 
@@ -1114,9 +1212,15 @@ def set_boilerplate():
 	flask_boilerplate += '\n\nlimiter = Limiter(app, key_func=get_remote_address)'
 
 	# Boilerplate code a the end of the output file (app.py).
-	flask_end_boilerplate = '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
+	flask_end_boilerplate = '\n\n@app.route(\'/docs/\', methods=[\'GET\'], defaults={\'filter_type\': None})\n'
+	flask_end_boilerplate += '@app.route(\'/docs/<filter_type>\', methods=[\'GET\'])\n'
+	flask_end_boilerplate += '@auto.doc(\'public\')\n'
+	flask_end_boilerplate += 'def get_docs(filter_type):\n'
+	flask_end_boilerplate += '\tif filter_type:\n'
+	flask_end_boilerplate += '\t\treturn auto.html(filter_type)\n'
+	flask_end_boilerplate += '\treturn auto.html(groups=[\'public\',\'private\'])\n'
 
-	additional_line_count += len(flask_boilerplate.split('\n'))
+	flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
 
 
 # Global variables
@@ -1149,15 +1253,14 @@ special_keywords = {
 	}
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
-ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond']
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond', 'require_keys']
 uses_db = False
 ask_config = {}
 flask_boilerplate = ''
 flask_end_boilerplate = ''
 uses_basic_decorator = False
 basic_decorator_collector = []
-# Used in error messages
-additional_line_count = 0
+previous_basic_decorator_collector = []
 
 is_dev = False
 

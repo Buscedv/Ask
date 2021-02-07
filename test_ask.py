@@ -475,9 +475,14 @@ class TestAsk(unittest.TestCase):
 		expected = ['generic_list_creator', False]
 		self.assertEqual(expected, ask.transpile_db_action(var))
 
+	def test_transpile_db_action_basic_ignore(self):
+		var = 'basic_ignore'
+		expected = ['_ignored', False]
+		self.assertEqual(expected, ask.transpile_db_action(var))
+
 	def test_transpile_db_action_keyError(self):
 		var = 'keyError'
-		expected = ''
+		expected = ['', False]
 		self.assertEqual(expected, ask.transpile_db_action(var))
 
 	# lex_var_keywords()
