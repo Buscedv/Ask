@@ -175,16 +175,26 @@ def transpile_db_action(action):
 	needs_commit = ['add', 'delete']
 
 	actions = {
+		# Basic
 		'col': 'db.Column',
-		'int': 'db.Integer',
+
+		# Attributes
 		'pk': 'primary_key=True',
 		'unique': 'unique=True',
 		'nullable': 'nullable=True',
+		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
+		'desc': 'db.desc',
+
+		# Data types
+		'int': 'db.Integer',
 		'str': 'db.String',
 		'float': 'db.Float',
 		'bool': 'db.Boolean',
 		'bytes': 'db.LargeBinary',
 		'datetime': 'db.DateTime',
+		'list_id': 'db.Integer',
+
+		# Actions
 		'all': 'query.all',
 		'get': 'query.get',
 		'save': 'db.session.commit',
@@ -192,10 +202,9 @@ def transpile_db_action(action):
 		'get_by': 'query.filter_by',
 		'add': 'db.session.add',
 		'exists': 'AskLibrary.exists',
-		'desc': 'db.desc',
-		'list_id': 'db.Integer',
+
+		# Other
 		'list': 'generic_list_creator',
-		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
 	}
 
 	try:
@@ -246,7 +255,7 @@ def is_db_column_in_past_line(tokens):
 		if token_type == 'FORMAT' and token_val == '\n':
 			break
 
-		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_CLASS':
+		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_MODEL':
 			return True
 
 	return False
@@ -453,7 +462,7 @@ def parser(tokens):
 				parsed += 'func(*args, **kwargs'
 			else:
 				parsed += f'{token_val}('
-		elif token_type == 'DB_CLASS':
+		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
 			if token_val == '_init':
@@ -1207,7 +1216,7 @@ keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 # "Special" keywords = keywords that require some sort of data after the keyword it self.
 # e.g. Classes have a class name.
 db_class = {
-	'type': 'DB_CLASS',
+	'type': 'DB_MODEL',
 	'collect': True,
 	'collect_ends': [':'],
 	'include_collect_end': True
@@ -1238,10 +1247,15 @@ uses_basic_decorator = False
 basic_decorator_collector = []
 previous_basic_decorator_collector = []
 
+source_file_name = ''
 is_dev = False
 
-# Entrypoint
-if __name__ == '__main__':
+
+def main():
+	global source_file_name
+	global ask_config
+	global is_dev
+
 	print('🌳', end='')
 	style_print('Ask', color='green')
 
@@ -1261,3 +1275,7 @@ if __name__ == '__main__':
 			style_print('- The file could not be found!', color='red')
 	else:
 		style_print('- Please provide a script file!', color='red')
+
+
+if __name__ == '__main__':
+	main()

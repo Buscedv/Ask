@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "ask"
+version = "1.0.0"
+description = "A backend programming language that reduces boilerplate."
+authors = ["Buscedv <me@edvard.dev>"]
+license = "GNU GPL v3.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Flask = "^1.1.2"
+Flask-Cors = "^3.0.10"
+Flask-Limiter = "^1.4"
+Flask-SQLAlchemy = "^2.4.4"
+Jinja2 = "^2.11.3"
+limits = "^1.5.1"
+six = "^1.15.0"
+SQLAlchemy = "^1.3.23"
+PyMySQL = "^1.0.2"
+Flask-Selfdoc = "^1.2.3"
+# Don't update PyJWT, it breaks in future releases!
+PyJWT = "1.7.1"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+ask = 'ask.ask:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

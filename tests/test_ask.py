@@ -543,13 +543,13 @@ class TestAsk(unittest.TestCase):
 	def test_lex_var_keywords_db_class(self):
 		tokens = []
 		tmp = 'db_class'
-		expected = ([['DB_CLASS', 'db_class']], '', True, [':'], True )
+		expected = ([['DB_MODEL', 'db_class']], '', True, [':'], True )
 		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
 
 	def test_lex_var_keywords_db_model(self):
 		tokens = []
 		tmp = 'db_model'
-		expected = ([['DB_CLASS', 'db_model']], '', True, [':'], True )
+		expected = ([['DB_MODEL', 'db_model']], '', True, [':'], True )
 		self.assertEqual(expected, ask.lex_var_keyword(tokens, tmp))
 
 	def test_lex_var_keywords_def(self):
