@@ -18,7 +18,7 @@ jobs:
           password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
-      - run: python test_ask.py
+      - run: python tests/test_ask.py
 
 workflows:
   version: 2
