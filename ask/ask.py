@@ -1,6 +1,6 @@
 # coding=utf-8
 
-# Ask
+# Ask 1.0.0
 # Copyright 2020, 2021 Edvard Busck-Nielsen
 #
 #     Ask is free software: you can redistribute it and/or modify
@@ -72,8 +72,8 @@ def get_ask_config(source_root):
 	if source_root:
 		source_root += '/'
 
-	if os.path.isfile(f'{source_root}Askfile'):
-		with open(f'{source_root}Askfile', 'r') as f:
+	if path := os.path.isfile(f'{source_root}Askfile'):
+		with open(path, 'r') as f:
 			return json.loads(''.join(f.readlines()))
 
 	return {}
@@ -120,13 +120,14 @@ def get_output_file_destination_path():
 
 
 def generic_transpile_word(word, words: dict, default=None):
-	return defaultdict(lambda: default if default else word, words)[word]
+	return defaultdict(lambda: default if default is not None else word, words)[word]
 
 
 def transpile_function(function):
 	return generic_transpile_word(function, {
 		'respond': 'return jsonify(',
 		'inner': 'func(*args, **kwargs',
+		'status': 'abort(Response('
 	}, f'{function}(')
 
 
@@ -226,11 +227,14 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 			break
 
 	code_lines = [f'def __init__(self, {", ".join(basic_decorator_collector)}):']
+
 	for var in basic_decorator_collector:
 		code_lines.append(f'\tself.{var} = {var}')
+
 	code_lines.append('')
 	code_lines.append('def s(self):')
 	code_lines.append('\treturn {')
+
 	for var_index, var in enumerate(ignored_db_vars + basic_decorator_collector):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
 	code_lines.append('\t}\n')
@@ -444,11 +448,11 @@ def parser(tokens):
 					is_decorator = False
 			elif token_val in ask_library_methods:
 				prefix = 'AskLibrary.'
-				if token_val in ['respond']:
+				if token_val == 'respond':
 					prefix = f'return {prefix}'
 				parsed += f'{prefix}{token_val}('
 			elif token_val == 'status':
-				parsed += 'abort(Response('
+				parsed += transpile_function(token_val)
 				add_parenthesis_at_en_of_line = True
 
 			parsed += transpile_function(token_val)
@@ -533,8 +537,8 @@ def add_part(parts, is_string, code):
 	return parts, '', is_string
 
 
-# Remove spaces between function names and '('.
-# Replaces four & two spaces with tab.
+# Removes spaces between function names and '(' characters.
+# Replaces 4 & 2 spaces with tab characters.
 def fix_up_code_line(statement):
 	statement = statement.replace("'", '"')
 
@@ -734,25 +738,6 @@ def insert_indention_group_markers(tokens):
 	return marked
 
 
-# Parses tokens and adds the end boilerplate to the output code.
-def parse_and_prepare(tokens):
-	global flask_boilerplate
-	global flask_end_boilerplate
-
-	parsed = parser(tokens)
-	parsed = f'{flask_boilerplate}\n{parsed}'
-	parsed += flask_end_boilerplate
-
-	return parsed
-
-
-def build(parsed):
-	# Saves the transpiled code to the build/output file
-	with open(get_output_file_destination_path(), 'w+') as f:
-		f.write('')
-		f.write(parsed)
-
-
 def parse_and_print_error(err):
 	import difflib
 
@@ -826,9 +811,15 @@ def startup(file_name):
 		os.environ['FLASK_ENV'] = 'development'
 
 	if tokens_list:
-		# Parsing.
-		parsed = parse_and_prepare(tokens_list)
-		build(parsed)
+		# Parses tokens and adds the end boilerplate to the output code.
+		parsed = parser(tokens_list)
+		parsed = f'{flask_boilerplate}\n{parsed}'
+		parsed += flask_end_boilerplate
+
+		# Saves the transpiled code to the build/output file
+		with open(get_output_file_destination_path(), 'w+') as f:
+			f.write('')
+			f.write(parsed)
 
 		# Transpilation done.
 		end_time = time.time()
