@@ -20,6 +20,7 @@
 import sys
 import os
 from pprint import pprint
+from collections import defaultdict
 
 
 # Prints out text colorized and (optionally) as bold.
@@ -118,30 +119,31 @@ def get_output_file_destination_path():
 	return f'{prefix}app.py'
 
 
+def generic_transpile_word(word, words: dict, default=None):
+	return defaultdict(lambda: default if default else word, words)[word]
+
+
+def transpile_function(function):
+	return generic_transpile_word(function, {
+		'respond': 'return jsonify(',
+		'inner': 'func(*args, **kwargs',
+	}, f'{function}(')
+
+
 def transpile_var(var):
-	vars = {
+	return generic_transpile_word(var, {
 		'_body': 'request.json',
 		'_form': 'request.form',
 		'_args': 'request.args',
 		'_req': 'AskLibrary.get_all_req()',
 		'_datetime': 'datetime.datetime'
-	}
-
-	try:
-		return vars[var]
-	except KeyError:
-		return var
+	})
 
 
 def transpile_keyword(keyword):
-	keywords = {
+	return generic_transpile_word(keyword, {
 		'respond': 'return'
-	}
-
-	try:
-		return keywords[keyword]
-	except KeyError:
-		return keyword
+	})
 
 
 def transpile_decorator(decorator):
@@ -174,7 +176,7 @@ def transpile_decorator(decorator):
 def transpile_db_action(action):
 	needs_commit = ['add', 'delete']
 
-	actions = {
+	transpiled_action = generic_transpile_word(action, {
 		# Basic
 		'col': 'db.Column',
 
@@ -205,15 +207,9 @@ def transpile_db_action(action):
 
 		# Other
 		'list': 'generic_list_creator',
-	}
+	}, '')
 
-	try:
-		if action in needs_commit:
-			return [actions[action], True]
-
-		return [actions[action], False]
-	except KeyError:
-		return ['', False]
+	return [transpiled_action, action in needs_commit]
 
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
@@ -448,26 +444,18 @@ def parser(tokens):
 					is_decorator = False
 			elif token_val in ask_library_methods:
 				prefix = 'AskLibrary.'
-
 				if token_val in ['respond']:
 					prefix = f'return {prefix}'
-
 				parsed += f'{prefix}{token_val}('
-			elif token_val == 'respond':
-				parsed += 'return jsonify('
 			elif token_val == 'status':
 				parsed += 'abort(Response('
 				add_parenthesis_at_en_of_line = True
-			elif token_val == '_inner':
-				parsed += 'func(*args, **kwargs'
-			else:
-				parsed += f'{token_val}('
+
+			parsed += transpile_function(token_val)
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
-			if token_val == '_init':
-				token_val = '__init__'
-			parsed += f'def {token_val}('
+			parsed += f'def {token_val if token_val != "_init" else "__init__"}('
 		elif token_type == 'DEC_DEF':
 			parsed += f'def {token_val}(func):'
 			parsed += f'\n\tdef wrapper(*args, **kwargs):'

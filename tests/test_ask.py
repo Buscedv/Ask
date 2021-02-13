@@ -1,5 +1,5 @@
 import unittest
-import ask
+from ask import ask
 
 
 class TestAsk(unittest.TestCase):
@@ -373,6 +373,17 @@ class TestAsk(unittest.TestCase):
 		var = 'keyError'
 		expected = ''
 		self.assertEqual(expected, ask.transpile_decorator(var))
+
+	# transpile_function()
+	def test_transpile_function_respond(self):
+		var = 'respond'
+		expected = 'return jsonify('
+		self.assertEqual(expected, ask.transpile_function(var))
+
+	def test_transpile_function_keyError(self):
+		var = 'keyError'
+		expected = 'keyError('
+		self.assertEqual(expected, ask.transpile_function(var))
 
 	# transpile_db_action()
 	def test_transpile_db_action_add(self):
