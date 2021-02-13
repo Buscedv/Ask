@@ -72,8 +72,10 @@ def get_ask_config(source_root):
 	if source_root:
 		source_root += '/'
 
-	if path := os.path.isfile(f'{source_root}Askfile'):
-		with open(path, 'r') as f:
+	askfile_path = f'{source_root}Askfile'
+
+	if os.path.isfile(askfile_path):
+		with open(askfile_path, 'r') as f:
 			return json.loads(''.join(f.readlines()))
 
 	return {}
@@ -454,8 +456,8 @@ def parser(tokens):
 			elif token_val == 'status':
 				parsed += transpile_function(token_val)
 				add_parenthesis_at_en_of_line = True
-
-			parsed += transpile_function(token_val)
+			else:
+				parsed += transpile_function(token_val)
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
@@ -742,6 +744,7 @@ def parse_and_print_error(err):
 	import difflib
 
 	global source_file_name
+	global is_dev
 
 	message = err['msg'].capitalize()
 	transpiled_line_nr = err['line']
@@ -754,6 +757,11 @@ def parse_and_print_error(err):
 
 	matches = list(difflib.get_close_matches(code, raw_lines))
 
+	if is_dev:
+		# Prints out the "real" line number.
+		style_print('\t- DEV: ', color='blue', end=' ')
+		print(f'{message} on line: {transpiled_line_nr} in: {get_output_file_destination_path()}')
+
 	if not matches:
 		style_print('\t- Error!', color='red', end=' ')
 		print('Something went wrong!')
@@ -765,10 +773,6 @@ def parse_and_print_error(err):
 		if line == str(matches[0]):
 			line_nr = line_index
 			break
-
-	if is_dev:
-		# Prints out the "real" line number.
-		print(f'\t- DEV: {message} on line: {transpiled_line_nr} in: {get_output_file_destination_path()}')
 
 	style_print('\t- Error!', color='red', end=' ')
 	style_print(f'({source_file_name})', color='gray', end=' ')
