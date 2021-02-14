@@ -3,6 +3,7 @@ version: 2.1
 slack-fail-post-step: &slack-fail-post-step
     post-steps:
         - slack/status:
+            webhook: $SLACK_WEBHOOK
             fail_only: true
 
 orbs:
