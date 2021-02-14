@@ -134,13 +134,19 @@ def transpile_function(function):
 
 
 def transpile_var(var):
-	return generic_transpile_word(var, {
-		'_body': 'request.json',
-		'_form': 'request.form',
-		'_args': 'request.args',
-		'_req': 'AskLibrary.get_all_req()',
-		'_datetime': 'datetime.datetime'
-	})
+	translations = {
+		'body': 'request.json',
+		'form': 'request.form',
+		'args': 'request.args',
+		'req': 'AskLibrary.get_all_req()',
+		'datetime': 'datetime.datetime'
+	}
+
+	# Also support built in vars with leading underscores.
+	translations_with_underscores = {f'_{var_key}': translations[var_key] for var_key in translations}
+	translations.update(translations_with_underscores)
+
+	return generic_transpile_word(var, translations)
 
 
 def transpile_keyword(keyword):
@@ -187,7 +193,7 @@ def transpile_db_action(action):
 		'pk': 'primary_key=True',
 		'unique': 'unique=True',
 		'nullable': 'nullable=True',
-		'basic_ignore': '_ignored',  # Ignored in the basic _init() boilerplate.
+		'basic_ignore': 'ignored',  # Ignored in the basic init() boilerplate.
 		'desc': 'db.desc',
 
 		# Data types
@@ -461,7 +467,7 @@ def parser(tokens):
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
-			parsed += f'def {token_val if token_val != "_init" else "__init__"}('
+			parsed += f'def {token_val if token_val not in ["init", "_init"] else "__init__"}('
 		elif token_type == 'DEC_DEF':
 			parsed += f'def {token_val}(func):'
 			parsed += f'\n\tdef wrapper(*args, **kwargs):'
@@ -479,7 +485,7 @@ def parser(tokens):
 			transpiled = transpile_db_action(token_val)
 
 			if uses_basic_decorator:
-				if transpiled[0] in ['primary_key=True', '_ignored']:
+				if transpiled[0] in ['primary_key=True', 'ignored']:
 					ignored_due_to_basic_decorator.append(get_first_variable_token_value_of_line(past_lines_tokens))
 
 				if transpiled[0] == 'db.Column':
@@ -490,7 +496,7 @@ def parser(tokens):
 						if ignored in basic_decorator_collector:
 							basic_decorator_collector.remove(ignored)
 
-			if transpiled[0] != '_ignored':
+			if transpiled[0] != 'ignored':
 				parsed += transpiled[0]
 			if transpiled[1]:
 				needs_db_commit = True
@@ -585,7 +591,7 @@ def lexer(raw):
 		line = fix_up_code_line(line)
 		for char_index, char in enumerate(line):
 			if char == '#':
-				tokens.append(['FORMAT', '\n'])
+				# tokens.append(['FORMAT', '\n'])
 				break
 
 			if is_collector:
@@ -656,7 +662,7 @@ def lexer(raw):
 			else:
 				tokens, tmp, is_collector, collector_ends, include_collector_end = lex_var_keyword(tokens, tmp)
 
-			if len(tokens) > 2 and tokens[-2][0] == 'VAR' and tokens[-2][1] == '_db':
+			if len(tokens) > 2 and tokens[-2][0] == 'VAR' and tokens[-2][1] in ['db', '_db']:
 				# Removes both the VAR: _db and the OP: .
 				tokens.pop(-1)
 				tokens.pop(-1)
@@ -911,7 +917,7 @@ def set_boilerplate():
 	flask_boilerplate += 'import datetime\n'
 	flask_boilerplate += 'import os\n'
 	flask_boilerplate += 'import hashlib\n'
-	flask_boilerplate += 'import random\n'
+	flask_boilerplate += 'import random as rand\n'
 	flask_boilerplate += 'import pickle\n'
 	flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 	flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
@@ -1130,12 +1136,12 @@ def set_boilerplate():
 	flask_boilerplate += '\t\tif end - start < count:\n'
 	flask_boilerplate += '\t\t\traise ValueError("Integer count greater than the input range!")\n'
 	flask_boilerplate += '\t\tif count > 1:\n'
-	flask_boilerplate += '\t\t\treturn random.sample(range(start, end), count)\n'
-	flask_boilerplate += '\n\t\treturn random.randint(start, end)\n'
+	flask_boilerplate += '\t\t\treturn rand.sample(range(start, end), count)\n'
+	flask_boilerplate += '\n\t\treturn rand.randint(start, end)\n'
 
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef __random_float(start, end, decimals):\n'
-	flask_boilerplate += '\t\treturn round(random.uniform(start, end), decimals)\n'
+	flask_boilerplate += '\t\treturn round(rand.uniform(start, end), decimals)\n'
 
 	flask_boilerplate += '\n\tdef float(self, start, end, count=1, decimals=16, unique=False):\n'
 	flask_boilerplate += '\t\tif count <= 1:\n'
@@ -1152,14 +1158,22 @@ def set_boilerplate():
 	flask_boilerplate += '\n\t@staticmethod\n'
 	flask_boilerplate += '\tdef element(iterable, count=1, weights=None, unique=False):\n'
 	flask_boilerplate += '\t\tif unique:\n'
-	flask_boilerplate += '\t\t\treturn random.sample(iterable, k=count)\n'
-	flask_boilerplate += '\n\t\treturn random.choices(iterable, weights=weights, k=count)\n'
+	flask_boilerplate += '\t\t\treturn rand.sample(iterable, k=count)\n'
+	flask_boilerplate += '\n\t\treturn rand.choices(iterable, weights=weights, k=count)\n'
 
 	# Setting up global instances of the library classes.
-	flask_boilerplate += "\n\n_auth = Auth()\n"
-	flask_boilerplate += "_env = Env()\n"
-	flask_boilerplate += "_hash = Hash()\n"
-	flask_boilerplate += "_random = Random()\n"
+	# There's also support for leading underscore syntax.
+	flask_boilerplate += "\n\nauth = Auth()\n"
+	flask_boilerplate += "_auth = auth\n"
+
+	flask_boilerplate += "env = Env()\n"
+	flask_boilerplate += "_env = env\n"
+
+	flask_boilerplate += "hash = Hash()\n"
+	flask_boilerplate += "_hash = hash\n"
+
+	flask_boilerplate += "random = Random()\n"
+	flask_boilerplate += "_random = random\n"
 
 	# Decorator function for checking & validating the passed in token for protected routes.
 	flask_boilerplate += "\n\ndef check_for_token(func):\n"
@@ -1192,7 +1206,14 @@ def set_boilerplate():
 
 
 # Global variables
-built_in_vars = ['_body', '_form', '_args', '_req', '_auth', '_env', '_db', '_datetime']
+built_in_vars = ['body', 'form', 'args', 'req', 'auth', 'env', 'db', 'datetime']
+
+# Also support the built in var with leading underscores.
+built_in_vars_with_underscores = []
+for var in built_in_vars:
+	built_in_vars_with_underscores.append(f'_{var}')
+built_in_vars += built_in_vars_with_underscores
+
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 
