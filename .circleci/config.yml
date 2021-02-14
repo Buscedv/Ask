@@ -42,7 +42,7 @@ workflows:
     version: 2
     build_and_test:
         jobs:
-            - build
+            - build: *slack-fail-post-step
             - test:
                 requires:
                     - build
