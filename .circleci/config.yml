@@ -5,7 +5,7 @@ jobs:
         docker:
             - image: circleci/python:3.9.1
               auth:
-                  username: buscedv
+                  username: $DOCKERHUH_USERNAME
                   password: $DOCKERHUB_PASSWORD
         steps:
             - checkout
@@ -25,7 +25,7 @@ jobs:
         docker:
             - image: circleci/python:3.9.1
               auth:
-                  username: buscedv
+                  username: $DOCKERHUH_USERNAME
                   password: $DOCKERHUB_PASSWORD
         steps:
             - checkout
