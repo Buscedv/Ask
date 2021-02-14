@@ -1,12 +1,12 @@
-built_in_vars = ['body', 'form', 'args', 'req', 'auth', 'env', 'db', 'datetime']
+from collections import defaultdict
 
+# Transpiler related globals.
+built_in_vars = ['body', 'form', 'args', 'req', 'auth', 'env', 'db', 'datetime']
 # Also support the built in var with leading underscores.
 built_in_vars_with_underscores = [f'_{var}' for var in built_in_vars]
 built_in_vars += built_in_vars_with_underscores
-
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
-
 # "Special" keywords = keywords that require some sort of data after the keyword it self.
 # e.g. Classes have a class name.
 db_class = {
@@ -33,13 +33,20 @@ special_keywords = {
 }
 operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
 ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond', 'require_keys']
-uses_db = False
-ask_config = {}
 flask_boilerplate = ''
 flask_end_boilerplate = ''
+uses_db = False
 uses_basic_decorator = False
 basic_decorator_collector = []
 previous_basic_decorator_collector = []
 
+# Others.
+ask_config = {}
+
+project_information = {
+	'version': '1.0.0',
+}
+
 source_file_name = ''
 is_dev = False
+transpilation_result = defaultdict(lambda: '', {})

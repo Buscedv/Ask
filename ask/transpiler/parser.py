@@ -1,6 +1,5 @@
 from ask import cfg
-from ask.utilities import parser_utils
-from ask.utilities import translators
+from ask.transpiler.utilities import parser_utils, translators
 
 
 def parser(tokens):

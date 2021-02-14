@@ -1,7 +1,7 @@
 from pprint import pprint
 
 import ask.cfg as cfg
-import ask.utilities.lexer_utils as lexer_utils
+from ask.transpiler.utilities import lexer_utils
 
 
 def add_part(parts, is_string, code):

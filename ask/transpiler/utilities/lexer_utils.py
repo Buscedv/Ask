@@ -1,10 +1,8 @@
 from ask import cfg
+from ask.transpiler.utilities import translators
 
 
 # Figures out if a given name should be lexed as a keyword or variable token.
-from ask.utilities import translators
-
-
 def lex_var_keyword(tokens, tmp):
 	collect = False
 	collect_ends = []

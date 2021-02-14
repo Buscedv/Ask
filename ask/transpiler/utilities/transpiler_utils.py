@@ -1,7 +1,5 @@
-import os
-
 from ask import cfg
-from ask.utilities import utils, file_utils
+from ask.utilities import file_utils
 
 
 def set_boilerplate():
@@ -302,21 +300,3 @@ def set_boilerplate():
 	cfg.flask_end_boilerplate += '\treturn auto.html(groups=[\'public\',\'private\'])\n'
 
 	cfg.flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
-
-
-def build_db(file_name):
-	status = False
-	try:
-		status = bool(cfg.ask_config['db']['custom'])
-	except Exception:
-		status = False
-
-	if not status and cfg.uses_db and not os.path.exists(file_utils.get_db_file_path()):
-		utils.style_print('Building database...', styles=['bold'], end='')
-		db_root = file_utils.get_root_from_file_path(file_utils.get_db_file_path())
-		print('\t✅')
-
-		if db_root and db_root != file_name and not os.path.exists(db_root):
-			print('\t- Building Folder Structure...', end='')
-			os.makedirs(db_root)
-			print('\t✅')
