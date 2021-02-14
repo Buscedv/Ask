@@ -1,0 +1,45 @@
+built_in_vars = ['body', 'form', 'args', 'req', 'auth', 'env', 'db', 'datetime']
+
+# Also support the built in var with leading underscores.
+built_in_vars_with_underscores = [f'_{var}' for var in built_in_vars]
+built_in_vars += built_in_vars_with_underscores
+
+variables = built_in_vars
+keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
+
+# "Special" keywords = keywords that require some sort of data after the keyword it self.
+# e.g. Classes have a class name.
+db_class = {
+	'type': 'DB_MODEL',
+	'collect': True,
+	'collect_ends': [':'],
+	'include_collect_end': True
+}
+special_keywords = {
+	'db_class': db_class,
+	'db_model': db_class,
+	'def': {
+		'type': 'FUNC_DEF',
+		'collect': True,
+		'collect_ends': ['('],
+		'include_collect_end': False
+	},
+	'decorator': {
+		'type': 'DEC_DEF',
+		'collect': True,
+		'collect_ends': [':'],
+		'include_collect_end': False
+	}
+}
+operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
+ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond', 'require_keys']
+uses_db = False
+ask_config = {}
+flask_boilerplate = ''
+flask_end_boilerplate = ''
+uses_basic_decorator = False
+basic_decorator_collector = []
+previous_basic_decorator_collector = []
+
+source_file_name = ''
+is_dev = False
