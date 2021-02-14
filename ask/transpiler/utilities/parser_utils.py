@@ -1,38 +1,3 @@
-from ask import cfg
-
-
-def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
-	parsed_lines_reversed = parsed.split('\n')[::-1]
-	tab_count = 0
-	line_to_place_code_at = None
-
-	for line_index, line in enumerate(parsed_lines_reversed):
-		if 'db.Column(' in line:
-			tab_count = len(get_current_tab_level(line))
-			line_to_place_code_at = line_index + 1
-			break
-
-	code_lines = [f'def __init__(self, {", ".join(cfg.basic_decorator_collector)}):']
-
-	for var in cfg.basic_decorator_collector:
-		code_lines.append(f'\tself.{var} = {var}')
-
-	code_lines.append('')
-	code_lines.append('def s(self):')
-	code_lines.append('\treturn {')
-
-	for var_index, var in enumerate(ignored_db_vars + cfg.basic_decorator_collector):
-		code_lines.append(f'\t\t\'{var}\': self.{var},')
-	code_lines.append('\t}\n')
-
-	tab_char = '\t'
-	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
-
-	return '\n'.join(
-		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
-		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
-
-
 def is_db_column_in_past_line(tokens):
 	for token in tokens[::-1]:
 		token_type = token[0]
@@ -98,7 +63,6 @@ def get_current_tab_level(parsed):
 	parsed = parsed[::-1]
 
 	indents = ''
-
 	for char in parsed:
 		if char == '\t':
 			indents += char

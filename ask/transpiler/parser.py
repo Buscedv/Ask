@@ -1,5 +1,37 @@
 from ask import cfg
-from ask.transpiler.utilities import parser_utils, translators
+from ask.transpiler.utilities import parser_utils, small_transpilers
+
+
+def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
+	parsed_lines_reversed = parsed.split('\n')[::-1]
+	tab_count = 0
+	line_to_place_code_at = None
+
+	for line_index, line in enumerate(parsed_lines_reversed):
+		if 'db.Column(' in line:
+			tab_count = len(parser_utils.get_current_tab_level(line))
+			line_to_place_code_at = line_index + 1
+			break
+
+	code_lines = [f'def __init__(self, {", ".join(cfg.basic_decorator_collector)}):']
+
+	for var in cfg.basic_decorator_collector:
+		code_lines.append(f'\tself.{var} = {var}')
+
+	code_lines.append('')
+	code_lines.append('def s(self):')
+	code_lines.append('\treturn {')
+
+	for var_index, var in enumerate(ignored_db_vars + cfg.basic_decorator_collector):
+		code_lines.append(f'\t\t\'{var}\': self.{var},')
+	code_lines.append('\t}\n')
+
+	tab_char = '\t'
+	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
+
+	return '\n'.join(
+		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
+		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
 
 
 def parser(tokens):
@@ -38,7 +70,7 @@ def parser(tokens):
 					basic_decorator_collection_might_end = False
 					cfg.uses_basic_decorator = False
 
-					parsed = parser_utils.insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
+					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
 					cfg.basic_decorator_collector = []
 					ignored_due_to_basic_decorator = []
 			else:
@@ -88,7 +120,7 @@ def parser(tokens):
 			if token_val not in cfg.built_in_vars and token_index > 0:
 				parsed = parser_utils.maybe_place_space_before(parsed, token_val)
 			else:
-				parsed += translators.transpile_var(token_val)
+				parsed += small_transpilers.transpile_var(token_val)
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				new_line = '\n'
@@ -126,10 +158,10 @@ def parser(tokens):
 					prefix = f'return {prefix}'
 				parsed += f'{prefix}{token_val}('
 			elif token_val == 'status':
-				parsed += translators.transpile_function(token_val)
+				parsed += small_transpilers.transpile_function(token_val)
 				add_parenthesis_at_en_of_line = True
 			else:
-				parsed += translators.transpile_function(token_val)
+				parsed += small_transpilers.transpile_function(token_val)
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
@@ -141,14 +173,14 @@ def parser(tokens):
 		elif token_type == 'KEY':
 			parsed += f'\'{token_val}\''
 		elif token_type == 'DEC':
-			decorator = translators.transpile_decorator(token_val)
+			decorator = small_transpilers.transpile_decorator(token_val)
 			if not decorator:
 				parsed += f'@{token_val}'
 
 			if decorator != '---':
 				is_decorator = True
 		elif token_type == 'DB_ACTION':
-			transpiled = translators.transpile_db_action(token_val)
+			transpiled = small_transpilers.transpile_db_action(token_val)
 
 			if cfg.uses_basic_decorator:
 				if transpiled[0] in ['primary_key=True', 'ignored']:

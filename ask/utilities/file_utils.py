@@ -20,16 +20,25 @@ def get_root_from_file_path(file_path):
 
 
 def get_ask_config(source_root):
-	import json
+	import toml
 
 	if source_root:
 		source_root += '/'
 
 	askfile_path = f'{source_root}Askfile'
 
+	# JSON (backwards compatibility).
 	if os.path.isfile(askfile_path):
+		import json
+
 		with open(askfile_path, 'r') as f:
 			return json.loads(''.join(f.readlines()))
+
+	# TOML (recommended).
+	askfile_path += '.toml'
+	if os.path.isfile(askfile_path):
+		with open(askfile_path, 'r') as f:
+			return toml.loads(''.join(f.readlines()))
 
 	return {}
 

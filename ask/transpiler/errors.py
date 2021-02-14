@@ -8,6 +8,9 @@ from ask.utilities import file_utils
 def parse_and_print_error(err):
 	import difflib
 
+	# This function tries to figure out on which line the error is coming from.
+	# This is complicated since the error is coming from the transpiled code and not the source code.
+
 	matches = []
 	skip_to_printing = False
 
@@ -21,11 +24,13 @@ def parse_and_print_error(err):
 			message = err['msg'].capitalize()
 		except Exception:
 			message = err['msg']
+
 		transpiled_line_nr = err['line']
 		code = err['code'].replace('\t', '')
 
 		line_nr = None
 
+		# Looks for the most similar line in the Ask code.
 		with open(cfg.source_file_name, 'r') as f:
 			raw_lines = f.readlines()
 
@@ -36,6 +41,7 @@ def parse_and_print_error(err):
 			utils.style_print('\t- DEV: ', color='blue', end=' ')
 			print(f'{message} on line: {transpiled_line_nr} in: {file_utils.get_output_file_destination_path()}')
 
+	# No matching line was found, this most likely means that it's not a syntax error.
 	if skip_to_printing or not matches:
 		utils.style_print('\t- Error!', color='red', end=' ')
 		print('Something went wrong!')
@@ -43,11 +49,13 @@ def parse_and_print_error(err):
 
 		return
 
+	# Get's the correct line number.
 	for line_index, line in enumerate(raw_lines):
 		if line == str(matches[0]):
 			line_nr = line_index
 			break
 
+	# Prints out a customized error message based on the original.
 	utils.style_print('\t- Error!', color='red', end=' ')
 	utils.style_print(f'({cfg.source_file_name})', color='gray', end=' ')
 	utils.style_print(message, styles=['bold'], end=' ')

@@ -4,47 +4,6 @@ import ask.cfg as cfg
 from ask.transpiler.utilities import lexer_utils
 
 
-def add_part(parts, is_string, code):
-	parts.append({
-		'is_string': is_string,
-		'code': code
-	})
-
-	is_string = True
-
-	if code[-1] == '\n':
-		is_string = False
-
-	return parts, '', is_string
-
-
-# Removes spaces between function names and '(' characters.
-# Replaces 4 & 2 spaces with tab characters.
-def fix_up_code_line(statement):
-	statement = statement.replace("'", '"')
-
-	parts = []
-	is_string = False
-	tmp = ''
-
-	for char in statement:
-		tmp += char
-
-		if char == '"' and is_string:
-			parts, tmp, is_string = add_part(parts, True, tmp)
-			is_string = False
-		elif char in ['"', '\n']:
-			parts, tmp, is_string = add_part(parts, False, tmp)
-
-	statement = ''
-	for part in parts:
-		if not part['is_string']:
-			part['code'] = part['code'].replace('    ', '\t').replace('  ', '\t').replace(' (', '(')
-		statement += part['code']
-
-	return statement
-
-
 def lexer(raw):
 	tmp = ''
 	is_collector = False
@@ -55,7 +14,7 @@ def lexer(raw):
 	tokens = []
 
 	for line in raw:
-		line = fix_up_code_line(line)
+		line = lexer_utils.fix_up_code_line(line)
 		for char_index, char in enumerate(line):
 			if char == '#':
 				# tokens.append(['FORMAT', '\n'])
@@ -142,31 +101,8 @@ def lexer(raw):
 	return tokens
 
 
-def tokens_grouped_by_lines(tokens):
-	tmp = []
-	lines = []
-
-	for token_index, token in enumerate(tokens):
-		token_type = token[0]
-		token_val = token[1]
-
-		if token_type == 'OP' and token_val in ['\n', '\t']:
-			token_type = 'FORMAT'
-
-		if token_type == 'FORMAT' and token_val == '\n':
-			lines.append(tmp)
-			tmp = []
-
-		tmp.append([token_type, token_val])
-
-	if tmp:
-		lines.append(tmp)
-
-	return lines
-
-
 def insert_indention_group_markers(tokens):
-	lines = tokens_grouped_by_lines(tokens)
+	lines = lexer_utils.tokens_grouped_by_lines(tokens)
 
 	marked = []
 	previous_line_tabs = 0
@@ -220,5 +156,6 @@ def lex(source_lines):
 	if cfg.is_dev:
 		print('\n')
 		pprint(tokens_list)
+		print('\n')
 
 	return tokens_list
