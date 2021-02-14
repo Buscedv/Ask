@@ -1,4 +1,10 @@
 version: 2.1
+
+slack-fail-post-step: &slack-fail-post-step
+    post-steps:
+        - slack/status:
+            fail_only: true
+
 orbs:
     slack: circleci/slack@4.2.1
 jobs:
@@ -31,10 +37,6 @@ jobs:
         steps:
             - checkout
             - run: python3 -m unittest
-            - slack/notify:
-                channel: $SLACK_DEFAULT_CHANNEL
-                event: fail
-                template: basic_fail_1
 
 workflows:
     version: 2
@@ -42,7 +44,8 @@ workflows:
         jobs:
             - build
             - test
-                context: slack-secrets
+                post-steps:
+                    - slack/status
 
 
 
