@@ -1,31 +1,42 @@
 version: 2.1
 
 jobs:
-  build:
-    docker:
-      - image: circleci/python:3.9.1
-        auth:
-          username: buscedv
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - run: pip install -r requirements.txt
-  test:
-    docker:
-      - image: circleci/python:3.9.1
-        auth:
-          username: buscedv
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - run: python tests/test_ask.py
+    build:
+        docker:
+            - image: circleci/python:3.9.1
+              auth:
+                  username: buscedv
+                  password: $DOCKERHUB_PASSWORD
+        steps:
+            - checkout
+            - restore_cache:
+                keys:
+                    - deps-{{ checksum "poetry.lock" }}
+            - run:
+                name: Install Dependencies
+                command: |
+                    poetry install
+
+            - save_cache:
+                key: deps-{{ checksum "poetry.lock" }}
+                paths:
+                    - /home/circleci/.cache/pypoetry/virtualenvs
+    test:
+        docker:
+            - image: circleci/python:3.9.1
+              auth:
+                  username: buscedv
+                  password: $DOCKERHUB_PASSWORD
+        steps:
+            - checkout
+            - run: python3 -m unittest
 
 workflows:
-  version: 2
-  build_and_test:
-    jobs:
-      - build
-      - test
+    version: 2
+    build_and_test:
+        jobs:
+            - build
+            - test
 
 
 
