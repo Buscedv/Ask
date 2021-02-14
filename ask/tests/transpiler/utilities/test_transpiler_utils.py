@@ -4,11 +4,8 @@ from ask.transpiler.utilities import transpiler_utils
 
 
 class TestAskTranspilerUtilitiesTranspilerUtils(unittest.TestCase):
-
-
-def main():
-	unittest.main()
+	pass
 
 
 if __name__ == '__main__':
-	main()
+	unittest.main()

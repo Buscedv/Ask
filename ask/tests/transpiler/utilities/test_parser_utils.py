@@ -48,9 +48,5 @@ class TestAskTranspilerUtilitiesParserUtils(unittest.TestCase):
 			self.assertEqual(tests[test], parser_utils.get_current_tab_level(test))
 
 
-def main():
-	unittest.main()
-
-
 if __name__ == '__main__':
-	main()
+	unittest.main()

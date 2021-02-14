@@ -10,9 +10,5 @@ class TestAskUtilitiesFileUtils(unittest.TestCase):
 		self.assertEqual('/folder/folder', file_utils.get_root_from_file_path(file_path))
 
 
-def main():
-	unittest.main()
-
-
 if __name__ == '__main__':
-	main()
+	unittest.main()

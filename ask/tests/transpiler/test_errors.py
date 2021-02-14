@@ -4,11 +4,8 @@ from ask.transpiler import errors
 
 
 class TestAskTranspilerErrors(unittest.TestCase):
-
-
-def main():
-	unittest.main()
+	pass
 
 
 if __name__ == '__main__':
-	main()
+	unittest.main()
