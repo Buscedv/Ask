@@ -82,14 +82,20 @@ def import_app():
 def run_dev_server():
 	app = import_app()
 
-	style_print('Running Flask app:', styles=['bold'])
-	os.environ['FLASK_APP'] = file_utils.get_output_file_destination_path()
-	if cfg.is_dev:
-		os.environ['FLASK_ENV'] = 'development'
-
-	# Starts the server.
+	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
-		app.app.run()
+		if not cfg.uses_routes:
+			# The app is just a script. Ask is used like a general purpose language.
+			app.main()
+		else:
+			# The app uses routes so it's an API, the app needs to run in a web server.
+			style_print('Running Flask app:', styles=['bold'])
+			os.environ['FLASK_APP'] = file_utils.get_output_file_destination_path()
+			if cfg.is_dev:
+				os.environ['FLASK_ENV'] = 'development'
+
+			# Starts the server.
+			app.app.run()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 
@@ -98,3 +104,14 @@ def run_dev_server():
 
 def load_askfile_config():
 	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
+
+
+def get_ask_config_rule(key_tree, not_found):
+	try:
+		current_position = cfg.ask_config[key_tree[0]]
+		for key in key_tree[1:]:
+			current_position = current_position[key]
+
+		return current_position
+	except KeyError:
+		return not_found

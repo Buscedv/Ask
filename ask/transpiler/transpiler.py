@@ -11,6 +11,7 @@ def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
 		# Imports app.py for two reasons:
 		# 1. To catch syntax errors.
 		# 2. To load the database (if it's used).
+
 		app = utils.import_app()
 
 		if cfg.uses_db:
@@ -51,9 +52,6 @@ def transpile(source_lines):
 
 	# Load Askfile.
 	utils.load_askfile_config()
-
-	# Boilerplate setup.
-	transpiler_utils.set_boilerplate()
 
 	# Lexing.
 	tokens_list = lexer.lex(source_lines)

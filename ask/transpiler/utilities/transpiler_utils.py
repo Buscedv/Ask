@@ -299,4 +299,9 @@ def set_boilerplate():
 	cfg.flask_end_boilerplate += '\t\treturn auto.html(filter_type)\n'
 	cfg.flask_end_boilerplate += '\treturn auto.html(groups=[\'public\',\'private\'])\n'
 
-	cfg.flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n\tapp.run()\n'
+	# Boilerplate at the end of the script.
+
+	cfg.flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n'
+	if not cfg.uses_routes:
+		cfg.flask_end_boilerplate += '\tmain()\n'
+	cfg.flask_end_boilerplate += '\tapp.run()\n'

@@ -70,3 +70,13 @@ def get_current_tab_level(parsed):
 			break
 
 	return indents
+
+
+def add_underscores_to_all_elements(original_list):
+	return original_list + [f'_{element}' for element in original_list]
+
+
+def add_underscores_to_dict_keys(dictionary):
+	with_underscores = {f'_{key}': dictionary[key] for key in dictionary}
+
+	return {**dictionary, **with_underscores}

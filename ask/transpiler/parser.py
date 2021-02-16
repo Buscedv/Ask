@@ -1,5 +1,5 @@
 from ask import cfg
-from ask.transpiler.utilities import parser_utils, small_transpilers
+from ask.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
 
 
 def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
@@ -35,6 +35,8 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 
 
 def parser(tokens):
+	parsed = ''
+
 	is_skip = False
 	needs_db_commit = False
 	is_decorator = False
@@ -44,7 +46,6 @@ def parser(tokens):
 	add_parenthesis_at_en_of_line = False
 	basic_decorator_collection_might_end = False
 	on_next_run_uses_basic_decorator = False
-	parsed = ''
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
 
@@ -117,7 +118,7 @@ def parser(tokens):
 		elif token_type == 'KEYWORD':
 			parsed = parser_utils.maybe_place_space_before(parsed, token_val)
 		elif token_type == 'VAR':
-			if token_val not in cfg.built_in_vars and token_index > 0:
+			if token_val not in parser_utils.add_underscores_to_all_elements(cfg.built_in_vars) and token_index > 0:
 				parsed = parser_utils.maybe_place_space_before(parsed, token_val)
 			else:
 				parsed += small_transpilers.transpile_var(token_val)
@@ -133,6 +134,7 @@ def parser(tokens):
 					next_token_val = tokens[token_index + 1][1]
 
 					parsed += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
+					cfg.uses_routes = True
 
 					# Flask-selfdoc decorator
 					parsed += f'{new_line if suffix == "" else ""}@auto.doc(\''
@@ -210,6 +212,18 @@ def parser(tokens):
 def parse(tokens_list):
 	# Parses tokens and adds the end boilerplate to the output code.
 	parsed = parser(tokens_list)
+
+	# Put the output code into a main function if the app doesn't use routes, and prevent it from running multiple
+	# times since the output file is imported multiple times.
+	if not cfg.uses_routes:
+		parsed_with_main_func = '\n\ndef main():\n'
+		for line in parsed.split('\n'):
+			parsed_with_main_func += f'\t{line}\n'
+		parsed = parsed_with_main_func
+
+	# Boilerplate setup.
+	transpiler_utils.set_boilerplate()
+
 	parsed = f'{cfg.flask_boilerplate}\n{parsed}'
 	parsed += cfg.flask_end_boilerplate
 

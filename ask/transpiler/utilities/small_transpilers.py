@@ -1,9 +1,14 @@
 from collections import defaultdict
 
 from ask import cfg
+from ask.utilities import utils
+from ask.transpiler.utilities import parser_utils
 
 
 def generic_transpile_word(word, words, default=None):
+	if utils.get_ask_config_rule(['rules', 'underscores'], True):
+		words = parser_utils.add_underscores_to_dict_keys(words)
+
 	return defaultdict(lambda: default if default is not None else word, words)[word]
 
 
@@ -23,10 +28,6 @@ def transpile_var(var):
 		'req': 'AskLibrary.get_all_req()',
 		'datetime': 'datetime.datetime'
 	}
-
-	# Also support built in vars with leading underscores.
-	translations_with_underscores = {f'_{var_key}': translations[var_key] for var_key in translations}
-	translations.update(translations_with_underscores)
 
 	return generic_transpile_word(var, translations)
 
