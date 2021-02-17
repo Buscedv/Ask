@@ -39,8 +39,7 @@ def main():
 			transpiler.transpile(source_lines)
 
 			# Starts server
-			# TODO: Add support for running the app in a production ready server.
-			utils.run_dev_server()
+			utils.run_server()
 		else:
 			if no_valid_flags:
 				utils.style_print('- The file could not be found!', color='red')

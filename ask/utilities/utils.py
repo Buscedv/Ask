@@ -79,17 +79,31 @@ def import_app():
 	return SourceFileLoader("app", file_utils.get_output_file_destination_path()).load_module()
 
 
-def run_dev_server():
+def start_production_server():
+	os.chdir(file_utils.get_root_from_file_path(file_utils.get_output_file_destination_path()))
+	os.system('gunicorn app:app')
+	import subprocess
+	s = subprocess.getstatusoutput('gunicorn app:app')
+	print('#####################')
+	print(s)
+	print('#####################')
+
+
+def run_server():
+	# TODO: Add support for running the app in a production ready server.
 	app = import_app()
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
+		style_print('Running app:', styles=['bold'])
+
 		if not cfg.uses_routes:
 			# The app is just a script. Ask is used like a general purpose language.
 			app.main()
+		elif get_ask_config_rule(['server', 'production'], False) is True:
+			start_production_server()
 		else:
 			# The app uses routes so it's an API, the app needs to run in a web server.
-			style_print('Running Flask app:', styles=['bold'])
 			os.environ['FLASK_APP'] = file_utils.get_output_file_destination_path()
 			if cfg.is_dev:
 				os.environ['FLASK_ENV'] = 'development'
