@@ -20,7 +20,8 @@ Flask-Selfdoc = "^1.2.3"
 # Don't update PyJWT, it breaks in future releases!
 PyJWT = "1.7.1"
 toml = "^0.10.2"
-gunicorn = "^20.0.4"
+waitress = "^1.4.4"
+Paste = "^3.5.0"
 
 [tool.poetry.dev-dependencies]
 

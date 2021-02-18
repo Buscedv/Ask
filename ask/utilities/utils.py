@@ -1,5 +1,7 @@
 import os
 from importlib.machinery import SourceFileLoader
+import waitress
+from paste.translogger import TransLogger
 
 from ask import cfg
 from ask.utilities import file_utils
@@ -79,18 +81,7 @@ def import_app():
 	return SourceFileLoader("app", file_utils.get_output_file_destination_path()).load_module()
 
 
-def start_production_server():
-	os.chdir(file_utils.get_root_from_file_path(file_utils.get_output_file_destination_path()))
-	os.system('gunicorn app:app')
-	import subprocess
-	s = subprocess.getstatusoutput('gunicorn app:app')
-	print('#####################')
-	print(s)
-	print('#####################')
-
-
 def run_server():
-	# TODO: Add support for running the app in a production ready server.
 	app = import_app()
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
@@ -100,15 +91,23 @@ def run_server():
 		if not cfg.uses_routes:
 			# The app is just a script. Ask is used like a general purpose language.
 			app.main()
-		elif get_ask_config_rule(['server', 'production'], False) is True:
-			start_production_server()
+
+		# The app uses routes so it's an API, the app needs to run in a web server.
+		elif get_ask_config_rule(['server', 'production'], True) is True:
+			# Run in the production server.
+			import datetime
+			waitress.serve(
+				TransLogger(app.app, logger_name='Ask Application', format=f'\033[37m\t- {datetime.datetime.now().strftime("[%d/%b/%Y %H:%M:%S]")}\033[0m \033[1m%(REQUEST_METHOD)s\033[0m: "\033[32m%(REMOTE_ADDR)s%(REQUEST_URI)s\033[0m" → \033[94m%(status)s\033[0m'),
+				host=get_ask_config_rule(['server', 'host'], '127.0.0.1'),
+				port=get_ask_config_rule(['server', 'port'], '5000'),
+				ident='Ask Application',
+			)
 		else:
-			# The app uses routes so it's an API, the app needs to run in a web server.
+			# Run in the development server.
 			os.environ['FLASK_APP'] = file_utils.get_output_file_destination_path()
 			if cfg.is_dev:
 				os.environ['FLASK_ENV'] = 'development'
 
-			# Starts the server.
 			app.app.run()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
