@@ -8,7 +8,7 @@ from ask.utilities import utils
 from ask.transpiler.utilities import parser_utils
 
 
-def generic_transpile_word(word: str, words: dict, default: str = None) -> str:
+def generic_transpile_symbol(word: str, words: dict, default: str = None) -> str:
 	if utils.get_config_rule(['rules', 'underscores'], True):
 		words = parser_utils.add_underscores_to_dict_keys(words)
 
@@ -16,29 +16,24 @@ def generic_transpile_word(word: str, words: dict, default: str = None) -> str:
 
 
 def transpile_function(function: str) -> str:
-	return generic_transpile_word(function, {
+	return generic_transpile_symbol(function, {
 		'respond': 'return jsonify(',
 		'inner': 'func(*args, **kwargs',
 		'status': 'abort(Response('
 	}, f'{function}(')
 
 
-def transpile_var(var: str) -> str:
+def transpile_word(word: str) -> str:
 	translations = {
 		'body': 'request.json',
 		'form': 'request.form',
 		'args': 'request.args',
 		'req': 'AskLibrary.get_all_req()',
-		'datetime': 'datetime.datetime'
+		'datetime': 'datetime.datetime',
+		'respond': 'return'
 	}
 
-	return generic_transpile_word(var, translations)
-
-
-def transpile_keyword(keyword: str) -> str:
-	return generic_transpile_word(keyword, {
-		'respond': 'return'
-	})
+	return generic_transpile_symbol(word, translations)
 
 
 def transpile_decorator(decorator: str) -> str:
@@ -67,7 +62,7 @@ def transpile_decorator(decorator: str) -> str:
 def transpile_db_action(action: str) -> Tuple[str, bool]:
 	needs_commit = ['add', 'delete']
 
-	transpiled_action = generic_transpile_word(action, {
+	transpiled_action = generic_transpile_symbol(action, {
 		# Basic
 		'col': 'db.Column',
 

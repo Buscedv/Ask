@@ -7,36 +7,36 @@ class TestAskTranspilerUtilitiesLexerUtils(unittest.TestCase):
 	# group_tokens_by_lines()
 	def test_tokens_grouped_by_lines(self):
 		tokens = [
-			['VAR', 'variable'],
+			['WORD', 'variable'],
 			['FORMAT', '\n'],
-			['VAR', 'variable'],
-			['FORMAT', '\n'],
-			['FORMAT', '\t'],
-			['VAR', 'variable'],
+			['WORD', 'variable'],
 			['FORMAT', '\n'],
 			['FORMAT', '\t'],
+			['WORD', 'variable'],
+			['FORMAT', '\n'],
 			['FORMAT', '\t'],
-			['VAR', 'variable'],
+			['FORMAT', '\t'],
+			['WORD', 'variable'],
 		]
 
 		expected = [
 			[
-				['VAR', 'variable'],
+				['WORD', 'variable'],
 			],
 			[
 				['FORMAT', '\n'],
-				['VAR', 'variable'],
-			],
-			[
-				['FORMAT', '\n'],
-				['FORMAT', '\t'],
-				['VAR', 'variable'],
+				['WORD', 'variable'],
 			],
 			[
 				['FORMAT', '\n'],
 				['FORMAT', '\t'],
+				['WORD', 'variable'],
+			],
+			[
+				['FORMAT', '\n'],
 				['FORMAT', '\t'],
-				['VAR', 'variable'],
+				['FORMAT', '\t'],
+				['WORD', 'variable'],
 			],
 		]
 

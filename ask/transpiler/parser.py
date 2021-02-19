@@ -8,7 +8,7 @@ from ask.transpiler.utilities import parser_utils, small_transpilers, transpiler
 def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str]) -> str:
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
-	line_to_place_code_at = None
+	line_to_place_code_at = 0
 
 	for line_index, line in enumerate(parsed_lines_reversed):
 		if 'db.Column(' in line:
@@ -33,8 +33,10 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
 
 	return '\n'.join(
-		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
-		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
+		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]
+	) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
+		parsed_lines_reversed[:line_to_place_code_at - 1][::-1]
+	)
 
 
 def parser(tokens: List[List[str]]) -> str:
@@ -95,36 +97,29 @@ def parser(tokens: List[List[str]]) -> str:
 			elif token_val == 'start':
 				indention_depth_counter += 1
 
-		if token_type in ['FORMAT', 'ASSIGN', 'NUM']:
+		if token_type == 'FORMAT':
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
 				parsed += ')'
 				add_parenthesis_at_en_of_line = False
+
 			parsed += token_val
+
 			if transpiler_utils.token_check(token, 'FORMAT', '\n') and add_tabs_to_inner_group:
 				parsed += '\t'
+		elif token_type == 'NUM':
+			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{token_val}'
 		elif token_type == 'OP':
-			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
-				parsed = parsed[:-1]
-
-			parsed += token_val
-
-			if token_val in [',', '=']:
-				parsed += ' '
+			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{token_val}'
 
 			if needs_db_commit and token_val == ')':
 				needs_db_commit = False
 
 				tab_level = parser_utils.get_current_tab_level(parsed)
-				parsed += '\n' + tab_level + 'db.session.commit()'
+				parsed += f'\n{tab_level}db.session.commit()'
 		elif token_type == 'STR':
-			parsed += f'\"{token_val}\"'
-		elif token_type == 'KEYWORD':
-			parsed = parser_utils.maybe_place_space_before(parsed, token_val)
-		elif token_type == 'VAR':
-			if token_val not in transpiler_utils.add_underscores_to_elements(cfg.built_in_vars) and token_index > 0:
-				parsed = parser_utils.maybe_place_space_before(parsed, token_val)
-			else:
-				parsed += small_transpilers.transpile_var(token_val)
+			parsed += f'{parser_utils.space_prefix(parsed, token_val)}\"{token_val}\"'
+		elif token_type == 'WORD':
+			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{small_transpilers.transpile_word(token_val)}'
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				new_line = '\n'
@@ -154,19 +149,27 @@ def parser(tokens: List[List[str]]) -> str:
 					else:
 						parsed += default_doc_end
 
-					parsed += f'def {token_val[1:]}{parser_utils.route_path_to_func_name(next_token_val)}({parser_utils.parse_route_params_str(next_token_val)}'
+					parsed += ''.join([
+						f'def {token_val[1:]}',
+						f'{parser_utils.route_path_to_func_name(next_token_val)}',
+						f'({parser_utils.parse_route_params_str(next_token_val)}'
+					])
+
 					is_skip = True
 					is_decorator = False
+
 			elif token_val in cfg.ask_library_methods:
 				prefix = 'AskLibrary.'
 				if token_val == 'respond':
 					prefix = f'return {prefix}'
-				parsed += f'{prefix}{token_val}('
-			elif token_val == 'status':
-				parsed += small_transpilers.transpile_function(token_val)
-				add_parenthesis_at_en_of_line = True
+				parsed += f'{parser_utils.space_prefix(parsed, to_add=token_val)}{prefix}{token_val}('
+
 			else:
-				parsed += small_transpilers.transpile_function(token_val)
+				parsed += f'{parser_utils.space_prefix(parsed, to_add=token_val)}{small_transpilers.transpile_function(token_val)}'
+
+				if token_val == 'status':
+					add_parenthesis_at_en_of_line = True
+
 		elif token_type == 'DB_MODEL':
 			parsed += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
@@ -190,10 +193,10 @@ def parser(tokens: List[List[str]]) -> str:
 			if cfg.uses_basic_decorator:
 				if transpiled_action in ['primary_key=True', 'ignored']:
 					ignored_due_to_basic_decorator.append(
-						parser_utils.get_first_variable_token_value_of_line(past_lines_tokens))
+						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens))
 
 				if transpiled_action == 'db.Column':
-					var = parser_utils.get_first_variable_token_value_of_line(past_lines_tokens)
+					var = parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
 					cfg.basic_decorator_collector.append(var)
 
 					for ignored in ignored_due_to_basic_decorator:
@@ -201,13 +204,9 @@ def parser(tokens: List[List[str]]) -> str:
 							cfg.basic_decorator_collector.remove(ignored)
 
 			if transpiled_action != 'ignored':
-				parsed += transpiled_action
+				parsed += f'{parser_utils.space_prefix(parsed, transpiled_action)}{transpiled_action}'
 			if needs_commit:
 				needs_db_commit = True
-
-		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
-			parsed = parsed[:-4]
-			parsed += ' == '
 
 	return parsed
 

@@ -29,7 +29,7 @@ special_keywords = {
 		'include_collect_end': False
 	}
 }
-operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&']
+operators = [':', ')', '!', '+', '-', '*', '/', '%', '.', ',', '[', ']', '&', '>', '<', '~', '^', '&', '|']
 ask_library_methods = ['quick_set', 'quickSet', 'deep', 'serialize', 'respond', 'require_keys']
 flask_boilerplate = ''
 flask_end_boilerplate = ''

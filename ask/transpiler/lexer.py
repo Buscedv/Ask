@@ -44,8 +44,8 @@ def lexer(raw: List[str]) -> List[List[str]]:
 			# Variable assignment.
 			elif char == '=':
 				if tmp:
-					tokens.append(['VAR', tmp])
-					tokens.append(['ASSIGN', char])
+					tokens.append(['WORD', tmp])
+					tokens.append(['OP', char])
 
 					if tmp not in cfg.variables:
 						cfg.variables.append(tmp)
@@ -69,7 +69,7 @@ def lexer(raw: List[str]) -> List[List[str]]:
 
 			# Dict close.
 			elif char == '}':
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
 
 				is_dict.pop(0)
@@ -96,13 +96,13 @@ def lexer(raw: List[str]) -> List[List[str]]:
 					tokens.append(['KEY', tmp])
 					tmp = ''
 
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
 				tokens.append(['OP', char])
 
 			# Formating.
 			elif char in ['\n', '\t']:
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
 				tokens.append(['FORMAT', char])
 
@@ -110,18 +110,18 @@ def lexer(raw: List[str]) -> List[List[str]]:
 			elif char not in ['\n', '\t', ' ']:
 				tmp += char
 			else:
-				# There might be a full variable or keyword in tmp.
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+				# There might be a word or keyword in tmp.
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
 
 			if len(tokens) > 2 and transpiler_utils.token_check(
 					tokens[-2],
-					'VAR',
+					'WORD',
 					transpiler_utils.add_underscores_to_elements(['db'])
 					if utils.get_config_rule(['rules', 'underscores'], True)
 					else 'db'
 			):
-				# Removes the VAR 'db'/'_db' and the OP '.'.
+				# Removes the WORD 'db'/'_db' and the OP '.'.
 				tokens.pop(-1)
 				tokens.pop(-1)
 				is_collector = True
@@ -182,6 +182,24 @@ def insert_indention_group_markers(tokens: List[List[str]]) -> List[List[str]]:
 	return marked
 
 
+def group_operators(tokens: List[List[str]]) -> List[List[str]]:
+	result = []
+	tmp = []
+
+	for token in tokens:
+		if token[0] == 'OP' and token[1] in ['=', ':', '-', '+', '*', '/', '%', '&', '|', '<', '>', '^', '!']:
+			tmp.append(token[1])
+		else:
+			if tmp:
+				result.append(['OP', ''.join(tmp)])
+				tmp = []
+
+			result.append(token)
+
+	return result
+
+
 def lex(source_lines: List[str]) -> List[List[str]]:
 	tokens_list = lexer(source_lines)
+	tokens_list = group_operators(tokens_list)
 	return insert_indention_group_markers(tokens_list)

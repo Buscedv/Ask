@@ -114,7 +114,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\treturn pickle.loads(self.item)\n'
 
 	# GenericList creation function
-	cfg.flask_boilerplate += '\n\ndef generic_list_creator(entry=[]):\n'
+	cfg.flask_boilerplate += '\n\ndef generic_list_creator(entry: list or None = None):\n'
 	cfg.flask_boilerplate += '\tgeneric_list = GenericList()\n'
 	cfg.flask_boilerplate += '\tdb.session.add(generic_list)\n'
 	cfg.flask_boilerplate += '\tdb.session.commit()\n'
@@ -232,7 +232,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\t\ttry:\n"
 	cfg.flask_boilerplate += "\t\t\t_ = self.decode()\n"
 	cfg.flask_boilerplate += "\t\t\treturn True\n"
-	cfg.flask_boilerplate += "\t\texcept:\n"
+	cfg.flask_boilerplate += "\t\texcept Exception:\n"
 	cfg.flask_boilerplate += "\t\t\treturn False\n"
 
 	# Hash, sha256 hashing.
@@ -302,8 +302,8 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\t\tif not token:\n"
 	cfg.flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing token!'}), 400\n"
 	cfg.flask_boilerplate += "\t\ttry:\n"
-	cfg.flask_boilerplate += "\t\t\tdata = jwt.decode(token, _auth.secret_key)\n"
-	cfg.flask_boilerplate += "\t\texcept:\n"
+	cfg.flask_boilerplate += "\t\t\t_ = jwt.decode(token, _auth.secret_key)\n"
+	cfg.flask_boilerplate += "\t\texcept Exception:\n"
 	cfg.flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token!'}), 401\n"
 	cfg.flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
 	cfg.flask_boilerplate += "\treturn wrapped\n"
@@ -318,7 +318,7 @@ def set_boilerplate():
 	cfg.flask_end_boilerplate += 'def get_docs(filter_type):\n'
 	cfg.flask_end_boilerplate += '\tif filter_type:\n'
 	cfg.flask_end_boilerplate += '\t\treturn auto.html(filter_type)\n'
-	cfg.flask_end_boilerplate += '\treturn auto.html(groups=[\'public\',\'private\'])\n'
+	cfg.flask_end_boilerplate += '\treturn auto.html(groups=[\'public\', \'private\'])\n'
 
 	# Boilerplate at the end of the script.
 

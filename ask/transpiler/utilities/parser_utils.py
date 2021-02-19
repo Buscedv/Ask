@@ -1,6 +1,7 @@
 # coding=utf-8
 from typing import List
 
+from ask import cfg
 from ask.transpiler.utilities import transpiler_utils
 
 
@@ -15,12 +16,12 @@ def is_db_column_in_past_line(tokens: List[list]) -> bool:
 	return False
 
 
-def get_first_variable_token_value_of_line(tokens: List[list]) -> str or None:
+def get_first_non_keyword_word_token_value_of_line(tokens: List[list]) -> str or None:
 	for token in tokens:
 		token_type = token[0]
-		if token_type == 'VAR':
-			# Returns the token value
-			return token[1]
+		token_val = token[1]
+		if token_type == 'WORD' and token_val not in cfg.keywords:
+			return token_val
 
 	return None
 
@@ -29,14 +30,50 @@ def route_path_to_func_name(route: str) -> str:
 	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
-def maybe_place_space_before(parsed: str, token_val: str) -> str:
+def is_part_of_word(thing):
+	return thing.isalpha() or thing == '_'
+
+
+def space_prefix(parsed: str, to_add: str = '') -> str:
 	prefix = ' '
 
-	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.'] or token_val == '>' and parsed[-1] == '-':
-		prefix = ''
-	parsed += f'{prefix}{token_val} '
+	print(to_add)
+	if parsed:
+		print(parsed[-1])
+	else:
+		print('---')
 
-	return parsed
+	# No space at the beginning of a line.
+	if not parsed:
+		prefix = ''
+	if parsed and parsed[-1] in ['\n', '\t', ' ']:
+		prefix = ''
+
+	# No Space before specific characters.
+	if to_add in [':', ',', '(', ')', '.', '[', ']', '{', '}']:
+		prefix = ''
+
+	# No space after specific characters.
+	if parsed and parsed[-1] in ['(', '.']:
+		prefix = ''
+
+	# Space before specific characters.
+	if to_add in []:
+		prefix = ' '
+
+	# Space after specific characters.
+	if parsed and parsed[-1] in [',']:
+		prefix = ' '
+
+	# No space between specific haracters and words:
+	if parsed and parsed[-1] in ['['] and is_part_of_word(to_add):
+		prefix = ''
+
+	# Space between words
+	if parsed and is_part_of_word(parsed[-1]) and is_part_of_word(to_add):
+		prefix = ' '
+
+	return prefix
 
 
 def parse_route_params_str(route_path: str) -> str:

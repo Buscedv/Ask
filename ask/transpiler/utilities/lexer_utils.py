@@ -28,23 +28,21 @@ def group_tokens_by_lines(tokens: List[list]) -> List[list]:
 	return lines
 
 
-# Figures out if a given name should be lexed as a keyword or variable token.
-def var_or_keyword_token(tokens: List[list], tmp: str) -> Tuple[List[list], str, bool, list, bool]:
+# Figures out if a given name is a special keyword or a word/variable.
+def word_or_special(tokens: List[list], tmp: str) -> Tuple[List[list], str, bool, list, bool]:
 	collect = False
 	collect_ends = []
 	include_collect_end = False
 
 	if tmp:
-		if tmp in cfg.keywords:
-			tokens.append(['KEYWORD', small_transpilers.transpile_keyword(tmp)])
-		elif tmp in cfg.special_keywords.keys():
+		if tmp in cfg.special_keywords:
 			tokens.append([cfg.special_keywords[tmp]['type'], tmp])
 
 			collect = cfg.special_keywords[tmp]['collect']
 			collect_ends = cfg.special_keywords[tmp]['collect_ends']
 			include_collect_end = cfg.special_keywords[tmp]['include_collect_end']
 		else:
-			tokens.append(['VAR', tmp])
+			tokens.append(['WORD', tmp])
 		tmp = ''
 	return tokens, tmp, collect, collect_ends, include_collect_end
 
