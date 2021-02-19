@@ -1,8 +1,11 @@
+# coding=utf-8
+from typing import List
+
 from ask import cfg
 from ask.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
 
 
-def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
+def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str]) -> str:
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
 	line_to_place_code_at = None
@@ -34,7 +37,7 @@ def insert_basic_decorator_code_to_insert(parsed, ignored_db_vars):
 		parsed_lines_reversed[:line_to_place_code_at - 1][::-1])
 
 
-def parser(tokens):
+def parser(tokens: List[List[str]]) -> str:
 	parsed = ''
 
 	is_skip = False
@@ -61,7 +64,7 @@ def parser(tokens):
 			on_next_run_uses_basic_decorator = False
 			cfg.uses_basic_decorator = True
 
-		if cfg.uses_basic_decorator and token_type == 'FORMAT' and token_val == '\n' and past_lines_tokens:
+		if cfg.uses_basic_decorator and transpiler_utils.token_check(token, 'FORMAT', '\n') and past_lines_tokens:
 			if basic_decorator_collection_might_end:
 				if past_lines_tokens == [['DEC', 'basic']]:
 					on_next_run_uses_basic_decorator = True
@@ -77,7 +80,7 @@ def parser(tokens):
 			else:
 				basic_decorator_collection_might_end = True
 
-		if token_type == 'FORMAT' and token_val == '\n':
+		if transpiler_utils.token_check(token, 'FORMAT', '\n'):
 			past_lines_tokens = []
 		else:
 			past_lines_tokens.append(token)
@@ -97,7 +100,7 @@ def parser(tokens):
 				parsed += ')'
 				add_parenthesis_at_en_of_line = False
 			parsed += token_val
-			if token_type == 'FORMAT' and token_val == '\n' and add_tabs_to_inner_group:
+			if transpiler_utils.token_check(token, 'FORMAT', '\n') and add_tabs_to_inner_group:
 				parsed += '\t'
 		elif token_type == 'OP':
 			if token_val in ['.', ')', ',', ':'] and parsed and parsed[-1] == ' ':
@@ -118,7 +121,7 @@ def parser(tokens):
 		elif token_type == 'KEYWORD':
 			parsed = parser_utils.maybe_place_space_before(parsed, token_val)
 		elif token_type == 'VAR':
-			if token_val not in parser_utils.add_underscores_to_all_elements(cfg.built_in_vars) and token_index > 0:
+			if token_val not in transpiler_utils.add_underscores_to_elements(cfg.built_in_vars) and token_index > 0:
 				parsed = parser_utils.maybe_place_space_before(parsed, token_val)
 			else:
 				parsed += small_transpilers.transpile_var(token_val)
@@ -182,14 +185,14 @@ def parser(tokens):
 			if decorator != '---':
 				is_decorator = True
 		elif token_type == 'DB_ACTION':
-			transpiled = small_transpilers.transpile_db_action(token_val)
+			transpiled_action, needs_commit = small_transpilers.transpile_db_action(token_val)
 
 			if cfg.uses_basic_decorator:
-				if transpiled[0] in ['primary_key=True', 'ignored']:
+				if transpiled_action in ['primary_key=True', 'ignored']:
 					ignored_due_to_basic_decorator.append(
 						parser_utils.get_first_variable_token_value_of_line(past_lines_tokens))
 
-				if transpiled[0] == 'db.Column':
+				if transpiled_action == 'db.Column':
 					var = parser_utils.get_first_variable_token_value_of_line(past_lines_tokens)
 					cfg.basic_decorator_collector.append(var)
 
@@ -197,9 +200,9 @@ def parser(tokens):
 						if ignored in cfg.basic_decorator_collector:
 							cfg.basic_decorator_collector.remove(ignored)
 
-			if transpiled[0] != 'ignored':
-				parsed += transpiled[0]
-			if transpiled[1]:
+			if transpiled_action != 'ignored':
+				parsed += transpiled_action
+			if needs_commit:
 				needs_db_commit = True
 
 		if len(parsed) > 3 and parsed[-1] == ' ' and parsed[-2] == '=' and parsed[-3] == ' ' and parsed[-4] == '=':
@@ -209,7 +212,7 @@ def parser(tokens):
 	return parsed
 
 
-def parse(tokens_list):
+def parse(tokens_list: List[List[str]]) -> str:
 	# Parses tokens and adds the end boilerplate to the output code.
 	parsed = parser(tokens_list)
 

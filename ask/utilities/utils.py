@@ -110,7 +110,7 @@ def run_server():
 			app.main()
 
 		# The app uses routes, so it's an API, the app needs to run in a web server.
-		elif get_ask_config_rule(['server', 'production'], True) is True and cfg.is_dev is False:
+		elif get_config_rule(['server', 'production'], True) is True and cfg.is_dev is False:
 			# Run in the production server.
 			print('\033[91m\t- ', end='')
 			waitress.serve(
@@ -125,8 +125,8 @@ def run_server():
 						'\033[94m%(status)s\033[0m',
 					])
 				),
-				host=get_ask_config_rule(['server', 'host'], '127.0.0.1'),
-				port=get_ask_config_rule(['server', 'port'], '5000'),
+				host=get_config_rule(['server', 'host'], '127.0.0.1'),
+				port=get_config_rule(['server', 'port'], '5000'),
 				ident='Ask Application',
 			)
 		else:
@@ -146,7 +146,7 @@ def load_askfile_config():
 	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
 
 
-def get_ask_config_rule(key_tree, not_found):
+def get_config_rule(key_tree, not_found):
 	try:
 		current_position = cfg.ask_config[key_tree[0]]
 		for key in key_tree[1:]:

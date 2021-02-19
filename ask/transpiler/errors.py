@@ -1,18 +1,22 @@
+# coding=utf-8
 import os
+import difflib
 
 from ask import cfg
 from ask.utilities import utils
 from ask.utilities import file_utils
 
 
-def parse_and_print_error(err):
-	import difflib
-
+def parse_and_print_error(err: dict):
 	# This function tries to figure out on which line the error is coming from.
 	# This is complicated since the error is coming from the transpiled code and not the source code.
 
 	matches = []
 	skip_to_printing = False
+
+	message = ''
+	code = ''
+	line_nr = 0
 
 	if err['msg'] == 48:
 		# Address already in use eror:
@@ -22,7 +26,7 @@ def parse_and_print_error(err):
 	if not skip_to_printing:
 		try:
 			message = err['msg'].capitalize()
-		except Exception:
+		except AttributeError:
 			message = err['msg']
 
 		transpiled_line_nr = err['line']
@@ -49,7 +53,7 @@ def parse_and_print_error(err):
 
 		return
 
-	# Get's the correct line number.
+	# Gets the correct line number.
 	for line_index, line in enumerate(raw_lines):
 		if line == str(matches[0]):
 			line_nr = line_index
@@ -65,7 +69,7 @@ def parse_and_print_error(err):
 	utils.style_print(code, styles=['bold'])
 
 
-def error_while_running(e, source_lines, time_result):
+def error_while_running(e: Exception, source_lines: list, time_result: float):
 	# Catches e.g. syntax errors.
 	try:
 		msg, data = e.args

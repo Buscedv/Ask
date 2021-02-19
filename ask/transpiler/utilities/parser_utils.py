@@ -1,18 +1,21 @@
-def is_db_column_in_past_line(tokens):
-	for token in tokens[::-1]:
-		token_type = token[0]
-		token_val = token[1]
+# coding=utf-8
+from typing import List
 
-		if token_type == 'FORMAT' and token_val == '\n':
+from ask.transpiler.utilities import transpiler_utils
+
+
+def is_db_column_in_past_line(tokens: List[list]) -> bool:
+	for token in tokens[::-1]:
+		if transpiler_utils.token_check(token, 'FORMAT', '\n', ):
 			break
 
-		if token_type == 'DB_ACTION' and token_val == 'col' or token_type == 'DB_MODEL':
+		if transpiler_utils.token_check(token, 'DB_ACTION', 'col') or transpiler_utils.token_check(token, 'DB_MODEL'):
 			return True
 
 	return False
 
 
-def get_first_variable_token_value_of_line(tokens):
+def get_first_variable_token_value_of_line(tokens: List[list]) -> str or None:
 	for token in tokens:
 		token_type = token[0]
 		if token_type == 'VAR':
@@ -22,11 +25,11 @@ def get_first_variable_token_value_of_line(tokens):
 	return None
 
 
-def route_path_to_func_name(route_str):
-	return route_str.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
+def route_path_to_func_name(route: str) -> str:
+	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
-def maybe_place_space_before(parsed, token_val):
+def maybe_place_space_before(parsed: str, token_val: str) -> str:
 	prefix = ' '
 
 	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
@@ -36,7 +39,7 @@ def maybe_place_space_before(parsed, token_val):
 	return parsed
 
 
-def parse_route_params_str(route_path):
+def parse_route_params_str(route_path: str) -> str:
 	is_param = False
 	tmp = ''
 	params_str = ''
@@ -59,7 +62,7 @@ def parse_route_params_str(route_path):
 	return params_str
 
 
-def get_current_tab_level(parsed):
+def get_current_tab_level(parsed: str) -> str:
 	parsed = parsed[::-1]
 
 	indents = ''
@@ -72,11 +75,7 @@ def get_current_tab_level(parsed):
 	return indents
 
 
-def add_underscores_to_all_elements(original_list):
-	return original_list + [f'_{element}' for element in original_list]
-
-
-def add_underscores_to_dict_keys(dictionary):
+def add_underscores_to_dict_keys(dictionary: dict) -> dict:
 	with_underscores = {f'_{key}': dictionary[key] for key in dictionary}
 
 	return {**dictionary, **with_underscores}

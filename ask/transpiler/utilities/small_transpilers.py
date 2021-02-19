@@ -1,18 +1,21 @@
+# coding=utf-8
 from collections import defaultdict
+
+from typing import Tuple
 
 from ask import cfg
 from ask.utilities import utils
 from ask.transpiler.utilities import parser_utils
 
 
-def generic_transpile_word(word, words, default=None):
-	if utils.get_ask_config_rule(['rules', 'underscores'], True):
+def generic_transpile_word(word: str, words: dict, default: str = None) -> str:
+	if utils.get_config_rule(['rules', 'underscores'], True):
 		words = parser_utils.add_underscores_to_dict_keys(words)
 
 	return defaultdict(lambda: default if default is not None else word, words)[word]
 
 
-def transpile_function(function):
+def transpile_function(function: str) -> str:
 	return generic_transpile_word(function, {
 		'respond': 'return jsonify(',
 		'inner': 'func(*args, **kwargs',
@@ -20,7 +23,7 @@ def transpile_function(function):
 	}, f'{function}(')
 
 
-def transpile_var(var):
+def transpile_var(var: str) -> str:
 	translations = {
 		'body': 'request.json',
 		'form': 'request.form',
@@ -32,13 +35,13 @@ def transpile_var(var):
 	return generic_transpile_word(var, translations)
 
 
-def transpile_keyword(keyword):
+def transpile_keyword(keyword: str) -> str:
 	return generic_transpile_word(keyword, {
 		'respond': 'return'
 	})
 
 
-def transpile_decorator(decorator):
+def transpile_decorator(decorator: str) -> str:
 	decorators = {
 		'protected': 'check_for_token',
 		'limit': 'limiter.limit',
@@ -61,7 +64,7 @@ def transpile_decorator(decorator):
 	return ''
 
 
-def transpile_db_action(action):
+def transpile_db_action(action: str) -> Tuple[str, bool]:
 	needs_commit = ['add', 'delete']
 
 	transpiled_action = generic_transpile_word(action, {
@@ -99,4 +102,4 @@ def transpile_db_action(action):
 		'list': 'generic_list_creator',
 	}, '')
 
-	return [transpiled_action, action in needs_commit]
+	return transpiled_action, action in needs_commit

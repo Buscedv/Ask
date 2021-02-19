@@ -1,8 +1,12 @@
+# coding=utf-8
+from typing import List
+
 import ask.cfg as cfg
-from ask.transpiler.utilities import lexer_utils
+from ask.utilities import utils
+from ask.transpiler.utilities import lexer_utils, transpiler_utils
 
 
-def lexer(raw):
+def lexer(raw: List[str]) -> List[List[str]]:
 	tmp = ''
 	is_collector = False
 	collector_ends = []
@@ -14,8 +18,8 @@ def lexer(raw):
 	for line in raw:
 		line = lexer_utils.fix_up_code_line(line)
 		for char_index, char in enumerate(line):
+			# Ignores comments
 			if char == '#':
-				# tokens.append(['FORMAT', '\n'])
 				break
 
 			if is_collector:
@@ -31,10 +35,13 @@ def lexer(raw):
 					include_collector_end = False
 					tmp = ''
 
+			# Function call.
 			elif char == '(':
 				if tmp:
 					tokens.append(['FUNC', tmp.replace(' ', '')])
 					tmp = ''
+
+			# Variable assignment.
 			elif char == '=':
 				if tmp:
 					tokens.append(['VAR', tmp])
@@ -46,48 +53,75 @@ def lexer(raw):
 					tmp = ''
 				else:
 					tokens.append(['OP', char])
+
+			# String.
 			elif char in ['"', '\'']:
 				is_collector = True
 				collector_ends = ['"', '\'']
 				include_collector_end = False
 				tmp = ''
 				tokens.append(['STR', ''])
+
+			# Dict open.
 			elif char == '{':
 				is_dict.append(True)
 				tokens.append(['OP', char])
+
+			# Dict close.
 			elif char == '}':
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.lex_var_keyword(tokens, tmp)
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+					tokens, tmp)
 
 				is_dict.pop(0)
 				tokens.append(['OP', char])
+
+			# Number (on its own).
 			elif char.isdigit() and not tmp:
 				if tokens and tokens[-1][0] == 'NUM':
 					tokens[-1][1] += char
 					continue
 				tokens.append(['NUM', char])
+
+			# Decorator.
 			elif char == '&':
 				is_collector = True
 				collector_ends = ['\n']
 				include_collector_end = True
 				tmp = ''
 				tokens.append(['DEC', ''])
+
+			# Operator (special character).
 			elif char in cfg.operators:
 				if char == ':' and is_dict and tmp:
 					tokens.append(['KEY', tmp])
 					tmp = ''
 
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.lex_var_keyword(tokens, tmp)
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+					tokens, tmp)
 				tokens.append(['OP', char])
+
+			# Formating.
+			elif char in ['\n', '\t']:
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+					tokens, tmp)
+				tokens.append(['FORMAT', char])
+
+			# Character isn't anything specific, meaning it's e.g. a letter. These get collected for later use.
 			elif char not in ['\n', '\t', ' ']:
 				tmp += char
-			elif char in ['\n', '\t']:
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.lex_var_keyword(tokens, tmp)
-				tokens.append(['FORMAT', char])
 			else:
-				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.lex_var_keyword(tokens, tmp)
+				# There might be a full variable or keyword in tmp.
+				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.var_or_keyword_token(
+					tokens, tmp)
 
-			if len(tokens) > 2 and tokens[-2][0] == 'VAR' and tokens[-2][1] in ['db', '_db']:
-				# Removes both the VAR: _db and the OP: .
+			if len(tokens) > 2 and transpiler_utils.token_check(
+					tokens[-2],
+					'VAR',
+					transpiler_utils.add_underscores_to_elements(['db'])
+					if utils.get_config_rule(['rules', 'underscores'], True)
+					else 'db'
+			):
+				# Removes the VAR 'db'/'_db' and the OP '.'.
 				tokens.pop(-1)
 				tokens.pop(-1)
 				is_collector = True
@@ -96,11 +130,12 @@ def lexer(raw):
 				tmp = ''
 				tokens.append(['DB_ACTION', ''])
 				cfg.uses_db = True
+
 	return tokens
 
 
-def insert_indention_group_markers(tokens):
-	lines = lexer_utils.tokens_grouped_by_lines(tokens)
+def insert_indention_group_markers(tokens: List[List[str]]) -> List[List[str]]:
+	lines = lexer_utils.group_tokens_by_lines(tokens)
 
 	marked = []
 	previous_line_tabs = 0
@@ -147,6 +182,6 @@ def insert_indention_group_markers(tokens):
 	return marked
 
 
-def lex(source_lines):
+def lex(source_lines: List[str]) -> List[List[str]]:
 	tokens_list = lexer(source_lines)
 	return insert_indention_group_markers(tokens_list)

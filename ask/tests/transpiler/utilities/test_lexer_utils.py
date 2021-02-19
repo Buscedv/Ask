@@ -4,7 +4,7 @@ from ask.transpiler.utilities import lexer_utils
 
 
 class TestAskTranspilerUtilitiesLexerUtils(unittest.TestCase):
-	# tokens_grouped_by_lines()
+	# group_tokens_by_lines()
 	def test_tokens_grouped_by_lines(self):
 		tokens = [
 			['VAR', 'variable'],
@@ -40,7 +40,7 @@ class TestAskTranspilerUtilitiesLexerUtils(unittest.TestCase):
 			],
 		]
 
-		self.assertEqual(expected, lexer_utils.tokens_grouped_by_lines(tokens))
+		self.assertEqual(expected, lexer_utils.group_tokens_by_lines(tokens))
 
 
 if __name__ == '__main__':

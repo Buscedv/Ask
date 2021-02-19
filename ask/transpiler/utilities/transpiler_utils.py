@@ -1,5 +1,25 @@
+# coding=utf-8
 from ask import cfg
 from ask.utilities import file_utils
+
+
+def token_check(token: list, wanted_type: str = '', wanted_values: str or list = '') -> bool:
+	values_is_list = type(wanted_values) is list
+
+	try:
+		if not wanted_type and wanted_values:
+			return token[1] == wanted_values if not values_is_list else token[1] in wanted_values
+
+		if not wanted_values and wanted_type:
+			return token[0] == wanted_type
+
+		return token[0] == wanted_type and token[1] == wanted_values if not values_is_list else token[1] in wanted_values
+	except KeyError:
+		return False
+
+
+def add_underscores_to_elements(original_list: list) -> list:
+	return original_list + [f'_{element}' for element in original_list]
 
 
 def set_boilerplate():

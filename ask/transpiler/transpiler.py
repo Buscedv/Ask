@@ -1,13 +1,14 @@
 # coding=utf-8
 import os
 from pprint import pprint
+from typing import List
 
 from ask import cfg
 from ask.transpiler import lexer, parser, errors
 from ask.utilities import file_utils, utils
 
 
-def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
+def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign
 	try:
 		# Imports app.py for two reasons:
 		# 1. To catch syntax errors.
@@ -24,13 +25,13 @@ def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
 		exit()
 
 
-def build_db(file_name):
+def build_db(file_name: str):
 	if not cfg.uses_db:
 		return
 
 	utils.style_print('Database:', styles=['bold'])
 
-	if not utils.get_ask_config_rule(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
+	if not utils.get_config_rule(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
 		print('\t- Building database...', end='')
 		db_root = file_utils.get_root_from_file_path(file_utils.get_db_file_path())
 		print('\t✅')
@@ -41,7 +42,7 @@ def build_db(file_name):
 			print('\t✅')
 
 
-def transpile(source_lines):
+def transpile(source_lines: List[str]):
 	import time
 
 	# Transpilation time capture start.
