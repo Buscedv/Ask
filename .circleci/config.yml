@@ -18,18 +18,18 @@ jobs:
                   password: $DOCKERHUB_PASSWORD
         steps:
             - checkout
-            - restore_cache:
-                keys:
-                    - deps-{{ checksum "poetry.lock" }}
+#            - restore_cache:
+#                keys:
+#                    - deps-{{ checksum "poetry.lock" }}
             - run:
                 name: Install Dependencies
                 command: |
                     poetry install
 
-            - save_cache:
-                key: deps-{{ checksum "poetry.lock" }}
-                paths:
-                    - /home/circleci/.cache/pypoetry/virtualenvs
+#            - save_cache:
+#                key: deps-{{ checksum "poetry.lock" }}
+#                paths:
+#                    - /home/circleci/.cache/pypoetry/virtualenvs
     test:
         docker:
             - image: circleci/python:3.9.1

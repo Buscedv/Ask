@@ -1,9 +1,10 @@
+# coding=utf-8
 import os
 
 from ask import cfg
 
 
-def get_root_from_file_path(file_path):
+def get_root_from_file_path(file_path: str) -> str:
 	final_path = ''
 	adder = False
 
@@ -19,7 +20,7 @@ def get_root_from_file_path(file_path):
 	return final_path[::-1]
 
 
-def get_ask_config(source_root):
+def get_ask_config(source_root: str) -> dict:
 	import toml
 
 	if source_root:
@@ -43,7 +44,7 @@ def get_ask_config(source_root):
 	return {}
 
 
-def get_full_db_file_path(is_boilerplate_insertion_use=False):
+def get_full_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	prefix = 'sqlite:///'
 
 	if cfg.ask_config and 'db' in cfg.ask_config and 'custom' in cfg.ask_config['db'] and cfg.ask_config['db']['custom']:
@@ -52,7 +53,7 @@ def get_full_db_file_path(is_boilerplate_insertion_use=False):
 	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
 
 
-def get_db_file_path(is_boilerplate_insertion_use=False):
+def get_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	end = 'db.db'
 
 	path = get_output_file_destination_path()[:-6]
@@ -67,11 +68,11 @@ def get_db_file_path(is_boilerplate_insertion_use=False):
 		else:
 			return custom_path
 
-	return path + end
+	return f'{path}{end}'
 
 
 # Returns the path to be used for the app.py file.
-def get_output_file_destination_path():
+def get_output_file_destination_path() -> str:
 	prefix = ''
 	if '/' in cfg.source_file_name:
 		prefix = f'{get_root_from_file_path(cfg.source_file_name)}/'

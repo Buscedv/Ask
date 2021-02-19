@@ -1,6 +1,9 @@
 # coding=utf-8
 import os
 from importlib.machinery import SourceFileLoader
+from types import ModuleType
+from typing import Any, List, Tuple
+
 import waitress
 from paste.translogger import TransLogger
 import datetime
@@ -12,7 +15,7 @@ from ask.transpiler import errors
 
 
 # Prints out text colorized and (optionally) as bold.
-def style_print(text, color=None, styles=None, end='\n'):
+def style_print(text, color: str = None, styles: List[str] = None, end: str = '\n'):
 	if styles is None:
 		styles = []
 
@@ -46,7 +49,7 @@ def initial_print():
 	print(f'{cfg.project_information["version"]}')
 
 
-def print_transpilation_result(source_lines, time_result, for_error=False):
+def print_transpilation_result(source_lines: str, time_result: float, for_error: bool = False):
 	color = 'green' if not for_error else 'red'
 
 	style_print('\t- Transpiled ', color, end='')
@@ -55,7 +58,7 @@ def print_transpilation_result(source_lines, time_result, for_error=False):
 	print(' seconds.')
 
 
-def parse_sys_args(sys_args):
+def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 	flags = ['-d', '--dev', '-v', '--version', '-h', '--help']
 
 	file_name = ''
@@ -87,18 +90,17 @@ def parse_sys_args(sys_args):
 			file_name = param
 
 	if cfg.is_dev and file_name == '':
-		# TODO: More info?
 		no_valid_flags = True
 
 	return file_name, no_valid_flags
 
 
-def import_app():
+def import_app() -> ModuleType:
 	return SourceFileLoader("app", file_utils.get_output_file_destination_path()).load_module('app')
 
 
 def run_server():
-	app = import_app()
+	app: ModuleType = import_app()
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
@@ -146,7 +148,7 @@ def load_askfile_config():
 	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
 
 
-def get_config_rule(key_tree, not_found):
+def get_config_rule(key_tree: List[str], not_found) -> Any:
 	try:
 		current_position = cfg.ask_config[key_tree[0]]
 		for key in key_tree[1:]:

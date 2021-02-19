@@ -1,6 +1,8 @@
 # coding=utf-8
 import os
 from pprint import pprint
+import time
+from types import ModuleType
 from typing import List
 
 from ask import cfg
@@ -13,7 +15,7 @@ def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip
 		# Imports app.py for two reasons:
 		# 1. To catch syntax errors.
 		# 2. To load the database (if it's used).
-		app = utils.import_app()
+		app: ModuleType = utils.import_app()
 
 		if cfg.uses_db:
 			print('\t- Loading database...', end='')
@@ -43,8 +45,6 @@ def build_db(file_name: str):
 
 
 def transpile(source_lines: List[str]):
-	import time
-
 	# Transpilation time capture start.
 	start_time = time.time()
 
