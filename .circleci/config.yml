@@ -41,8 +41,6 @@ workflows:
     build-and-test-workflow:
         jobs:
             - build-and-test: *slack-fail-post-step
-                post-steps:
-                    - slack/status
 
 
 
