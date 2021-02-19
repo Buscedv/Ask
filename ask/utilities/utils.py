@@ -1,7 +1,10 @@
+# coding=utf-8
 import os
 from importlib.machinery import SourceFileLoader
 import waitress
 from paste.translogger import TransLogger
+import datetime
+from tabulate import tabulate
 
 from ask import cfg
 from ask.utilities import file_utils
@@ -9,7 +12,10 @@ from ask.transpiler import errors
 
 
 # Prints out text colorized and (optionally) as bold.
-def style_print(text, color=None, styles=[], end='\n'):
+def style_print(text, color=None, styles=None, end='\n'):
+	if styles is None:
+		styles = []
+
 	prefix = '\033['
 	suffix = prefix + '0m'
 
@@ -36,8 +42,8 @@ def style_print(text, color=None, styles=[], end='\n'):
 
 
 def initial_print():
-	print('🌳', end='')
-	style_print('Ask', color='green')
+	style_print('🌳Ask', styles=['bold'], color='green', end=' ')
+	print(f'{cfg.project_information["version"]}')
 
 
 def print_transpilation_result(source_lines, time_result, for_error=False):
@@ -49,7 +55,7 @@ def print_transpilation_result(source_lines, time_result, for_error=False):
 	print(' seconds.')
 
 
-def parse_sys_params(sys_args):
+def parse_sys_args(sys_args):
 	flags = ['-d', '--dev', '-v', '--version', '-h', '--help']
 
 	file_name = ''
@@ -65,8 +71,18 @@ def parse_sys_params(sys_args):
 				style_print('- Version:', color='blue', end=' ')
 				print(cfg.project_information["version"])
 			elif param in ['-h', '--help']:
-				# TODO: Add help menu/manual.
-				print('Go to: https://ask-lang.org for more information')
+				print('Usage: ask [OPTIONS] [FILE]...', end='\n\n')
+				print(tabulate(
+					[
+						['-h', '--help', 'Show this message.'],
+						['-v', '--version', 'Show version information.'],
+						['-d', '--d', 'Turn on developer/debug mode.'],
+					],
+					headers=['Option', 'Long Format', 'Description']
+				))
+				print()
+				print('Other configurations can be added to a file called `Askfile.toml`.')
+				print('Go to: https://docs.ask-lang.org for more information', end='\n\n')
 		else:
 			file_name = param
 
@@ -78,7 +94,7 @@ def parse_sys_params(sys_args):
 
 
 def import_app():
-	return SourceFileLoader("app", file_utils.get_output_file_destination_path()).load_module()
+	return SourceFileLoader("app", file_utils.get_output_file_destination_path()).load_module('app')
 
 
 def run_server():
@@ -86,18 +102,29 @@ def run_server():
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
-		style_print('Running app:', styles=['bold'])
+		style_print('Running the app...', styles=['bold'], end=' ')
+		print('(Press Ctrl+C to stop)')
 
 		if not cfg.uses_routes:
 			# The app is just a script. Ask is used like a general purpose language.
 			app.main()
 
-		# The app uses routes so it's an API, the app needs to run in a web server.
-		elif get_ask_config_rule(['server', 'production'], True) is True:
+		# The app uses routes, so it's an API, the app needs to run in a web server.
+		elif get_ask_config_rule(['server', 'production'], True) is True and cfg.is_dev is False:
 			# Run in the production server.
-			import datetime
+			print('\033[91m\t- ', end='')
 			waitress.serve(
-				TransLogger(app.app, logger_name='Ask Application', format=f'\033[37m\t- {datetime.datetime.now().strftime("[%d/%b/%Y %H:%M:%S]")}\033[0m \033[1m%(REQUEST_METHOD)s\033[0m: "\033[32m%(REMOTE_ADDR)s%(REQUEST_URI)s\033[0m" → \033[94m%(status)s\033[0m'),
+				TransLogger(
+					app.app,
+					logger_name='Ask Application',
+					format=' '.join([
+						f'\033[37m\t- {datetime.datetime.now().strftime("[%d/%b/%Y %H:%M:%S]")}\033[0m',
+						'\033[1m%(REQUEST_METHOD)s\033[0m:'
+						'"\033[32m%(REMOTE_ADDR)s%(REQUEST_URI)s\033[0m"',
+						'→',
+						'\033[94m%(status)s\033[0m',
+					])
+				),
 				host=get_ask_config_rule(['server', 'host'], '127.0.0.1'),
 				port=get_ask_config_rule(['server', 'port'], '5000'),
 				ident='Ask Application',

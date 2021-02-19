@@ -1,9 +1,10 @@
+# coding=utf-8
 import os
+from pprint import pprint
 
 from ask import cfg
 from ask.transpiler import lexer, parser, errors
 from ask.utilities import file_utils, utils
-from ask.transpiler.utilities import transpiler_utils
 
 
 def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
@@ -14,7 +15,7 @@ def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
 		app = utils.import_app()
 
 		if cfg.uses_db:
-			utils.style_print('Loading database...', styles=['bold'], end='')
+			print('\t- Loading database...', end='')
 			app.db.create_all()
 			print('\t✅')
 	except Exception as e:  # Exception is used here to capture all exception types.
@@ -24,14 +25,13 @@ def verify_and_load_db(source_lines, time_result):  # sourcery skip: move-assign
 
 
 def build_db(file_name):
-	status = False
-	try:
-		status = bool(cfg.ask_config['db']['custom'])
-	except KeyError:
-		status = False
+	if not cfg.uses_db:
+		return
 
-	if not status and cfg.uses_db and not os.path.exists(file_utils.get_db_file_path()):
-		utils.style_print('Building database...', styles=['bold'], end='')
+	utils.style_print('Database:', styles=['bold'])
+
+	if not utils.get_ask_config_rule(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
+		print('\t- Building database...', end='')
 		db_root = file_utils.get_root_from_file_path(file_utils.get_db_file_path())
 		print('\t✅')
 
@@ -70,6 +70,10 @@ def transpile(source_lines):
 
 		# Checkmark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
+
+		if cfg.is_dev:
+			pprint(tokens_list)
+
 		utils.print_transpilation_result(source_lines, time_result)
 
 		# Database setup & build.

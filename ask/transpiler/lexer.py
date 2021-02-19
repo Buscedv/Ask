@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import ask.cfg as cfg
 from ask.transpiler.utilities import lexer_utils
 
@@ -151,11 +149,4 @@ def insert_indention_group_markers(tokens):
 
 def lex(source_lines):
 	tokens_list = lexer(source_lines)
-	tokens_list = insert_indention_group_markers(tokens_list)
-
-	if cfg.is_dev:
-		print('\n')
-		pprint(tokens_list)
-		print('\n')
-
-	return tokens_list
+	return insert_indention_group_markers(tokens_list)
