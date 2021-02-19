@@ -32,7 +32,7 @@ def route_path_to_func_name(route: str) -> str:
 def maybe_place_space_before(parsed: str, token_val: str) -> str:
 	prefix = ' '
 
-	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.']:
+	if parsed and parsed[-1] in ['\n', '\t', '(', ' ', '.'] or token_val == '>' and parsed[-1] == '-':
 		prefix = ''
 	parsed += f'{prefix}{token_val} '
 

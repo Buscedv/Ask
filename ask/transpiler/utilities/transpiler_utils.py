@@ -36,6 +36,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'import hashlib\n'
 	cfg.flask_boilerplate += 'import random as rand\n'
 	cfg.flask_boilerplate += 'import pickle\n'
+	cfg.flask_boilerplate += 'from typing import *\n'
 	cfg.flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 	cfg.flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
 
