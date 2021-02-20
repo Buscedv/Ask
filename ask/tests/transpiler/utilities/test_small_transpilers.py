@@ -3,7 +3,7 @@ import unittest
 from ask.transpiler.utilities import small_transpilers
 
 
-class TestAskTranspilerUtilitiesSmallTranspilers(unittest.TestCase):
+class TestTranspilerUtilitiesSmallTranspilers(unittest.TestCase):
 	pass
 
 

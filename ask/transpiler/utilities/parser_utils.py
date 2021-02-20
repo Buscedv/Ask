@@ -9,7 +9,6 @@ def is_db_column_in_past_line(tokens: List[list]) -> bool:
 	for token in tokens[::-1]:
 		if transpiler_utils.token_check(token, 'FORMAT', '\n', ):
 			break
-
 		if transpiler_utils.token_check(token, 'DB_ACTION', 'col') or transpiler_utils.token_check(token, 'DB_MODEL'):
 			return True
 
@@ -31,16 +30,17 @@ def route_path_to_func_name(route: str) -> str:
 
 
 def is_part_of_word(thing):
-	return thing.isalpha() or thing == '_'
+	try:
+		return thing.isalpha() or thing == '_'
+	except AttributeError:
+		return False
 
 
 def space_prefix(parsed: str, to_add: str = '') -> str:
 	prefix = ' '
 
-	# No space at the beginning of a line.
+	# No space at the beginning.
 	if not parsed:
-		prefix = ''
-	if parsed and parsed[-1] in ['\n', '\t', ' ']:
 		prefix = ''
 
 	# No Space before specific characters.
@@ -48,18 +48,14 @@ def space_prefix(parsed: str, to_add: str = '') -> str:
 		prefix = ''
 
 	# No space after specific characters.
-	if parsed and parsed[-1] in ['(', '.']:
+	if parsed and parsed[-1] in ['(', '.', ' ', '\t', '\n']:
 		prefix = ''
-
-	# Space before specific characters.
-	if to_add in []:
-		prefix = ' '
 
 	# Space after specific characters.
 	if parsed and parsed[-1] in [',']:
 		prefix = ' '
 
-	# No space between specific haracters and words:
+	# No space between specific charters and words:
 	if parsed and parsed[-1] in ['['] and is_part_of_word(to_add):
 		prefix = ''
 

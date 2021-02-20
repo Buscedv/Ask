@@ -3,7 +3,7 @@ import unittest
 from ask.utilities import utils
 
 
-class TestAskUtilitiesUtils(unittest.TestCase):
+class TestUtilitiesUtils(unittest.TestCase):
 	pass
 
 

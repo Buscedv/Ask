@@ -3,7 +3,7 @@ import unittest
 from ask.transpiler import errors
 
 
-class TestAskTranspilerErrors(unittest.TestCase):
+class TestTranspilerErrors(unittest.TestCase):
 	pass
 
 

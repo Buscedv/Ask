@@ -3,7 +3,7 @@ import unittest
 from ask.transpiler.utilities import lexer_utils
 
 
-class TestAskTranspilerUtilitiesLexerUtilsGroupTokensByLines(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsGroupTokensByLines(unittest.TestCase):
 	def test_(self):
 		tokens = [
 			['TOKEN', 'token'],
@@ -34,7 +34,7 @@ class TestAskTranspilerUtilitiesLexerUtilsGroupTokensByLines(unittest.TestCase):
 		self.assertEqual(expected, lexer_utils.group_tokens_by_lines(tokens))
 
 
-class TestAskTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
 	def test_empty_tmp(self):
 		expected = ([['TOKEN', 'token']], '', False, [], False)
 		self.assertEqual(expected, lexer_utils.word_or_special([['TOKEN', 'token']], ''))
@@ -52,7 +52,7 @@ class TestAskTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
 		self.assertEqual(expected, lexer_utils.word_or_special([['TOKEN', 'token']], 'def'))
 
 
-class TestAskTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
 	def test_not_string(self):
 		expected = ([{'is_string': False, 'code': 'code'}], '', True)
 		self.assertEqual(expected, lexer_utils.add_chunk([], False, 'code'))
@@ -70,7 +70,7 @@ class TestAskTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
 		self.assertEqual(expected, lexer_utils.add_chunk([], True, 'my string\n'))
 
 
-class TestAskTranspilerUtilitiesLexerUtilsFixUpCodeLine(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsFixUpCodeLine(unittest.TestCase):
 	def test_add_new_line_at_the_end(self):
 		self.assertEqual('word\n', lexer_utils.fix_up_code_line('word'))
 		self.assertEqual('word\n', lexer_utils.fix_up_code_line('word\n'))

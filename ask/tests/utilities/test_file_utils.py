@@ -3,7 +3,7 @@ import unittest
 from ask.utilities import file_utils
 
 
-class TestAskUtilitiesFileUtils(unittest.TestCase):
+class TestUtilitiesFileUtils(unittest.TestCase):
 	# get_root_from_file_path()
 	def test_get_root_from_file_path(self):
 		file_path = '/folder/folder/file.txt'

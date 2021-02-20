@@ -3,7 +3,7 @@ import unittest
 from ask.transpiler import lexer
 
 
-class TestAskTranspilerLexer(unittest.TestCase):
+class TestTranspilerLexer(unittest.TestCase):
 	# insert_indentation_group_markers()
 	def test_insert_indention_group_markers(self):
 		tokens = [
