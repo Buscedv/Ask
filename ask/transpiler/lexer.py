@@ -29,7 +29,7 @@ def lexer(raw: List[str]) -> List[List[str]]:
 					tokens[-1][1] = tmp
 
 					if include_collector_end:
-						tokens.append(['OP', char])
+						tokens.append(['OP' if char not in ['\n', '\t'] else 'FORMAT', char])
 
 					is_collector = False
 					include_collector_end = False

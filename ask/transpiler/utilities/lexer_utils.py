@@ -2,26 +2,22 @@
 from typing import List, Tuple
 
 from ask import cfg
-from ask.transpiler.utilities import small_transpilers
+from ask.transpiler.utilities import transpiler_utils
 
 
-def group_tokens_by_lines(tokens: List[list]) -> List[list]:
+# Converts list of single tokens into groups (lists) of tokens where newlines are the separators.
+def group_tokens_by_lines(tokens: List[List[str]]) -> List[List[List[str]]]:
 	tmp = []
 	lines = []
 
-	for token_index, token in enumerate(tokens):
-		token_type = token[0]
-		token_val = token[1]
-
-		if token_type == 'OP' and token_val in ['\n', '\t']:
-			token_type = 'FORMAT'
-
-		if token_type == 'FORMAT' and token_val == '\n':
+	for token in tokens:
+		if transpiler_utils.token_check(token, 'FORMAT', '\n'):
 			lines.append(tmp)
 			tmp = []
 
-		tmp.append([token_type, token_val])
+		tmp.append(token)
 
+	# The last match.
 	if tmp:
 		lines.append(tmp)
 
@@ -48,8 +44,8 @@ def word_or_special(tokens: List[list], tmp: str) -> Tuple[List[list], str, bool
 
 
 # This function is part of fix_up_code_line().
-def add_part(parts: list, is_string: bool, code: str) -> Tuple[list, str, bool]:
-	parts.append({
+def add_chunk(chunks: list, is_string: bool, code: str) -> Tuple[list, str, bool]:
+	chunks.append({
 		'is_string': is_string,
 		'code': code
 	})
@@ -59,7 +55,7 @@ def add_part(parts: list, is_string: bool, code: str) -> Tuple[list, str, bool]:
 	if code[-1] == '\n':
 		is_string = False
 
-	return parts, '', is_string
+	return chunks, '', is_string
 
 
 # Removes the spaces between function names and '(' characters.
@@ -67,27 +63,33 @@ def add_part(parts: list, is_string: bool, code: str) -> Tuple[list, str, bool]:
 def fix_up_code_line(statement: str) -> str:
 	statement = statement.replace("'", '"')
 
-	parts = []
+	if statement and statement[-1] != '\n':
+		statement += '\n'
+
+	chunks = []
 	is_string = False
 	tmp = ''
 
+	# Groups the code into chunks that are labeled as strings and not strings.
+	# This way spaces->tabs conversion etc. doesn't interfere with spaces inside strings.
 	for char in statement:
 		tmp += char
 
 		if char == '"' and is_string:
-			parts, tmp, is_string = add_part(parts, True, tmp)
+			chunks, tmp, is_string = add_chunk(chunks, True, tmp)
 			is_string = False
 		elif char in ['"', '\n']:
-			parts, tmp, is_string = add_part(parts, False, tmp)
+			chunks, tmp, is_string = add_chunk(chunks, False, tmp)
 
+	# Fixes indentation based on the generated chucks.
 	statement = ''
-	for part in parts:
-		if not part['is_string']:
-			part['code'] = part['code'] \
+	for chunk in chunks:
+		if not chunk['is_string']:
+			chunk['code'] = chunk['code'] \
 				.replace('    ', '\t') \
 				.replace('  ', '\t') \
 				.replace(' (', '(')
 
-		statement += part['code']
+		statement += chunk['code']
 
 	return statement

@@ -37,12 +37,6 @@ def is_part_of_word(thing):
 def space_prefix(parsed: str, to_add: str = '') -> str:
 	prefix = ' '
 
-	print(to_add)
-	if parsed:
-		print(parsed[-1])
-	else:
-		print('---')
-
 	# No space at the beginning of a line.
 	if not parsed:
 		prefix = ''
