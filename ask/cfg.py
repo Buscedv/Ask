@@ -38,6 +38,7 @@ uses_basic_decorator = False
 uses_routes = False
 basic_decorator_collector = []
 previous_basic_decorator_collector = []
+basic_decorator_has_primary_key = False
 
 # Others.
 ask_config = {}

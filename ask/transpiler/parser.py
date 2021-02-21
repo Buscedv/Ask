@@ -9,6 +9,12 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 	parsed_lines_reversed = parsed.split('\n')[::-1]
 	tab_count = 0
 	line_to_place_code_at = 0
+	code_lines = []
+
+	# Inserts an id/primary key column if the model is missing one.
+	if not cfg.basic_decorator_has_primary_key:
+		code_lines.append('id = db.Column(db.Integer, primary_key=True)\n')
+		cfg.basic_decorator_collector.insert(0, 'id')
 
 	for line_index, line in enumerate(parsed_lines_reversed):
 		if 'db.Column(' in line:
@@ -16,7 +22,7 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 			line_to_place_code_at = line_index + 1
 			break
 
-	code_lines = [f'def __init__(self, {", ".join(cfg.basic_decorator_collector)}):']
+	code_lines.append(f'def __init__(self, {", ".join(cfg.basic_decorator_collector)}):')
 
 	for var in cfg.basic_decorator_collector:
 		code_lines.append(f'\tself.{var} = {var}')
@@ -79,6 +85,7 @@ def parser(tokens: List[List[str]]) -> str:
 					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
 					cfg.basic_decorator_collector = []
 					ignored_due_to_basic_decorator = []
+					cfg.basic_decorator_has_primary_key = False
 			else:
 				basic_decorator_collection_might_end = True
 
@@ -191,13 +198,22 @@ def parser(tokens: List[List[str]]) -> str:
 			transpiled_action, needs_commit = small_transpilers.transpile_db_action(token_val)
 
 			if cfg.uses_basic_decorator:
-				if transpiled_action in ['primary_key=True', 'ignored']:
+				print(transpiled_action)
+				if transpiled_action == 'primary_key=True':
+					cfg.basic_decorator_has_primary_key = True
+					cfg.basic_decorator_collector.append(
+						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
+					)
+
+				if transpiled_action == 'ignored':
 					ignored_due_to_basic_decorator.append(
-						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens))
+						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
+					)
 
 				if transpiled_action == 'db.Column':
-					var = parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
-					cfg.basic_decorator_collector.append(var)
+					cfg.basic_decorator_collector.append(
+						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
+					)
 
 					for ignored in ignored_due_to_basic_decorator:
 						if ignored in cfg.basic_decorator_collector:
