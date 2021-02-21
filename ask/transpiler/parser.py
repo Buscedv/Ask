@@ -198,7 +198,6 @@ def parser(tokens: List[List[str]]) -> str:
 			transpiled_action, needs_commit = small_transpilers.transpile_db_action(token_val)
 
 			if cfg.uses_basic_decorator:
-				print(cfg.basic_decorator_collector)
 				if transpiled_action == 'primary_key=True':
 					cfg.basic_decorator_has_primary_key = True
 
