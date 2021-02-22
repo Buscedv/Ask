@@ -151,8 +151,10 @@ def load_askfile_config():
 def get_config_rule(key_tree: List[str], not_found) -> Any:
 	try:
 		current_position = cfg.ask_config[key_tree[0]]
-		for key in key_tree[1:]:
-			current_position = current_position[key]
+
+		if len(key_tree) > 1:
+			for key in key_tree[1:]:
+				current_position = current_position[key]
 
 		return current_position
 	except KeyError:
