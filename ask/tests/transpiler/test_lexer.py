@@ -75,5 +75,10 @@ class TestTranspilerLexerGroupOps(unittest.TestCase):
 		)
 
 
+class TestTranspilerLexerLex(unittest.TestCase):
+	# TODO: Add advanced tests here.
+	pass
+
+
 if __name__ == '__main__':
 	unittest.main()
