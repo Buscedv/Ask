@@ -6,7 +6,7 @@ from ask.transpiler.utilities import transpiler_utils
 
 
 # Converts list of single tokens into groups (lists) of tokens where newlines are the separators.
-def group_tokens_by_lines(tokens: List[List[str]]) -> List[List[List[str]]]:
+def group_toks_by_lines(tokens: List[List[str]]) -> List[List[List[str]]]:
 	tmp = []
 	lines = []
 
@@ -32,6 +32,7 @@ def word_or_special(tokens: List[list], tmp: str) -> Tuple[List[list], str, bool
 
 	if tmp:
 		if tmp in cfg.special_keywords:
+			# The word is a "special keyword". Collection starts.
 			tokens.append([cfg.special_keywords[tmp]['type'], tmp])
 
 			collect = cfg.special_keywords[tmp]['collect']
@@ -43,7 +44,7 @@ def word_or_special(tokens: List[list], tmp: str) -> Tuple[List[list], str, bool
 	return tokens, tmp, collect, collect_ends, include_collect_end
 
 
-# This function is part of fix_up_code_line().
+# This function is part of reformat_line().
 def add_chunk(chunks: list, is_string: bool, code: str) -> Tuple[list, str, bool]:
 	chunks.append({
 		'is_string': is_string,
@@ -60,7 +61,7 @@ def add_chunk(chunks: list, is_string: bool, code: str) -> Tuple[list, str, bool
 
 # Removes the spaces between function names and '(' characters.
 # Replaces 4 & 2 spaces with tab characters.
-def fix_up_code_line(statement: str) -> str:
+def reformat_line(statement: str) -> str:
 	statement = statement.replace("'", '"')
 
 	if statement and statement[-1] != '\n':

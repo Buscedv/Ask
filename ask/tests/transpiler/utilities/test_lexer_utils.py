@@ -3,7 +3,7 @@ import unittest
 from ask.transpiler.utilities import lexer_utils
 
 
-class TestTranspilerUtilitiesLexerUtilsGroupTokensByLines(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsGroupToksByLines(unittest.TestCase):
 	def test_(self):
 		tokens = [
 			['TOKEN', 'token'],
@@ -31,7 +31,7 @@ class TestTranspilerUtilitiesLexerUtilsGroupTokensByLines(unittest.TestCase):
 			]
 		]
 
-		self.assertEqual(expected, lexer_utils.group_tokens_by_lines(tokens))
+		self.assertEqual(expected, lexer_utils.group_toks_by_lines(tokens))
 
 
 class TestTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
@@ -70,22 +70,22 @@ class TestTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
 		self.assertEqual(expected, lexer_utils.add_chunk([], True, 'my string\n'))
 
 
-class TestTranspilerUtilitiesLexerUtilsFixUpCodeLine(unittest.TestCase):
+class TestTranspilerUtilitiesLexerUtilsReformatLine(unittest.TestCase):
 	def test_add_new_line_at_the_end(self):
-		self.assertEqual('word\n', lexer_utils.fix_up_code_line('word'))
-		self.assertEqual('word\n', lexer_utils.fix_up_code_line('word\n'))
+		self.assertEqual('word\n', lexer_utils.reformat_line('word'))
+		self.assertEqual('word\n', lexer_utils.reformat_line('word\n'))
 
 	def test_quotes(self):
-		self.assertEqual('"Hello, World!"\n', lexer_utils.fix_up_code_line('\'Hello, World!\''))
+		self.assertEqual('"Hello, World!"\n', lexer_utils.reformat_line('\'Hello, World!\''))
 
 	def test_space_before_parenthesis(self):
-		self.assertEqual('print()\n', lexer_utils.fix_up_code_line('print ()\n'))
+		self.assertEqual('print()\n', lexer_utils.reformat_line('print ()\n'))
 
 	def test_indents_fix(self):
 		original = 'if True:\n  print(True)\nif False:\n    print(False)'
 		expected = 'if True:\n\tprint(True)\nif False:\n\tprint(False)\n'
 
-		self.assertEqual(expected, lexer_utils.fix_up_code_line(original))
+		self.assertEqual(expected, lexer_utils.reformat_line(original))
 
 
 if __name__ == '__main__':

@@ -1,11 +1,11 @@
+# coding=utf-8
 import unittest
 
 from ask.transpiler import lexer
 
 
-class TestTranspilerLexer(unittest.TestCase):
-	# insert_indentation_group_markers()
-	def test_insert_indention_group_markers(self):
+class TestTranspilerLexerInsertGroupMarkers(unittest.TestCase):
+	def test_(self):
 		tokens = [
 			['FUNC_DEF', 'function'],
 			['FORMAT', '\n'],
@@ -62,7 +62,17 @@ class TestTranspilerLexer(unittest.TestCase):
 			['GROUP', 'end']
 		]
 
-		self.assertEqual(expected, lexer.insert_indention_group_markers(tokens))
+		self.assertEqual(expected, lexer.insert_indent_group_markers(tokens))
+
+
+class TestTranspilerLexerGroupOps(unittest.TestCase):
+	def test_(self):
+		self.assertEqual(
+			[['OP', '=='], ['TOKEN', 'value'], ['OP', '->'], ['TOKEN', 'value'], ['OP', '='], ['TOKEN', 'value'], ['OP', '=']],
+			lexer.group_ops(
+				[['OP', '='], ['OP', '='], ['TOKEN', 'value'], ['OP', '-'], ['OP', '>'], ['TOKEN', 'value'], ['OP', '='], ['TOKEN', 'value'], ['OP', '=']]
+			)
+		)
 
 
 if __name__ == '__main__':

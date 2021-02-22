@@ -54,7 +54,7 @@ def transpile(source_lines: List[str]):
 	utils.load_askfile_config()
 
 	# Lexing.
-	tokens_list = lexer.lex(source_lines)
+	tokens_list = lexer.lexer(source_lines)
 
 	if tokens_list:
 		# Parsing.

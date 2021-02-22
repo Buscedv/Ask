@@ -3,26 +3,36 @@ from ask import cfg
 from ask.utilities import file_utils
 
 
-def token_check(token: list, wanted_type: str = '', wanted_values: str or list = '') -> bool:
-	values_is_list = type(wanted_values) is list
-
+# Checks if a given token matches type(s) and/or value(s)
+def token_check(token: list, types: str or list = '', values: str or list = '') -> bool:
 	try:
-		if not wanted_type and wanted_values:
-			return token[1] == wanted_values if not values_is_list else token[1] in wanted_values
+		def generic_matcher(needle, haystack):
+			return needle == haystack if not type(haystack) is list else needle in haystack
 
-		if not wanted_values and wanted_type:
-			return token[0] == wanted_type
+		# Just match types.
+		if not values and types:
+			return generic_matcher(token[0], types)
 
-		return token[0] == wanted_type and token[1] == wanted_values if not values_is_list else token[1] in wanted_values
+		# Just match values.
+		if not types and values:
+			return generic_matcher(token[1], values)
+
+		# Match both types & values.
+		return generic_matcher(token[0], types) and generic_matcher(token[1], values)
 	except KeyError:
+		# Default.
 		return False
 
 
-def add_underscores_to_elements(original_list: list) -> list:
+def add_underscores_to_elems(original_list: list) -> list:
 	return original_list + [f'_{element}' for element in original_list]
 
 
 def set_boilerplate():
+	if cfg.is_extra_dev:
+		cfg.flask_boilerplate = '# WARNING! Boilerplate skipped. Extra dev mode is on! (-xd/--extra-dev)'
+		return
+
 	# Imports & initial setup
 	cfg.flask_boilerplate = ''
 	cfg.flask_boilerplate += 'from flask import Flask, jsonify, abort, request, Response\n'
@@ -321,7 +331,6 @@ def set_boilerplate():
 	cfg.flask_end_boilerplate += '\treturn auto.html(groups=[\'public\', \'private\'])\n'
 
 	# Boilerplate at the end of the script.
-
 	cfg.flask_end_boilerplate += '\n\nif __name__ == \'__main__\':\n'
 	if not cfg.uses_routes:
 		cfg.flask_end_boilerplate += '\tmain()\n'

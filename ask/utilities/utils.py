@@ -59,7 +59,7 @@ def print_transpilation_result(source_lines: str, time_result: float, for_error:
 
 
 def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
-	flags = ['-d', '--dev', '-v', '--version', '-h', '--help']
+	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help']
 
 	file_name = ''
 	no_valid_flags = True
@@ -70,6 +70,9 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 
 			if param in ['-d', '--dev']:
 				cfg.is_dev = True
+			if param in ['-xd', '--extra-d']:
+				cfg.is_extra_dev = True
+				style_print('Extra Dev Mode Activated!', 'red', ['bold'])
 			elif param in ['-v', '--version']:
 				style_print('- Version:', color='blue', end=' ')
 				print(cfg.project_information["version"])

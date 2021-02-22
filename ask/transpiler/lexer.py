@@ -6,7 +6,7 @@ from ask.utilities import utils
 from ask.transpiler.utilities import lexer_utils, transpiler_utils
 
 
-def lexer(raw: List[str]) -> List[List[str]]:
+def lex(raw: List[str]) -> List[List[str]]:
 	tmp = ''
 	is_collector = False
 	collector_ends = []
@@ -16,7 +16,7 @@ def lexer(raw: List[str]) -> List[List[str]]:
 	tokens = []
 
 	for line in raw:
-		line = lexer_utils.fix_up_code_line(line)
+		line = lexer_utils.reformat_line(line)
 		for char_index, char in enumerate(line):
 			# Ignores comments
 			if char == '#':
@@ -117,7 +117,7 @@ def lexer(raw: List[str]) -> List[List[str]]:
 			if len(tokens) > 2 and transpiler_utils.token_check(
 					tokens[-2],
 					'WORD',
-					transpiler_utils.add_underscores_to_elements(['db'])
+					transpiler_utils.add_underscores_to_elems(['db'])
 					if utils.get_config_rule(['rules', 'underscores'], True)
 					else 'db'
 			):
@@ -134,8 +134,8 @@ def lexer(raw: List[str]) -> List[List[str]]:
 	return tokens
 
 
-def insert_indention_group_markers(tokens: List[List[str]]) -> List[List[str]]:
-	lines = lexer_utils.group_tokens_by_lines(tokens)
+def insert_indent_group_markers(tokens: List[List[str]]) -> List[List[str]]:
+	lines = lexer_utils.group_toks_by_lines(tokens)
 
 	marked = []
 	previous_line_tabs = 0
@@ -182,7 +182,8 @@ def insert_indention_group_markers(tokens: List[List[str]]) -> List[List[str]]:
 	return marked
 
 
-def group_operators(tokens: List[List[str]]) -> List[List[str]]:
+# Merges together operator tokens that are next to each other (e.g = = becomes ==).
+def group_ops(tokens: List[List[str]]) -> List[List[str]]:
 	result = []
 	tmp = []
 
@@ -196,10 +197,14 @@ def group_operators(tokens: List[List[str]]) -> List[List[str]]:
 
 			result.append(token)
 
+	# Last match
+	if tmp:
+		result.append(['OP', ''.join(tmp)])
+
 	return result
 
 
-def lex(source_lines: List[str]) -> List[List[str]]:
-	tokens_list = lexer(source_lines)
-	tokens_list = group_operators(tokens_list)
-	return insert_indention_group_markers(tokens_list)
+def lexer(source_lines: List[str]) -> List[List[str]]:
+	tokens_list = lex(source_lines)
+	tokens_list = group_ops(tokens_list)
+	return insert_indent_group_markers(tokens_list)

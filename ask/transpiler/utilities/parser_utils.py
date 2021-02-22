@@ -5,7 +5,8 @@ from ask import cfg
 from ask.transpiler.utilities import transpiler_utils
 
 
-def is_db_column_in_past_line(tokens: List[list]) -> bool:
+# Is there a db column or model defined in the most recent/current line (in tokens).
+def is_db_column_or_model_in_past_line(tokens: List[list]) -> bool:
 	for token in tokens[::-1]:
 		if transpiler_utils.token_check(token, 'FORMAT', '\n', ):
 			break
@@ -15,7 +16,7 @@ def is_db_column_in_past_line(tokens: List[list]) -> bool:
 	return False
 
 
-def get_first_non_keyword_word_token_value_of_line(tokens: List[list]) -> str or None:
+def previous_non_keyword_word_tok(tokens: List[list]) -> str or None:
 	for token in tokens:
 		token_type = token[0]
 		token_val = token[1]
@@ -25,17 +26,20 @@ def get_first_non_keyword_word_token_value_of_line(tokens: List[list]) -> str or
 	return None
 
 
-def route_path_to_func_name(route: str) -> str:
+# Converts URI strings to a format that can be used as a Python function name.
+def uri_to_func_name(route: str) -> str:
 	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
 
 
-def is_part_of_word(thing):
+# Is the symbol a letter or underscore.
+def is_word_char(thing):
 	try:
 		return thing.isalpha() or thing == '_'
 	except AttributeError:
 		return False
 
 
+# Returns either a space or an empty string based on if the parsed token to append should have a space before it.
 def space_prefix(parsed: str, to_add: str = '') -> str:
 	prefix = ' '
 
@@ -56,17 +60,18 @@ def space_prefix(parsed: str, to_add: str = '') -> str:
 		prefix = ' '
 
 	# No space between specific charters and words:
-	if parsed and parsed[-1] in ['['] and is_part_of_word(to_add):
+	if parsed and parsed[-1] in ['['] and is_word_char(to_add):
 		prefix = ''
 
 	# Space between words
-	if parsed and is_part_of_word(parsed[-1]) and is_part_of_word(to_add):
+	if parsed and is_word_char(parsed[-1]) and is_word_char(to_add):
 		prefix = ' '
 
 	return prefix
 
 
-def parse_route_params_str(route_path: str) -> str:
+# Finds parameters in URI strings.
+def extract_params_from_uri(route_path: str) -> str:
 	is_param = False
 	tmp = ''
 	params_str = ''
@@ -89,7 +94,7 @@ def parse_route_params_str(route_path: str) -> str:
 	return params_str
 
 
-def get_current_tab_level(parsed: str) -> str:
+def get_tab_count(parsed: str) -> str:
 	parsed = parsed[::-1]
 
 	indents = ''

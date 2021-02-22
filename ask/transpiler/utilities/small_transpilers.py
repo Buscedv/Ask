@@ -1,6 +1,5 @@
 # coding=utf-8
 from collections import defaultdict
-
 from typing import Tuple
 
 from ask import cfg
@@ -51,8 +50,10 @@ def transpile_decorator(decorator: str) -> str:
 		return '---'
 
 	try:
+		# A fully matching decorator
 		return f'\n@{decorators[decorator]}'
 	except KeyError:
+		# Check if the decorator partly matches one in the transpilation dict.
 		for key, value in decorators.items():
 			if decorator[:len(key)] == key:
 				return f'\n@{value}{decorator[len(key):]}'

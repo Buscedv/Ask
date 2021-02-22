@@ -60,6 +60,7 @@ def parse_and_print_error(err: dict):
 			break
 
 	# Prints out a customized error message based on the original.
+	# Format: Error! ([file name]) [message] on line [nr] [\n] - in/at: [error line code].
 	utils.style_print('\t- Error!', color='red', end=' ')
 	utils.style_print(f'({cfg.source_file_name})', color='gray', end=' ')
 	utils.style_print(message, styles=['bold'], end=' ')

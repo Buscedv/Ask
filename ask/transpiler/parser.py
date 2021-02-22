@@ -18,7 +18,7 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 
 	for line_index, line in enumerate(parsed_lines_reversed):
 		if 'db.Column(' in line:
-			tab_count = len(parser_utils.get_current_tab_level(line))
+			tab_count = len(parser_utils.get_tab_count(line))
 			line_to_place_code_at = line_index + 1
 			break
 
@@ -78,7 +78,7 @@ def parser(tokens: List[List[str]]) -> str:
 					on_next_run_uses_basic_decorator = True
 					cfg.basic_decorator_collector = cfg.previous_basic_decorator_collector
 
-				if not parser_utils.is_db_column_in_past_line(past_lines_tokens):
+				if not parser_utils.is_db_column_or_model_in_past_line(past_lines_tokens):
 					basic_decorator_collection_might_end = False
 					cfg.uses_basic_decorator = False
 
@@ -121,7 +121,7 @@ def parser(tokens: List[List[str]]) -> str:
 			if needs_db_commit and token_val == ')':
 				needs_db_commit = False
 
-				tab_level = parser_utils.get_current_tab_level(parsed)
+				tab_level = parser_utils.get_tab_count(parsed)
 				parsed += f'\n{tab_level}db.session.commit()'
 		elif token_type == 'STR':
 			parsed += f'{parser_utils.space_prefix(parsed, token_val)}\"{token_val}\"'
@@ -158,8 +158,8 @@ def parser(tokens: List[List[str]]) -> str:
 
 					parsed += ''.join([
 						f'def {token_val[1:]}',
-						f'{parser_utils.route_path_to_func_name(next_token_val)}',
-						f'({parser_utils.parse_route_params_str(next_token_val)}'
+						f'{parser_utils.uri_to_func_name(next_token_val)}',
+						f'({parser_utils.extract_params_from_uri(next_token_val)}'
 					])
 
 					is_skip = True
@@ -203,12 +203,12 @@ def parser(tokens: List[List[str]]) -> str:
 
 				if transpiled_action == 'ignored':
 					ignored_due_to_basic_decorator.append(
-						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
+						parser_utils.previous_non_keyword_word_tok(past_lines_tokens)
 					)
 
 				if transpiled_action == 'db.Column':
 					cfg.basic_decorator_collector.append(
-						parser_utils.get_first_non_keyword_word_token_value_of_line(past_lines_tokens)
+						parser_utils.previous_non_keyword_word_tok(past_lines_tokens)
 					)
 
 					for ignored in ignored_due_to_basic_decorator:
