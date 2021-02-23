@@ -1,31 +1,50 @@
 version: 2.1
 
-jobs:
-  build:
-    docker:
-      - image: circleci/python:3.9.1
-        auth:
-          username: buscedv
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - run: pip install -r requirements.txt
-  test:
-    docker:
-      - image: circleci/python:3.9.1
-        auth:
-          username: buscedv
-          password: $DOCKERHUB_PASSWORD
-    steps:
-      - checkout
-      - run: python test_ask.py
+slack-fail-post-step: &slack-fail-post-step
+    post-steps:
+        - slack/status:
+            webhook: $SLACK_WEBHOOK
+            fail_only: true
 
+orbs:
+    slack: circleci/slack@3.4.2
+
+jobs:
+    build-and-test:
+        docker:
+            - image: circleci/python:3.9.1
+              auth:
+                  username: $DOCKERHUH_USERNAME
+                  password: $DOCKERHUB_PASSWORD
+        steps:
+            - checkout
+            - restore_cache:
+                keys:
+                    - deps-{{ checksum "poetry.lock" }}
+            
+            - run:
+                name: Install Dependencies
+                command: |
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    poetry install
+
+            - save_cache:
+                key: deps-{{ checksum "poetry.lock" }}
+                paths:
+                    - /home/circleci/.cache/pypoetry/virtualenvs
+            
+            - run:
+                name: Test
+                command: |
+                    source venv/bin/activate
+                    python3 -m unittest
 workflows:
-  version: 2
-  build_and_test:
-    jobs:
-      - build
-      - test
+    version: 2
+    build-and-test-workflow:
+        jobs:
+            - build-and-test: *slack-fail-post-step
+
 
 
 
