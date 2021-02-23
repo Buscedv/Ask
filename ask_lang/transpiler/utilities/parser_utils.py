@@ -1,8 +1,8 @@
 # coding=utf-8
 from typing import List
 
-from ask import cfg
-from ask.transpiler.utilities import transpiler_utils
+from ask_lang import cfg
+from ask_lang.transpiler.utilities import transpiler_utils
 
 
 # Is there a db column or model defined in the most recent/current line (in tokens).

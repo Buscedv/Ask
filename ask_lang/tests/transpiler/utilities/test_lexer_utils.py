@@ -1,6 +1,6 @@
 import unittest
 
-from ask.transpiler.utilities import lexer_utils
+from ask_lang.transpiler.utilities import lexer_utils
 
 
 class TestTranspilerUtilitiesLexerUtilsGroupToksByLines(unittest.TestCase):

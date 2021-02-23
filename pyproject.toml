@@ -1,9 +1,30 @@
 [tool.poetry]
-name = "ask"
-version = "1.0.0"
-description = "A backend programming language that reduces boilerplate."
-authors = ["Buscedv <me@edvard.dev>"]
+name = "ask_lang"
+version = "1.0.1"
+description = "Ask is a modern open source transpiled programming language, designed for building backend services and APIs. Ask reduces the amount of needed boilerplate code for setting up thing like database connections and authentication to virtually zero lines."
+authors = ["Edvard Busck-Nielsen <me@edvard.dev>"]
 license = "GNU GPL v3.0"
+readme = "README.md"
+homepage = "https://ask-lang.org"
+repository = "https://github.com/Buscedv/Ask"
+keywords = ["ask", "programming language", "backend", 'api', 'rest', 'tool']
+include = [
+    "LICENSE",
+]
+classifiers = [
+	"Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: Flask",
+    "Operating System :: OS Independent",
+	"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+	"Programming Language :: Python :: 3.9",
+	"Topic :: Software Development",
+	"Topic :: Software Development :: Build Tools",
+	"Topic :: Software Development :: Version Control :: Git",
+	"Topic :: Software Development :: Code Generators",
+	"Topic :: Software Development :: Compilers",
+	"Topic :: Software Development :: Pre-processors",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -23,12 +44,11 @@ toml = "^0.10.2"
 waitress = "^1.4.4"
 Paste = "^3.5.0"
 tabulate = "^0.8.8"
-nose2 = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-ask = 'ask:main'
+ask = 'ask_lang:main'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

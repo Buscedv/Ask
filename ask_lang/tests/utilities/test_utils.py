@@ -1,32 +1,32 @@
 import unittest
 
-import ask.cfg as cfg
-from ask.utilities import utils
+import ask_lang.cfg as cfg
+from ask_lang.utilities import utils
 
 
 class TestUtilitiesUtilsParseSysArgs(unittest.TestCase):
 	def test_no_valid_flags(self):
-		self.assertEqual(('file', True), utils.parse_sys_args(['ask', 'file']))
+		self.assertEqual(('file', True), utils.parse_sys_args(['ask_lang', 'file']))
 
 	#  single after
 	def test_single_flag_after(self):
-		self.assertEqual(('file', False), utils.parse_sys_args(['ask', 'file', '-d']))
+		self.assertEqual(('file', False), utils.parse_sys_args(['ask_lang', 'file', '-d']))
 
 	# Multiple after
 	def test_multiple_flags_after(self):
-		self.assertEqual(('file', False), utils.parse_sys_args(['ask', 'file', '-d', '--version']))
+		self.assertEqual(('file', False), utils.parse_sys_args(['ask_lang', 'file', '-d', '--version']))
 
 	# Single before.
 	def test_single_flag_before(self):
-		self.assertEqual(('file', False), utils.parse_sys_args(['ask', '-d', 'file']))
+		self.assertEqual(('file', False), utils.parse_sys_args(['ask_lang', '-d', 'file']))
 
 	# Multiple before.
 	def test_multiple_flags_before(self):
-		self.assertEqual(('file', False), utils.parse_sys_args(['ask', '--dev', '-v', 'file']))
+		self.assertEqual(('file', False), utils.parse_sys_args(['ask_lang', '--dev', '-v', 'file']))
 
 	# Mix.
 	def test_mixed_flags(self):
-		self.assertEqual(('file', False), utils.parse_sys_args(['ask', '-d', 'file', '--version', '-v']))
+		self.assertEqual(('file', False), utils.parse_sys_args(['ask_lang', '-d', 'file', '--version', '-v']))
 
 
 class TestUtilitiesUtilsGetConfigRule(unittest.TestCase):

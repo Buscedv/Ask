@@ -5,9 +5,9 @@ import time
 from types import ModuleType
 from typing import List
 
-from ask import cfg
-from ask.transpiler import lexer, parser, errors
-from ask.utilities import file_utils, utils
+from ask_lang import cfg
+from ask_lang.transpiler import lexer, parser, errors
+from ask_lang.utilities import file_utils, utils
 
 
 def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign

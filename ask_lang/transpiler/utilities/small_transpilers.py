@@ -2,9 +2,9 @@
 from collections import defaultdict
 from typing import Tuple
 
-from ask import cfg
-from ask.utilities import utils
-from ask.transpiler.utilities import parser_utils
+from ask_lang import cfg
+from ask_lang.utilities import utils
+from ask_lang.transpiler.utilities import parser_utils
 
 
 def generic_transpile_symbol(word: str, words: dict, default: str = None) -> str:

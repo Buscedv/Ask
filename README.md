@@ -76,7 +76,7 @@ if __name__ == '__main__':
 - Create a virtual environment.
 `$ poetry shell`
   - (you can exit it with `$ deactivate`).
-- Install depedencies.
+- Install dependencies.
 `$ poetry install`
 
 - Create your Ask app in a `.ask` file.
@@ -87,8 +87,3 @@ You can find the full documentation on [ask.edvard.dev](https://ask.edvard.dev)
 
 ## Contributing
 Read more in the `CONTRIBUTING` file.
-
-## Project structure
-- `ask.py`: The Ask to Flask transpiler.
-- `ask-watch.py`: A file watcher auto transpiler. Requires ask.py in the same directory.
-- `docs/`: Ask's documentation website, built with Vue.js. Fetches the actual documentation from this repo's wiki.

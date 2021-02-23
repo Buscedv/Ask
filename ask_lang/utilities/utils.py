@@ -9,9 +9,9 @@ from paste.translogger import TransLogger
 import datetime
 from tabulate import tabulate
 
-from ask import cfg
-from ask.utilities import file_utils
-from ask.transpiler import errors
+from ask_lang import cfg
+from ask_lang.utilities import file_utils
+from ask_lang.transpiler import errors
 
 
 # Prints out text colorized and (optionally) as bold.
@@ -77,7 +77,7 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 				style_print('- Version:', color='blue', end=' ')
 				print(cfg.project_information["version"])
 			elif param in ['-h', '--help']:
-				print('Usage: ask [OPTIONS] [FILE]...', end='\n\n')
+				print('Usage: ask_lang [OPTIONS] [FILE]...', end='\n\n')
 				print(tabulate(
 					[
 						['-h', '--help', 'Show this message.'],

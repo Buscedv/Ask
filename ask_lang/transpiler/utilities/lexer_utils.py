@@ -1,8 +1,8 @@
 # coding=utf-8
 from typing import List, Tuple
 
-from ask import cfg
-from ask.transpiler.utilities import transpiler_utils
+from ask_lang import cfg
+from ask_lang.transpiler.utilities import transpiler_utils
 
 
 # Converts list of single tokens into groups (lists) of tokens where newlines are the separators.

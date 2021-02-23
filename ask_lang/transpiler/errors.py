@@ -2,9 +2,9 @@
 import os
 import difflib
 
-from ask import cfg
-from ask.utilities import utils
-from ask.utilities import file_utils
+from ask_lang import cfg
+from ask_lang.utilities import utils
+from ask_lang.utilities import file_utils
 
 
 def parse_and_print_error(err: dict):

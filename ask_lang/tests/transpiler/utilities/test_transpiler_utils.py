@@ -1,6 +1,6 @@
 import unittest
 
-from ask.transpiler.utilities import transpiler_utils
+from ask_lang.transpiler.utilities import transpiler_utils
 
 
 class TestTranspilerUtilitiesTranspilerUtilsTokenCheck(unittest.TestCase):

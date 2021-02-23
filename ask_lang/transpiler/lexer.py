@@ -1,9 +1,9 @@
 # coding=utf-8
 from typing import List
 
-import ask.cfg as cfg
-from ask.utilities import utils
-from ask.transpiler.utilities import lexer_utils, transpiler_utils
+import ask_lang.cfg as cfg
+from ask_lang.utilities import utils
+from ask_lang.transpiler.utilities import lexer_utils, transpiler_utils
 
 
 def lex(raw: List[str]) -> List[List[str]]:

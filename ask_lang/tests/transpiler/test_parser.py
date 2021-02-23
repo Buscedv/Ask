@@ -1,6 +1,6 @@
 import unittest
 
-from ask.transpiler import parser
+from ask_lang.transpiler import parser
 
 
 class TestTranspilerParserInsertBasicDecoratorCodeToInsert(unittest.TestCase):

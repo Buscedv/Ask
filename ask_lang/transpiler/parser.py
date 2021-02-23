@@ -1,8 +1,8 @@
 # coding=utf-8
 from typing import List
 
-from ask import cfg
-from ask.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
+from ask_lang import cfg
+from ask_lang.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
 
 
 def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str]) -> str:

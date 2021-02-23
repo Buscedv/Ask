@@ -1,7 +1,7 @@
 # coding=utf-8
 import unittest
 
-from ask.transpiler import lexer
+from ask_lang.transpiler import lexer
 
 
 class TestTranspilerLexerInsertGroupMarkers(unittest.TestCase):

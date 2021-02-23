@@ -1,6 +1,6 @@
 import unittest
 
-from ask.transpiler.utilities import parser_utils
+from ask_lang.transpiler.utilities import parser_utils
 
 
 class TestTranspilerUtilitiesParserUtilsIsDbColumnInLastLine(unittest.TestCase):

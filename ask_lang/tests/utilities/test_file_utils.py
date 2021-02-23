@@ -1,7 +1,7 @@
 import unittest
 
-from ask import cfg
-from ask.utilities import file_utils
+from ask_lang import cfg
+from ask_lang.utilities import file_utils
 
 
 class TestUtilitiesFileUtilsGetRootFromFilePath(unittest.TestCase):
@@ -36,11 +36,11 @@ class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
 
 class TestUtilitiesFileUtilsGetOutputFileDestinationPath(unittest.TestCase):
 	def test_(self):
-		cfg.source_file_name = 'script.ask'
+		cfg.source_file_name = 'script.ask_lang'
 		self.assertEqual('app.py', file_utils.get_output_file_destination_path())
 
 	def test_sub_path(self):
-		cfg.source_file_name = 'folder/script.ask'
+		cfg.source_file_name = 'folder/script.ask_lang'
 		self.assertEqual('folder/app.py', file_utils.get_output_file_destination_path())
 
 

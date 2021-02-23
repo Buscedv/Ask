@@ -1,6 +1,6 @@
 # coding=utf-8
-from ask import cfg
-from ask.utilities import file_utils
+from ask_lang import cfg
+from ask_lang.utilities import file_utils
 
 
 # Checks if a given token matches type(s) and/or value(s)

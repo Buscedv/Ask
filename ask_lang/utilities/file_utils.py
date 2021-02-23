@@ -1,8 +1,8 @@
 # coding=utf-8
 import os
 
-from ask import cfg
-from ask.utilities import utils
+from ask_lang import cfg
+from ask_lang.utilities import utils
 
 
 def get_root_from_file_path(file_path: str) -> str:

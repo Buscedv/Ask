@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from ask.transpiler.utilities import small_transpilers
+from ask_lang.transpiler.utilities import small_transpilers
 
 
 def get_config_rule_patch_false(*args, **kwargs):
@@ -13,7 +13,7 @@ def get_config_rule_patch_true(*args, **kwargs):
 
 
 class TestTranspilerUtilitiesSmallTranspilersGenericTranspileSymbol(unittest.TestCase):
-	get_config_rule_path_path = 'ask.transpiler.utilities.small_transpilers.utils.get_config_rule'
+	get_config_rule_path_path = 'ask_lang.transpiler.utilities.small_transpilers.utils.get_config_rule'
 
 	def test_match(self):
 		with patch(self.get_config_rule_path_path, get_config_rule_patch_true):
