@@ -183,7 +183,7 @@ def insert_indent_group_markers(tokens: List[List[str]]) -> List[List[str]]:
 
 
 # Merges together operator tokens that are next to each other (e.g = = becomes ==).
-def group_ops(tokens: List[List[str]]) -> List[List[str]]:
+def merge_ops(tokens: List[List[str]]) -> List[List[str]]:
 	result = []
 	tmp = []
 
@@ -206,5 +206,5 @@ def group_ops(tokens: List[List[str]]) -> List[List[str]]:
 
 def lexer(source_lines: List[str]) -> List[List[str]]:
 	tokens_list = lex(source_lines)
-	tokens_list = group_ops(tokens_list)
+	tokens_list = merge_ops(tokens_list)
 	return insert_indent_group_markers(tokens_list)

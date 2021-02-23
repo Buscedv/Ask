@@ -65,11 +65,11 @@ class TestTranspilerLexerInsertGroupMarkers(unittest.TestCase):
 		self.assertEqual(expected, lexer.insert_indent_group_markers(tokens))
 
 
-class TestTranspilerLexerGroupOps(unittest.TestCase):
+class TestTranspilerLexerMergeOps(unittest.TestCase):
 	def test_(self):
 		self.assertEqual(
 			[['OP', '=='], ['TOKEN', 'value'], ['OP', '->'], ['TOKEN', 'value'], ['OP', '='], ['TOKEN', 'value'], ['OP', '=']],
-			lexer.group_ops(
+			lexer.merge_ops(
 				[['OP', '='], ['OP', '='], ['TOKEN', 'value'], ['OP', '-'], ['OP', '>'], ['TOKEN', 'value'], ['OP', '='], ['TOKEN', 'value'], ['OP', '=']]
 			)
 		)

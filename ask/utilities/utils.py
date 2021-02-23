@@ -160,5 +160,5 @@ def get_config_rule(key_tree: List[str], not_found) -> Any:
 				current_position = current_position[key]
 
 		return current_position
-	except KeyError:
+	except Exception:
 		return not_found

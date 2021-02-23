@@ -3,7 +3,13 @@ import unittest
 from ask.transpiler import parser
 
 
-class TestTranspilerParser(unittest.TestCase):
+class TestTranspilerParserInsertBasicDecoratorCodeToInsert(unittest.TestCase):
+	# TODO: Add advanced tests here.
+	pass
+
+
+class TestTranspilerParserParse(unittest.TestCase):
+	# TODO: Add advanced tests here.
 	pass
 
 

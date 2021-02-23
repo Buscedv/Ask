@@ -58,7 +58,7 @@ def transpile(source_lines: List[str]):
 
 	if tokens_list:
 		# Parsing.
-		parsed = parser.parse(tokens_list)
+		parsed = parser.parser(tokens_list)
 
 		# Saves the transpiled code to the build/output file
 		with open(file_utils.get_output_file_destination_path(), 'w+') as f:

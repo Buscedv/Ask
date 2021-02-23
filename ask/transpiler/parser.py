@@ -45,7 +45,7 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 	)
 
 
-def parser(tokens: List[List[str]]) -> str:
+def parse(tokens: List[List[str]]) -> str:
 	parsed = ''
 
 	is_skip = False
@@ -223,9 +223,9 @@ def parser(tokens: List[List[str]]) -> str:
 	return parsed
 
 
-def parse(tokens_list: List[List[str]]) -> str:
+def parser(tokens_list: List[List[str]]) -> str:
 	# Parses tokens and adds the end boilerplate to the output code.
-	parsed = parser(tokens_list)
+	parsed = parse(tokens_list)
 
 	# Put the output code into a main function if the app doesn't use routes, and prevent it from running multiple
 	# times since the output file is imported multiple times.

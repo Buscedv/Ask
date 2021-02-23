@@ -2,6 +2,7 @@
 import os
 
 from ask import cfg
+from ask.utilities import utils
 
 
 def get_root_from_file_path(file_path: str) -> str:
@@ -47,7 +48,7 @@ def get_ask_config(source_root: str) -> dict:
 def get_full_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	prefix = 'sqlite:///'
 
-	if cfg.ask_config and 'db' in cfg.ask_config and 'custom' in cfg.ask_config['db'] and cfg.ask_config['db']['custom']:
+	if utils.get_config_rule(['db', 'custom'], False):
 		prefix = ''
 
 	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
@@ -61,7 +62,7 @@ def get_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	if is_boilerplate_insertion_use:
 		path = f'{os.getcwd()}/{path}'
 
-	if cfg.ask_config and 'db' in cfg.ask_config and 'path' in cfg.ask_config['db']:
+	if utils.get_config_rule(['db', 'path'], ''):
 		custom_path = cfg.ask_config['db']['path']
 		if not path or path[0] != '/':
 			end = custom_path
