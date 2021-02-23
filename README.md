@@ -32,7 +32,7 @@ The transpiled app is completely standalone and doesn't require Ask in any way.
 ## Installation
 - You can download Python from the PyPI.
 - `$ pip install ask-lang`.
-- Then run your apps with: `$ sk [your file].ask`.
+- Then run your apps with: `$ ask [your file].ask`.
 
 ## Example (Ask vs Flask)
 Here is the same basic app with one GET route written in Ask and in Python with Flask.
@@ -89,3 +89,8 @@ As you can see Ask hides away all the clutter and boilerplate.
 
 ## Documentation
 You can find the full documentation on [docs.ask-lang.org](https://docs.ask-lang.org)
+
+## Contact
+- Website: [ask-lang.org](https://ask-lang.org)
+- Email: [me(a)edvard.dev](mailto:me@edvard.dev)
+- GitHub: [Buscedv](https://github.com/Buscedv)
