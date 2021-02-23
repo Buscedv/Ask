@@ -30,8 +30,8 @@ Flask is a very popular and well-established web framework for Python, so there'
 The transpiled app is completely standalone and doesn't require Ask in any way.
 
 ## Installation
-- You can download Python from the PyPI.
-- `$ pip install ask-lang`.
+- You can download Python from the PyPI. You can use `pip` but we recommend that you use [pipx](https://pipxproject.github.io/pipx/).
+- `$ pipx install ask-lang`.
 - Then run your apps with: `$ ask [your file].ask`.
 
 ## Example (Ask vs Flask)
