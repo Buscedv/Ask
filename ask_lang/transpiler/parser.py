@@ -1,5 +1,6 @@
 # coding=utf-8
 from typing import List
+from re import findall
 
 from ask_lang import cfg
 from ask_lang.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
@@ -231,12 +232,23 @@ def parser(tokens_list: List[List[str]]) -> str:
 	# times since the output file is imported multiple times.
 	if not cfg.uses_routes:
 		parsed_with_main_func = '\n\ndef main():\n'
+
+		if cfg.is_repl and cfg.repl_previous_transpiled:
+			for line in cfg.repl_previous_transpiled.split('\n'):
+				if bool(findall(r'^[\t\s]*[\w]+[\s]*=[\s]*.+', line)):
+					parsed_with_main_func += f'\t{line}\n'
+
 		for line in parsed.split('\n'):
 			parsed_with_main_func += f'\t{line}\n'
+
+		if cfg.is_repl:
+			cfg.repl_previous_transpiled += f'\n{parsed}'
+
 		parsed = parsed_with_main_func
 
-	# Boilerplate setup.
-	transpiler_utils.set_boilerplate()
+	if not cfg.is_repl:
+		# Boilerplate setup.
+		transpiler_utils.set_boilerplate()
 
 	parsed = f'{cfg.flask_boilerplate}\n{parsed}'
 	parsed += cfg.flask_end_boilerplate

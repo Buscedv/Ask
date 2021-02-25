@@ -18,17 +18,22 @@ def parse_and_print_error(err: dict):
 	code = ''
 	line_nr = 0
 
+	try:
+		message = err['msg'].capitalize()
+	except AttributeError:
+		message = err['msg']
+
 	if err['msg'] == 48:
 		# Address already in use eror:
 		message = 'Address already in use.'
 		skip_to_printing = True
+	if cfg.is_repl:
+		utils.style_print('Error!', color='red', end=' ')
+		print(message)
+
+		return
 
 	if not skip_to_printing:
-		try:
-			message = err['msg'].capitalize()
-		except AttributeError:
-			message = err['msg']
-
 		transpiled_line_nr = err['line']
 		code = err['code'].replace('\t', '')
 
@@ -47,9 +52,11 @@ def parse_and_print_error(err: dict):
 
 	# No matching line was found, this most likely means that it's not a syntax error.
 	if skip_to_printing or not matches:
-		utils.style_print('\t- Error!', color='red', end=' ')
-		print('Something went wrong!')
-		print(f'\t\t- {message}')
+		utils.style_print('\t- Error!', color='red')
+		if not message:
+			print('Something went wrong!')
+		else:
+			print(f'\t\t- {message}')
 
 		return
 
@@ -80,17 +87,21 @@ def error_while_running(e: Exception, source_lines: list, time_result: float):
 		line = ''
 		code = ''
 
-	# Prints out the error.
-	# Clears the screen and re-prints the transpilation result.
-	os.system('cls' if os.name == 'nt' else 'clear')
+	if not cfg.is_repl:
+		# Prints out the error.
+		# Clears the screen and re-prints the transpilation result.
+		os.system('cls' if os.name == 'nt' else 'clear')
 
-	utils.initial_print()
-	utils.style_print('Transpiling...', styles=['bold'], end='')
-	print('\t❌ ')
-	utils.print_transpilation_result(source_lines, time_result, True)
+		utils.initial_print()
+		utils.style_print('Transpiling...', styles=['bold'], end='')
+		print('\t❌ ')
+		utils.print_transpilation_result(source_lines, time_result, True)
 
 	parse_and_print_error({
 		'msg': msg,
 		'line': line,
 		'code': code
 	})
+	
+	if cfg.is_repl:
+		return

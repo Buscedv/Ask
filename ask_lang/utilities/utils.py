@@ -107,8 +107,9 @@ def run_server():
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
-		style_print('Running the app...', styles=['bold'], end=' ')
-		print('(Press Ctrl+C to stop)')
+		if not cfg.is_repl:
+			style_print('Running the app...', styles=['bold'], end=' ')
+			print('(Press Ctrl+C to stop)')
 
 		if not cfg.uses_routes:
 			# The app is just a script. Ask is used like a general purpose language.
@@ -141,13 +142,23 @@ def run_server():
 				os.environ['FLASK_ENV'] = 'development'
 
 			app.app.run()
+
+		# Deletes the output file if configured to.
+		if not get_config_rule(['system', 'keep_app'], True):
+			os.remove(file_utils.get_output_file_destination_path())
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 
-		exit()
+		if cfg.is_repl:
+			# Tries to remove the line the error was on.
+			if len(cfg.repl_previous_transpiled.split('\n')) > 2:
+				cfg.repl_previous_transpiled = '\n'.join(cfg.repl_previous_transpiled.split('\n')[:-2])
+			return
+
+		exit(1)
 
 
-def load_askfile_config():
+def load_askfile():
 	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
 
 

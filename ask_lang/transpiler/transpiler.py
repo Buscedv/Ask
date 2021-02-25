@@ -24,7 +24,7 @@ def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, source_lines, time_result)
 
-		exit()
+		exit(1)
 
 
 def build_db(file_name: str):
@@ -48,46 +48,45 @@ def transpile(source_lines: List[str]):
 	# Transpilation time capture start.
 	start_time = time.time()
 
-	utils.style_print('Transpiling...', styles=['bold'], end='')
+	if not cfg.is_repl:
+		utils.style_print('Transpiling...', styles=['bold'], end='')
 
 	# Load Askfile.
-	utils.load_askfile_config()
+	utils.load_askfile()
 
 	# Lexing.
 	tokens_list = lexer.lexer(source_lines)
 
-	if tokens_list:
-		# Parsing.
-		parsed = parser.parser(tokens_list)
+	# Parsing.
+	parsed = parser.parser(tokens_list)
 
-		# Saves the transpiled code to the build/output file
-		with open(file_utils.get_output_file_destination_path(), 'w+') as f:
-			f.write('')
-			f.write(parsed)
+	# Saves the transpiled code to the build/output file
+	with open(file_utils.get_output_file_destination_path(), 'w+') as f:
+		f.write('')
+		f.write(parsed)
 
-		# The transpilation is done.
-		end_time = time.time()
-		time_result = round(end_time - start_time, 3)
+	# The transpilation is done.
+	end_time = time.time()
+	time_result = round(end_time - start_time, 3)
 
+	if not cfg.is_repl:
 		# Checkmark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
 
-		if cfg.is_dev:
-			pprint(tokens_list)
+	if cfg.is_dev:
+		pprint(tokens_list)
 
+	if not cfg.is_repl:
 		utils.print_transpilation_result(source_lines, time_result)
 
-		# Database setup & build.
-		build_db(cfg.source_file_name)
+	# Database setup & build.
+	build_db(cfg.source_file_name)
 
-		# Verify transpilation
-		verify_and_load_db(source_lines, time_result)
+	# Verify transpilation
+	verify_and_load_db(source_lines, time_result)
 
-		# Stores the result in the global store.
-		cfg.transpilation_result = {
-			'source_lines': source_lines,
-			'time_result': time_result
-		}
-	else:
-		utils.style_print('\t- The file is empty!', color='red')
-		exit()
+	# Stores the result in the global store.
+	cfg.transpilation_result = {
+		'source_lines': source_lines,
+		'time_result': time_result
+	}
