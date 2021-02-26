@@ -12,11 +12,7 @@
   elementTypeClass="org.ask.sdk.language.psi.AskElementType"
   tokenTypeClass="org.ask.sdk.language.psi.AskTokenType"
 
-  tokens = [
-      IDENTIFIER = 'regexp:[a-zA-Z_]+'
-      WHITE_SPACE = 'regexp:\s+'
-      NUMBER = 'regexp:[-]*[0-9]+'
-  ]
+  tokens = []
 }
 
-
+Askfile ::= ''
