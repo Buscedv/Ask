@@ -1,0 +1,15 @@
+<idea-plugin>
+  <version>1.0.0</version>
+  <idea-version since-build="203.7148" until-build="203.*"/>
+  <id>org.ask-lang.ask-lang</id>
+  <name>Ask</name>
+  <vendor email="me@edvard.dev" url="https://ask-lang.org">Ask</vendor>
+  <description>
+    Language support for the Ask programming language.
+    </description>
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Ask File" implementationClass="org.ask.sdk.language.AskFileType" fieldName="INSTANCE" language="Ask" extensions="ask"/>
+  </extensions>
+  <actions/>
+</idea-plugin>

@@ -1,0 +1,22 @@
+{
+  parserClass="org.ask.sdk.language.parser.AskParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Ask"
+  psiImplClassSuffix="Impl"
+  psiPackage="org.ask.sdk.language.psi"
+  psiImplPackage="org.ask.sdk.language.psi.impl"
+
+  elementTypeHolderClass="org.ask.sdk.language.psi.AskTypes"
+  elementTypeClass="org.ask.sdk.language.psi.AskElementType"
+  tokenTypeClass="org.ask.sdk.language.psi.AskTokenType"
+
+  tokens = [
+      IDENTIFIER = 'regexp:[a-zA-Z_]+'
+      WHITE_SPACE = 'regexp:\s+'
+      NUMBER = 'regexp:[-]*[0-9]+'
+  ]
+}
+
+
