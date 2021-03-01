@@ -3,8 +3,7 @@ import os
 import difflib
 
 from ask_lang import cfg
-from ask_lang.utilities import utils
-from ask_lang.utilities import file_utils
+from ask_lang.utilities import printing, file_utils
 
 
 def parse_and_print_error(err: dict):
@@ -28,7 +27,7 @@ def parse_and_print_error(err: dict):
 		message = 'Address already in use.'
 		skip_to_printing = True
 	if cfg.is_repl:
-		utils.style_print('Error!', color='red', end=' ')
+		printing.style_print('Error!', color='red', end=' ')
 		print(message)
 
 		return
@@ -47,12 +46,12 @@ def parse_and_print_error(err: dict):
 
 		if cfg.is_dev:
 			# Prints out the "real" line number.
-			utils.style_print('\t- DEV: ', color='blue', end=' ')
-			print(f'{message} on line: {transpiled_line_nr} in: {file_utils.get_output_file_destination_path()}')
+			printing.style_print('\t- DEV: ', color='blue', end=' ')
+			print(f'{message} on line: {transpiled_line_nr} in: {file_utils.output_path()}')
 
 	# No matching line was found, this most likely means that it's not a syntax error.
 	if skip_to_printing or not matches:
-		utils.style_print('\t- Error!', color='red')
+		printing.style_print('\t- Error!', color='red')
 		if not message:
 			print('Something went wrong!')
 		else:
@@ -68,13 +67,13 @@ def parse_and_print_error(err: dict):
 
 	# Prints out a customized error message based on the original.
 	# Format: Error! ([file name]) [message] on line [nr] [\n] - in/at: [error line code].
-	utils.style_print('\t- Error!', color='red', end=' ')
-	utils.style_print(f'({cfg.source_file_name})', color='gray', end=' ')
-	utils.style_print(message, styles=['bold'], end=' ')
+	printing.style_print('\t- Error!', color='red', end=' ')
+	printing.style_print(f'({cfg.source_file_name})', color='gray', end=' ')
+	printing.style_print(message, styles=['bold'], end=' ')
 	print('on line', end=' ')
-	utils.style_print(f'{line_nr},', color='blue')
+	printing.style_print(f'{line_nr},', color='blue')
 	print('\t\t- in/at: ', end='')
-	utils.style_print(code, styles=['bold'])
+	printing.style_print(code, styles=['bold'])
 
 
 def error_while_running(e: Exception, source_lines: list, time_result: float):
@@ -92,16 +91,16 @@ def error_while_running(e: Exception, source_lines: list, time_result: float):
 		# Clears the screen and re-prints the transpilation result.
 		os.system('cls' if os.name == 'nt' else 'clear')
 
-		utils.initial_print()
-		utils.style_print('Transpiling...', styles=['bold'], end='')
+		printing.initial_print()
+		printing.style_print('Transpiling...', styles=['bold'], end='')
 		print('\t❌ ')
-		utils.print_transpilation_result(source_lines, time_result, True)
+		printing.transpilation_result(source_lines, time_result, True)
 
 	parse_and_print_error({
 		'msg': msg,
 		'line': line,
 		'code': code
 	})
-	
+
 	if cfg.is_repl:
 		return

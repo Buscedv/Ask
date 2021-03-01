@@ -37,11 +37,11 @@ class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
 class TestUtilitiesFileUtilsGetOutputFileDestinationPath(unittest.TestCase):
 	def test_(self):
 		cfg.source_file_name = 'script.ask_lang'
-		self.assertEqual('app.py', file_utils.get_output_file_destination_path())
+		self.assertEqual('app.py', file_utils.output_path())
 
 	def test_sub_path(self):
 		cfg.source_file_name = 'folder/script.ask_lang'
-		self.assertEqual('folder/app.py', file_utils.get_output_file_destination_path())
+		self.assertEqual('folder/app.py', file_utils.output_path())
 
 
 if __name__ == '__main__':

@@ -5,13 +5,13 @@ import sys
 
 from ask_lang import cfg
 from ask_lang.transpiler import transpiler
-from ask_lang.utilities import utils
+from ask_lang.utilities import utils, printing, askfile
 
 
 def repl():
 	cfg.is_repl = True
 
-	utils.style_print('Type "q" to quit.', color='gray')
+	printing.style_print('Type "q" to quit.', color='gray')
 	line = input('Ask >>> ')
 
 	if line == 'q':
@@ -24,7 +24,7 @@ def repl():
 
 
 def main():
-	utils.initial_print()
+	printing.initial_print()
 
 	if len(sys.argv) > 1:
 		param_file_name, no_valid_flags = utils.parse_sys_args(sys.argv)
@@ -39,22 +39,22 @@ def main():
 				source_lines = f.readlines()
 
 			if not source_lines:
-				utils.style_print('\t- The file is empty!', color='red')
+				printing.style_print('\t- The file is empty!', color='red')
 				exit(1)
 
 			transpiler.transpile(source_lines)
 
-			if utils.get_config_rule(['system', 'server'], True):
+			if askfile.get(['system', 'server'], True):
 				# Starts server
 				utils.run_server()
 			else:
-				utils.style_print('\nAuto start server is turned OFF.', styles=['bold'])
+				printing.style_print('\nAuto start server is turned OFF.', styles=['bold'])
 				print('\t - The transpiled code can be found in:', end=' ')
-				utils.style_print('app.py', color='blue', end='')
+				printing.style_print('app.py', color='blue', end='')
 				print('.')
 		else:
 			if no_valid_flags:
-				utils.style_print('- The file could not be found!', color='red')
+				printing.style_print('- The file could not be found!', color='red')
 	else:
 		repl()
 

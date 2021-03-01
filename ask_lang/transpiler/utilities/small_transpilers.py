@@ -3,13 +3,13 @@ from collections import defaultdict
 from typing import Tuple
 
 from ask_lang import cfg
-from ask_lang.utilities import utils
-from ask_lang.transpiler.utilities import parser_utils
+from ask_lang.utilities import askfile, utils
+from ask_lang.transpiler.utilities import translator_utils
 
 
 def generic_transpile_symbol(word: str, words: dict, default: str = None) -> str:
-	if utils.get_config_rule(['rules', 'underscores'], True):
-		words = parser_utils.add_underscores_to_dict_keys(words)
+	if askfile.get(['rules', 'underscores'], True):
+		words = translator_utils.add_underscores_to_dict_keys(words)
 
 	return defaultdict(lambda: default if default is not None else word, words)[word]
 

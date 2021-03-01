@@ -2,7 +2,7 @@
 import os
 
 from ask_lang import cfg
-from ask_lang.utilities import utils
+from ask_lang.utilities import askfile
 
 
 def get_root_from_file_path(file_path: str) -> str:
@@ -48,7 +48,7 @@ def get_ask_config(source_root: str) -> dict:
 def get_full_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	prefix = 'sqlite:///'
 
-	if utils.get_config_rule(['db', 'custom'], False):
+	if askfile.get(['db', 'custom'], False):
 		prefix = ''
 
 	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
@@ -57,12 +57,12 @@ def get_full_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 def get_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 	end = 'db.db'
 
-	path = get_output_file_destination_path()[:-6]
+	path = output_path()[:-6]
 
 	if is_boilerplate_insertion_use:
 		path = f'{os.getcwd()}/{path}'
 
-	if utils.get_config_rule(['db', 'path'], ''):
+	if askfile.get(['db', 'path'], ''):
 		custom_path = cfg.ask_config['db']['path']
 		if not path or path[0] != '/':
 			end = custom_path
@@ -73,7 +73,7 @@ def get_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
 
 
 # Returns the path to be used for the app.py file.
-def get_output_file_destination_path() -> str:
+def output_path() -> str:
 	prefix = ''
 	if '/' in cfg.source_file_name:
 		prefix = f'{get_root_from_file_path(cfg.source_file_name)}/'

@@ -6,8 +6,8 @@ from types import ModuleType
 from typing import List
 
 from ask_lang import cfg
-from ask_lang.transpiler import lexer, parser, errors
-from ask_lang.utilities import file_utils, utils
+from ask_lang.transpiler import lexer, translator, errors
+from ask_lang.utilities import askfile, file_utils, printing, utils
 
 
 def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign
@@ -31,9 +31,9 @@ def build_db(file_name: str):
 	if not cfg.uses_db:
 		return
 
-	utils.style_print('Database:', styles=['bold'])
+	printing.style_print('Database:', styles=['bold'])
 
-	if not utils.get_config_rule(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
+	if not askfile.get(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
 		print('\t- Building database...', end='')
 		db_root = file_utils.get_root_from_file_path(file_utils.get_db_file_path())
 		print('\t✅')
@@ -49,21 +49,21 @@ def transpile(source_lines: List[str]):
 	start_time = time.time()
 
 	if not cfg.is_repl:
-		utils.style_print('Transpiling...', styles=['bold'], end='')
+		printing.style_print('Transpiling...', styles=['bold'], end='')
 
 	# Load Askfile.
-	utils.load_askfile()
+	askfile.load()
 
 	# Lexing.
 	tokens_list = lexer.lexer(source_lines)
 
 	# Parsing.
-	parsed = parser.parser(tokens_list)
+	translated = translator.translator(tokens_list)
 
 	# Saves the transpiled code to the build/output file
-	with open(file_utils.get_output_file_destination_path(), 'w+') as f:
+	with open(file_utils.output_path(), 'w+') as f:
 		f.write('')
-		f.write(parsed)
+		f.write(translated)
 
 	# The transpilation is done.
 	end_time = time.time()
@@ -77,7 +77,7 @@ def transpile(source_lines: List[str]):
 		pprint(tokens_list)
 
 	if not cfg.is_repl:
-		utils.print_transpilation_result(source_lines, time_result)
+		printing.transpilation_result(source_lines, time_result)
 
 	# Database setup & build.
 	build_db(cfg.source_file_name)

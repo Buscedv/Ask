@@ -1,0 +1,22 @@
+# coding=utf-8
+from typing import Any, List
+
+from ask_lang import cfg
+from ask_lang.utilities import file_utils
+
+
+def load():
+	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
+
+
+def get(key_tree: List[str], not_found) -> Any:
+	try:
+		current_position = cfg.ask_config[key_tree[0]]
+
+		if len(key_tree) > 1:
+			for key in key_tree[1:]:
+				current_position = current_position[key]
+
+		return current_position
+	except Exception:
+		return not_found

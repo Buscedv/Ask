@@ -2,7 +2,7 @@
 from typing import List
 
 import ask_lang.cfg as cfg
-from ask_lang.utilities import utils
+from ask_lang.utilities import askfile
 from ask_lang.transpiler.utilities import lexer_utils, transpiler_utils
 
 
@@ -100,7 +100,7 @@ def lex(raw: List[str]) -> List[List[str]]:
 					tokens, tmp)
 				tokens.append(['OP', char])
 
-			# Formating.
+			# Formatting.
 			elif char in ['\n', '\t']:
 				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
@@ -118,7 +118,7 @@ def lex(raw: List[str]) -> List[List[str]]:
 					tokens[-2],
 					'WORD',
 					transpiler_utils.add_underscores_to_elems(['db'])
-					if utils.get_config_rule(['rules', 'underscores'], True)
+					if askfile.get(['rules', 'underscores'], True)
 					else 'db'
 			):
 				# Removes the WORD 'db'/'_db' and the OP '.'.

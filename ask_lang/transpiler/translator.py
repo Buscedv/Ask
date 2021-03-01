@@ -3,11 +3,11 @@ from typing import List
 from re import findall
 
 from ask_lang import cfg
-from ask_lang.transpiler.utilities import parser_utils, small_transpilers, transpiler_utils
+from ask_lang.transpiler.utilities import translator_utils, small_transpilers, transpiler_utils
 
 
-def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str]) -> str:
-	parsed_lines_reversed = parsed.split('\n')[::-1]
+def insert_basic_decorator_code_to_insert(translated: str, ignored_db_vars: List[str]) -> str:
+	translated_lines_reversed = translated.split('\n')[::-1]
 	tab_count = 0
 	line_to_place_code_at = 0
 	code_lines = []
@@ -17,9 +17,9 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 		code_lines.append('id = db.Column(db.Integer, primary_key=True)\n')
 		cfg.basic_decorator_collector.insert(0, 'id')
 
-	for line_index, line in enumerate(parsed_lines_reversed):
+	for line_index, line in enumerate(translated_lines_reversed):
 		if 'db.Column(' in line:
-			tab_count = len(parser_utils.get_tab_count(line))
+			tab_count = len(translator_utils.get_tab_count(line))
 			line_to_place_code_at = line_index + 1
 			break
 
@@ -40,14 +40,14 @@ def insert_basic_decorator_code_to_insert(parsed: str, ignored_db_vars: List[str
 	code = f'\n{tab_char * tab_count}'.join([line for line in code_lines])
 
 	return '\n'.join(
-		parsed_lines_reversed[line_to_place_code_at - 1:][::-1]
+		translated_lines_reversed[line_to_place_code_at - 1:][::-1]
 	) + f'\n\n{tab_char * tab_count}{code}' + '\n'.join(
-		parsed_lines_reversed[:line_to_place_code_at - 1][::-1]
+		translated_lines_reversed[:line_to_place_code_at - 1][::-1]
 	)
 
 
-def parse(tokens: List[List[str]]) -> str:
-	parsed = ''
+def translate(tokens: List[List[str]]) -> str:
+	translated = ''
 
 	is_skip = False
 	needs_db_commit = False
@@ -69,6 +69,7 @@ def parse(tokens: List[List[str]]) -> str:
 		token_type = token[0]
 		token_val = token[1]
 
+		# Used when "postponing" the setting of uses_basic_decorator to true.
 		if on_next_run_uses_basic_decorator:
 			on_next_run_uses_basic_decorator = False
 			cfg.uses_basic_decorator = True
@@ -79,11 +80,12 @@ def parse(tokens: List[List[str]]) -> str:
 					on_next_run_uses_basic_decorator = True
 					cfg.basic_decorator_collector = cfg.previous_basic_decorator_collector
 
-				if not parser_utils.is_db_column_or_model_in_past_line(past_lines_tokens):
+				if not translator_utils.is_db_column_or_model_in_past_line(past_lines_tokens):
+					translated = insert_basic_decorator_code_to_insert(translated, ignored_due_to_basic_decorator)
+
+					# Re-setting to defaults.
 					basic_decorator_collection_might_end = False
 					cfg.uses_basic_decorator = False
-
-					parsed = insert_basic_decorator_code_to_insert(parsed, ignored_due_to_basic_decorator)
 					cfg.basic_decorator_collector = []
 					ignored_due_to_basic_decorator = []
 					cfg.basic_decorator_has_primary_key = False
@@ -101,33 +103,33 @@ def parse(tokens: List[List[str]]) -> str:
 
 				if indention_depth_counter == 0:
 					add_tabs_to_inner_group = False
-					parsed += '\n\treturn wrapper'
+					translated += '\n\treturn wrapper'
 			elif token_val == 'start':
 				indention_depth_counter += 1
 
 		if token_type == 'FORMAT':
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
-				parsed += ')'
+				translated += ')'
 				add_parenthesis_at_en_of_line = False
 
-			parsed += token_val
+			translated += token_val
 
 			if transpiler_utils.token_check(token, 'FORMAT', '\n') and add_tabs_to_inner_group:
-				parsed += '\t'
+				translated += '\t'
 		elif token_type == 'NUM':
-			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{token_val}'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'OP':
-			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{token_val}'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 
 			if needs_db_commit and token_val == ')':
 				needs_db_commit = False
 
-				tab_level = parser_utils.get_tab_count(parsed)
-				parsed += f'\n{tab_level}db.session.commit()'
+				tab_level = translator_utils.get_tab_count(translated)
+				translated += f'\n{tab_level}db.session.commit()'
 		elif token_type == 'STR':
-			parsed += f'{parser_utils.space_prefix(parsed, token_val)}\"{token_val}\"'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}\"{token_val}\"'
 		elif token_type == 'WORD':
-			parsed += f'{parser_utils.space_prefix(parsed, token_val)}{small_transpilers.transpile_word(token_val)}'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				new_line = '\n'
@@ -139,28 +141,28 @@ def parse(tokens: List[List[str]]) -> str:
 				if token_index < len(tokens) and tokens[token_index + 1][0] == 'STR':
 					next_token_val = tokens[token_index + 1][1]
 
-					parsed += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
+					translated += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
 					cfg.uses_routes = True
 
 					# Flask-selfdoc decorator
-					parsed += f'{new_line if suffix == "" else ""}@auto.doc(\''
+					translated += f'{new_line if suffix == "" else ""}@auto.doc(\''
 					default_doc_end = f'public\'){suffix}'
 
 					if is_decorator:
 						# Group type for the auto docs decorator. (private if the route is protected else public)
 						if decorator == '\n@check_for_token':
-							parsed += f'private\'){suffix}'
+							translated += f'private\'){suffix}'
 						else:
-							parsed += default_doc_end
+							translated += default_doc_end
 
-						parsed += decorator + '\n'
+						translated += decorator + '\n'
 					else:
-						parsed += default_doc_end
+						translated += default_doc_end
 
-					parsed += ''.join([
+					translated += ''.join([
 						f'def {token_val[1:]}',
-						f'{parser_utils.uri_to_func_name(next_token_val)}',
-						f'({parser_utils.extract_params_from_uri(next_token_val)}'
+						f'{translator_utils.uri_to_func_name(next_token_val)}',
+						f'({translator_utils.extract_params_from_uri(next_token_val)}'
 					])
 
 					is_skip = True
@@ -170,28 +172,28 @@ def parse(tokens: List[List[str]]) -> str:
 				prefix = 'AskLibrary.'
 				if token_val == 'respond':
 					prefix = f'return {prefix}'
-				parsed += f'{parser_utils.space_prefix(parsed, to_add=token_val)}{prefix}{token_val}('
+				translated += f'{translator_utils.space_prefix(translated, to_add=token_val)}{prefix}{token_val}('
 
 			else:
-				parsed += f'{parser_utils.space_prefix(parsed, to_add=token_val)}{small_transpilers.transpile_function(token_val)}'
+				translated += f'{translator_utils.space_prefix(translated, to_add=token_val)}{small_transpilers.transpile_function(token_val)}'
 
 				if token_val == 'status':
 					add_parenthesis_at_en_of_line = True
 
 		elif token_type == 'DB_MODEL':
-			parsed += f'\nclass {token_val}(db.Model)'
+			translated += f'\nclass {token_val}(db.Model)'
 		elif token_type == 'FUNC_DEF':
-			parsed += f'def {token_val if token_val not in ["init", "_init"] else "__init__"}('
+			translated += f'def {token_val if token_val not in ["init", "_init"] else "__init__"}('
 		elif token_type == 'DEC_DEF':
-			parsed += f'def {token_val}(func):'
-			parsed += f'\n\tdef wrapper(*args, **kwargs):'
+			translated += f'def {token_val}(func):'
+			translated += f'\n\tdef wrapper(*args, **kwargs):'
 			add_tabs_to_inner_group = True
 		elif token_type == 'KEY':
-			parsed += f'\'{token_val}\''
+			translated += f'\'{token_val}\''
 		elif token_type == 'DEC':
 			decorator = small_transpilers.transpile_decorator(token_val)
 			if not decorator:
-				parsed += f'@{token_val}'
+				translated += f'@{token_val}'
 
 			if decorator != '---':
 				is_decorator = True
@@ -204,12 +206,12 @@ def parse(tokens: List[List[str]]) -> str:
 
 				if transpiled_action == 'ignored':
 					ignored_due_to_basic_decorator.append(
-						parser_utils.previous_non_keyword_word_tok(past_lines_tokens)
+						translator_utils.previous_non_keyword_word_tok(past_lines_tokens)
 					)
 
 				if transpiled_action == 'db.Column':
 					cfg.basic_decorator_collector.append(
-						parser_utils.previous_non_keyword_word_tok(past_lines_tokens)
+						translator_utils.previous_non_keyword_word_tok(past_lines_tokens)
 					)
 
 					for ignored in ignored_due_to_basic_decorator:
@@ -217,40 +219,40 @@ def parse(tokens: List[List[str]]) -> str:
 							cfg.basic_decorator_collector.remove(ignored)
 
 			if transpiled_action != 'ignored':
-				parsed += f'{parser_utils.space_prefix(parsed, transpiled_action)}{transpiled_action}'
+				translated += f'{translator_utils.space_prefix(translated, transpiled_action)}{transpiled_action}'
 			if needs_commit:
 				needs_db_commit = True
 
-	return parsed
+	return translated
 
 
-def parser(tokens_list: List[List[str]]) -> str:
-	# Parses tokens and adds the end boilerplate to the output code.
-	parsed = parse(tokens_list)
+def translator(tokens_list: List[List[str]]) -> str:
+	# Translates tokens and adds the end boilerplate to the output code.
+	translated = translate(tokens_list)
 
 	# Put the output code into a main function if the app doesn't use routes, and prevent it from running multiple
 	# times since the output file is imported multiple times.
 	if not cfg.uses_routes:
-		parsed_with_main_func = '\n\ndef main():\n'
+		translated_with_main_func = '\n\ndef main():\n'
 
 		if cfg.is_repl and cfg.repl_previous_transpiled:
 			for line in cfg.repl_previous_transpiled.split('\n'):
 				if bool(findall(r'^[\t\s]*[\w]+[\s]*=[\s]*.+', line)):
-					parsed_with_main_func += f'\t{line}\n'
+					translated_with_main_func += f'\t{line}\n'
 
-		for line in parsed.split('\n'):
-			parsed_with_main_func += f'\t{line}\n'
+		for line in translated.split('\n'):
+			translated_with_main_func += f'\t{line}\n'
 
 		if cfg.is_repl:
-			cfg.repl_previous_transpiled += f'\n{parsed}'
+			cfg.repl_previous_transpiled += f'\n{translated}'
 
-		parsed = parsed_with_main_func
+		translated = translated_with_main_func
 
 	if not cfg.is_repl:
 		# Boilerplate setup.
 		transpiler_utils.set_boilerplate()
 
-	parsed = f'{cfg.flask_boilerplate}\n{parsed}'
-	parsed += cfg.flask_end_boilerplate
+	translated = f'{cfg.flask_boilerplate}\n{translated}'
+	translated += cfg.flask_end_boilerplate
 
-	return parsed
+	return translated
