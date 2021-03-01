@@ -5,17 +5,21 @@ import sys
 
 from ask_lang import cfg
 from ask_lang.transpiler import transpiler
-from ask_lang.utilities import utils, printing, askfile
+from ask_lang.utilities import file_utils, utils, printing, askfile
 
 
-def repl():
+def repl(first_time: bool = False):
 	cfg.is_repl = True
 
-	printing.style_print('Type "q" to quit.', color='gray')
+	if first_time:
+		printing.style_print('Type "q" to quit.', color='gray')
+
 	line = input('Ask >>> ')
 
+	# Quit/Exit
 	if line == 'q':
-		exit(0)
+		file_utils.maybe_delete_app(True)
+		return
 
 	transpiler.transpile([line])
 	utils.run_server()
@@ -30,7 +34,7 @@ def main():
 		param_file_name, no_valid_flags = utils.parse_sys_args(sys.argv)
 
 		if not param_file_name and True in [x in sys.argv for x in ['-d', '--dev', '-xd', '--extra-dev']]:
-			repl()
+			repl(True)
 
 		cfg.source_file_name = param_file_name
 		if os.path.isfile(f'{os.getcwd()}/{cfg.source_file_name}'):
@@ -50,13 +54,13 @@ def main():
 			else:
 				printing.style_print('\nAuto start server is turned OFF.', styles=['bold'])
 				print('\t - The transpiled code can be found in:', end=' ')
-				printing.style_print('app.py', color='blue', end='')
+				printing.style_print(askfile.get(['system', 'output_path'], 'app.py'), color='blue', end='')
 				print('.')
 		else:
 			if no_valid_flags:
 				printing.style_print('- The file could not be found!', color='red')
 	else:
-		repl()
+		repl(True)
 
 
 if __name__ == '__main__':

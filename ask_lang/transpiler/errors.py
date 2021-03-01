@@ -47,7 +47,7 @@ def parse_and_print_error(err: dict):
 		if cfg.is_dev:
 			# Prints out the "real" line number.
 			printing.style_print('\t- DEV: ', color='blue', end=' ')
-			print(f'{message} on line: {transpiled_line_nr} in: {file_utils.output_path()}')
+			print(f'{message} on line: {transpiled_line_nr} in: {file_utils.output_file_path()}')
 
 	# No matching line was found, this most likely means that it's not a syntax error.
 	if skip_to_printing or not matches:

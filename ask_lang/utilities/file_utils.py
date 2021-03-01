@@ -21,6 +21,10 @@ def get_root_from_file_path(file_path: str) -> str:
 	return final_path[::-1]
 
 
+def get_file_of_file_path(file_path: str):
+	return file_path[len(get_root_from_file_path(file_path)):]
+
+
 def get_ask_config(source_root: str) -> dict:
 	import toml
 
@@ -40,42 +44,44 @@ def get_ask_config(source_root: str) -> dict:
 	askfile_path += '.toml'
 	if os.path.isfile(askfile_path):
 		with open(askfile_path, 'r') as f:
-			return toml.loads(''.join(f.readlines()))
+			return dict(toml.loads(''.join(f.readlines())))
 
 	return {}
 
 
-def get_full_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
+def db_path_with_prefix() -> str:
 	prefix = 'sqlite:///'
 
 	if askfile.get(['db', 'custom'], False):
 		prefix = ''
 
-	return f'{prefix}{get_db_file_path(is_boilerplate_insertion_use)}'
+	return f'{prefix}{get_db_file_path()}'
 
 
-def get_db_file_path(is_boilerplate_insertion_use: bool = False) -> str:
-	end = 'db.db'
+def generic_construct_output_file_path(file_name_or_path):
+	prefix = f'{os.getcwd()}/'
 
-	path = output_path()[:-6]
+	if '/' in cfg.source_file_name:
+		prefix += f'{get_root_from_file_path(cfg.source_file_name)}/'
 
-	if is_boilerplate_insertion_use:
-		path = f'{os.getcwd()}/{path}'
+	if file_name_or_path[0] == '/':
+		file_name_or_path = file_name_or_path[1:]
 
-	if askfile.get(['db', 'path'], ''):
-		custom_path = cfg.ask_config['db']['path']
-		if not path or path[0] != '/':
-			end = custom_path
-		else:
-			return custom_path
+	return prefix + file_name_or_path
 
-	return f'{path}{end}'
+
+def get_db_file_path() -> str:
+	return generic_construct_output_file_path(askfile.get(['db', 'path'], 'db.db'))
 
 
 # Returns the path to be used for the app.py file.
-def output_path() -> str:
-	prefix = ''
-	if '/' in cfg.source_file_name:
-		prefix = f'{get_root_from_file_path(cfg.source_file_name)}/'
+def output_file_path() -> str:
+	return generic_construct_output_file_path(askfile.get(['system', 'output_path'], 'app.py'))
 
-	return f'{prefix}app.py'
+
+def maybe_delete_app(force: bool = False):
+	if not askfile.get(['system', 'keep_app'], True) or force:
+		try:
+			os.remove(output_file_path())
+		except FileNotFoundError:
+			return

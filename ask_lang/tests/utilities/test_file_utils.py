@@ -13,15 +13,15 @@ class TestUtilitiesFileUtilsGetRootFromFilePath(unittest.TestCase):
 class TestUtilitiesFileUtilsGetFullDbFilePath(unittest.TestCase):
 	def test_(self):
 		cfg.ask_config = {}
-		self.assertEqual('sqlite:///db.db', file_utils.get_full_db_file_path())
+		self.assertEqual('sqlite:///db.db', file_utils.db_path_with_prefix())
 
 	def test_custom_path(self):
 		cfg.ask_config = {'db': {'path': 'xyz.db'}}
-		self.assertEqual('sqlite:///xyz.db', file_utils.get_full_db_file_path())
+		self.assertEqual('sqlite:///xyz.db', file_utils.db_path_with_prefix())
 
 	def test_custom_protocol(self):
 		cfg.ask_config = {'db': {'custom': True, 'path': 'xyz.db'}}
-		self.assertEqual('xyz.db', file_utils.get_full_db_file_path())
+		self.assertEqual('xyz.db', file_utils.db_path_with_prefix())
 
 
 class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
@@ -37,11 +37,11 @@ class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
 class TestUtilitiesFileUtilsGetOutputFileDestinationPath(unittest.TestCase):
 	def test_(self):
 		cfg.source_file_name = 'script.ask_lang'
-		self.assertEqual('app.py', file_utils.output_path())
+		self.assertEqual('app.py', file_utils.output_file_path())
 
 	def test_sub_path(self):
 		cfg.source_file_name = 'folder/script.ask_lang'
-		self.assertEqual('folder/app.py', file_utils.output_path())
+		self.assertEqual('folder/app.py', file_utils.output_file_path())
 
 
 if __name__ == '__main__':

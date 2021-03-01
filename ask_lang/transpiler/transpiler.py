@@ -61,7 +61,7 @@ def transpile(source_lines: List[str]):
 	translated = translator.translator(tokens_list)
 
 	# Saves the transpiled code to the build/output file
-	with open(file_utils.output_path(), 'w+') as f:
+	with open(file_utils.output_file_path(), 'w+') as f:
 		f.write('')
 		f.write(translated)
 

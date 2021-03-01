@@ -57,7 +57,8 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 
 
 def import_app() -> ModuleType:
-	return SourceFileLoader("app", file_utils.output_path()).load_module('app')
+	output_file = file_utils.get_file_of_file_path(file_utils.output_file_path()).replace('.py', '')
+	return SourceFileLoader(output_file, file_utils.output_file_path()).load_module(output_file)
 
 
 def run_server():
@@ -95,15 +96,14 @@ def run_server():
 			)
 		else:
 			# Run in the development server.
-			os.environ['FLASK_APP'] = file_utils.output_path()
+			os.environ['FLASK_APP'] = file_utils.output_file_path()
 			if cfg.is_dev:
 				os.environ['FLASK_ENV'] = 'development'
 
 			app.app.run()
 
 		# Deletes the output file if configured to.
-		if not askfile.get(['system', 'keep_app'], True):
-			os.remove(file_utils.output_path())
+		file_utils.maybe_delete_app()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 
