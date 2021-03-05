@@ -7,7 +7,7 @@ from typing import List
 
 from ask_lang import cfg
 from ask_lang.transpiler import lexer, translator, errors
-from ask_lang.utilities import askfile, file_utils, printing, utils
+from ask_lang.utilities import askfile, files, printing, serve_run
 
 
 def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign
@@ -15,7 +15,7 @@ def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip
 		# Imports app.py for two reasons:
 		# 1. To catch syntax errors.
 		# 2. To load the database (if it's used).
-		app: ModuleType = utils.import_app()
+		app: ModuleType = serve_run.import_app()
 
 		if cfg.uses_db:
 			print('\t- Loading database...', end='')
@@ -33,9 +33,9 @@ def build_db(file_name: str):
 
 	printing.style_print('Database:', styles=['bold'])
 
-	if not askfile.get(['db', 'custom'], False) and not os.path.exists(file_utils.get_db_file_path()):
+	if not askfile.get(['db', 'custom'], False) and not os.path.exists(files.get_db_file_path()):
 		print('\t- Building database...', end='')
-		db_root = file_utils.get_root_from_file_path(file_utils.get_db_file_path())
+		db_root = files.get_root_from_file_path(files.get_db_file_path())
 		print('\t✅')
 
 		if db_root and db_root != file_name and not os.path.exists(db_root):
@@ -61,7 +61,7 @@ def transpile(source_lines: List[str]):
 	translated = translator.translator(tokens_list)
 
 	# Saves the transpiled code to the build/output file
-	with open(file_utils.output_file_path(), 'w+') as f:
+	with open(files.output_file_path(), 'w+') as f:
 		f.write('')
 		f.write(translated)
 

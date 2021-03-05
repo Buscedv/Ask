@@ -2,63 +2,21 @@
 import os
 from importlib.machinery import SourceFileLoader
 from types import ModuleType
-from typing import List, Tuple
 
 import waitress
 from paste.translogger import TransLogger
 import datetime
-from tabulate import tabulate
 
 from ask_lang import cfg
-from ask_lang.utilities import file_utils
+from ask_lang.utilities import files
 from ask_lang.transpiler import errors
 from ask_lang.utilities import printing
 from ask_lang.utilities import askfile
 
 
-def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
-	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help']
-
-	file_name = ''
-	no_valid_flags = True
-
-	for param in sys_args[1:]:
-		if param in flags:
-			no_valid_flags = False
-
-			if param in ['-d', '--dev']:
-				cfg.is_dev = True
-			if param in ['-xd', '--extra-d']:
-				cfg.is_extra_dev = True
-				printing.style_print('Extra Dev Mode Activated!', 'red', ['bold'])
-			elif param in ['-v', '--version']:
-				printing.style_print('- Version:', color='blue', end=' ')
-				print(cfg.project_information["version"])
-			elif param in ['-h', '--help']:
-				print('Usage: ask_lang [OPTIONS] [FILE]...', end='\n\n')
-				print(tabulate(
-					[
-						['-h', '--help', 'Show this message.'],
-						['-v', '--version', 'Show version information.'],
-						['-d', '--d', 'Turn on developer/debug mode.'],
-					],
-					headers=['Option', 'Long Format', 'Description']
-				))
-				print()
-				print('Other configurations can be added to a file called `Askfile.toml`.')
-				print('Go to: https://docs.ask-lang.org for more information', end='\n\n')
-		else:
-			file_name = param
-
-	if cfg.is_dev and file_name == '':
-		no_valid_flags = True
-
-	return file_name, no_valid_flags
-
-
 def import_app() -> ModuleType:
-	output_file = file_utils.get_file_of_file_path(file_utils.output_file_path()).replace('.py', '')
-	return SourceFileLoader(output_file, file_utils.output_file_path()).load_module(output_file)
+	output_file = files.get_file_of_file_path(files.output_file_path()).replace('.py', '')
+	return SourceFileLoader(output_file, files.output_file_path()).load_module(output_file)
 
 
 def run_server():
@@ -96,14 +54,14 @@ def run_server():
 			)
 		else:
 			# Run in the development server.
-			os.environ['FLASK_APP'] = file_utils.output_file_path()
+			os.environ['FLASK_APP'] = files.output_file_path()
 			if cfg.is_dev:
 				os.environ['FLASK_ENV'] = 'development'
 
 			app.app.run()
 
 		# Deletes the output file if configured to.
-		file_utils.maybe_delete_app()
+		files.maybe_delete_app()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 

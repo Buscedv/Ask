@@ -34,6 +34,16 @@ The transpiled app is completely standalone and doesn't require Ask in any way.
 - `$ pipx install ask-lang`.
 - Then run your apps with: `$ ask [your file].ask`.
 
+## Run locally
+1. Clone this repo: `https://github.com/Buscedv/Ask.git`.
+2. Install [Poetry](https://python-poetry.org/).
+3. Create a new virtual environment: `python3 venv venv`.
+4. Activate it: `source venv/bin/activate`.
+5. Install dependencies: `poetry install`.
+6. (Optional but helpful in some cases) Run Ask in development mode: [Docs](https://docs.ask-lang.org/development-tools/running-in-development-mode1).
+
+If you want to contribute please read the CONTRIBUTING.md file for code style, standards, etc.
+
 ## Example (Ask vs Flask)
 Here is the same basic app with one GET route written in Ask and in Python with Flask.
 
@@ -88,9 +98,9 @@ if __name__ == '__main__':
 As you can see Ask hides away all the clutter and boilerplate.
 
 ## Documentation
-You can find the full documentation on [docs.ask-lang.org](https://docs.ask-lang.org)
+You can find the full documentation on [docs.ask-lang.org](https://docs.ask-lang.org).
 
 ## Contact
-- Website: [ask-lang.org](https://ask-lang.org)
-- Email: [me(a)edvard.dev](mailto:me@edvard.dev)
-- GitHub: [Buscedv](https://github.com/Buscedv)
+- Website: [ask-lang.org](https://ask-lang.org).
+- Email: [me(a)edvard.dev](mailto:me@edvard.dev).
+- GitHub: [Buscedv](https://github.com/Buscedv).

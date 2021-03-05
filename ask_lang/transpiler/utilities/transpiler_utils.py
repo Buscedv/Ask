@@ -1,6 +1,6 @@
 # coding=utf-8
 from ask_lang import cfg
-from ask_lang.utilities import file_utils
+from ask_lang.utilities import files
 
 
 # Checks if a given token matches type(s) and/or value(s)
@@ -55,7 +55,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
-	cfg.flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{file_utils.db_path_with_prefix()}\'\n'
+	cfg.flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{files.db_path_with_prefix()}\'\n'
 	cfg.flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	cfg.flask_boilerplate += 'db = SQLAlchemy(app)\n'
 

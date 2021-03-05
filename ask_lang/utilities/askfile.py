@@ -2,11 +2,11 @@
 from typing import Any, List
 
 from ask_lang import cfg
-from ask_lang.utilities import file_utils
+from ask_lang.utilities import files
 
 
 def load():
-	cfg.ask_config = file_utils.get_ask_config(file_utils.get_root_from_file_path(cfg.source_file_name))
+	cfg.ask_config = files.get_ask_config(files.get_root_from_file_path(cfg.source_file_name))
 
 
 def get(key_tree: List[str], not_found) -> Any:
