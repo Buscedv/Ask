@@ -60,6 +60,9 @@ def db_path_with_prefix() -> str:
 
 def generic_construct_output_file_path(file_name_or_path):
 	prefix = f'{os.getcwd()}/'
+	
+	if askfile.get(['db', 'custom'], False):
+		prefix = ''
 
 	if '/' in cfg.source_file_name:
 		prefix += f'{get_root_from_file_path(cfg.source_file_name)}/'
