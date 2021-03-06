@@ -127,7 +127,7 @@ def translate(tokens: List[List[str]]) -> str:
 				tab_level = translator_utils.get_tab_count(translated)
 				translated += f'\n{tab_level}db.session.commit()'
 		elif token_type == 'STR':
-			translated += f'{translator_utils.space_prefix(translated, token_val)}\"{token_val}\"'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'WORD':
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
 		elif token_type == 'FUNC':
