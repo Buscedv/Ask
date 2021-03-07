@@ -1,6 +1,6 @@
 # coding=utf-8
 from ask_lang import cfg
-from ask_lang.utilities import file_utils
+from ask_lang.utilities import files
 
 
 # Checks if a given token matches type(s) and/or value(s)
@@ -49,13 +49,15 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'from typing import *\n'
 	cfg.flask_boilerplate += 'from flask_sqlalchemy import SQLAlchemy\n'
 	cfg.flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
+	cfg.flask_boilerplate += 'import abnex as ab\n'
+	cfg.flask_boilerplate += 'import re\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
 	cfg.flask_boilerplate += 'CORS(app)\n'
 	cfg.flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
-	cfg.flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{file_utils.get_full_db_file_path(True)}\'\n'
+	cfg.flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{files.db_path_with_prefix()}\'\n'
 	cfg.flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	cfg.flask_boilerplate += 'db = SQLAlchemy(app)\n'
 
@@ -85,11 +87,11 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\n\t\treturn self.s()\n'
 
 	cfg.flask_boilerplate += '\n\tdef get(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
+	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
 	cfg.flask_boilerplate += '\n\t\treturn item.in_type()\n'
 
 	cfg.flask_boilerplate += '\n\tdef remove(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
+	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
 	cfg.flask_boilerplate += '\t\tdb.session.delete(item)\n'
 	cfg.flask_boilerplate += '\t\tdb.session.commit()\n'
 
@@ -114,7 +116,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\t}\n'
 
 	cfg.flask_boilerplate += '\n\tdef get_last_index(self):\n'
-	cfg.flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first()\n'
+	cfg.flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first_time()\n'
 
 	cfg.flask_boilerplate += '\n\t\tif AskLibrary.exists(last_item):\n'
 	cfg.flask_boilerplate += '\t\t\treturn last_item.index\n'

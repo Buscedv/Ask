@@ -62,8 +62,6 @@ def add_chunk(chunks: list, is_string: bool, code: str) -> Tuple[list, str, bool
 # Removes the spaces between function names and '(' characters.
 # Replaces 4 & 2 spaces with tab characters.
 def reformat_line(statement: str) -> str:
-	statement = statement.replace("'", '"')
-
 	if statement and statement[-1] != '\n':
 		statement += '\n'
 
