@@ -39,33 +39,34 @@ def is_word_char(thing):
 		return False
 
 
-# Returns either a space or an empty string based on if the parsed token to append should have a space before it.
-def space_prefix(parsed: str, to_add: str = '') -> str:
+# Returns either a space or an empty string based on if the translated token to append should have a space before it.
+def space_prefix(translated: str, to_add: str = '') -> str:
 	prefix = ' '
 
 	# No space at the beginning.
-	if not parsed:
+	if not translated:
 		prefix = ''
 
 	# No Space before specific characters.
 	if to_add in [':', ',', '(', ')', '.', '[', ']', '{', '}']:
 		prefix = ''
 
-	# No space after specific characters.
-	if parsed and parsed[-1] in ['(', '.', ' ', '\t', '\n']:
-		prefix = ''
+	if translated:
+		# No space after specific characters.
+		if translated[-1] in ['(', '.', ' ', '\t', '\n']:
+			prefix = ''
 
-	# Space after specific characters.
-	if parsed and parsed[-1] in [',']:
-		prefix = ' '
+		# Space after specific characters.
+		if translated[-1] in [',']:
+			prefix = ' '
 
-	# No space between specific charters and words:
-	if parsed and parsed[-1] in ['['] and is_word_char(to_add):
-		prefix = ''
+		# No space between specific charters and words:
+		if translated[-1] in ['['] and is_word_char(to_add):
+			prefix = ''
 
-	# Space between words
-	if parsed and is_word_char(parsed[-1]) and is_word_char(to_add):
-		prefix = ' '
+		# Space between words
+		if is_word_char(translated[-1]) and is_word_char(to_add):
+			prefix = ' '
 
 	return prefix
 
@@ -94,11 +95,11 @@ def extract_params_from_uri(route_path: str) -> str:
 	return params_str
 
 
-def get_tab_count(parsed: str) -> str:
-	parsed = parsed[::-1]
+def get_tab_count(translated: str) -> str:
+	translated = translated[::-1]
 
 	indents = ''
-	for char in parsed:
+	for char in translated:
 		if char == '\t':
 			indents += char
 		elif char == '\n':

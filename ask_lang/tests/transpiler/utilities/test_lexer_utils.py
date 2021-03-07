@@ -76,7 +76,9 @@ class TestTranspilerUtilitiesLexerUtilsReformatLine(unittest.TestCase):
 		self.assertEqual('word\n', lexer_utils.reformat_line('word\n'))
 
 	def test_quotes(self):
-		self.assertEqual('"Hello, World!"\n', lexer_utils.reformat_line('\'Hello, World!\''))
+		self.assertEqual('\'Hello, World!\'\n', lexer_utils.reformat_line('\'Hello, World!\''))
+		self.assertEqual('"Hello, World!"\n', lexer_utils.reformat_line('"Hello, World!"'))
+		self.assertEqual('"Hello, World!" test\n', lexer_utils.reformat_line('"Hello, World!" test'))
 
 	def test_space_before_parenthesis(self):
 		self.assertEqual('print()\n', lexer_utils.reformat_line('print ()\n'))

@@ -2,13 +2,15 @@
 from typing import List
 
 import ask_lang.cfg as cfg
-from ask_lang.utilities import utils
+from ask_lang.utilities import askfile
 from ask_lang.transpiler.utilities import lexer_utils, transpiler_utils
 
 
 def lex(raw: List[str]) -> List[List[str]]:
 	tmp = ''
 	is_collector = False
+	is_str = False
+	might_be_special_str = False
 	collector_ends = []
 	include_collector_end = False
 	is_dict = []
@@ -21,6 +23,24 @@ def lex(raw: List[str]) -> List[List[str]]:
 			# Ignores comments
 			if char == '#':
 				break
+
+			if is_str:
+				if char not in collector_ends:
+					tmp += char
+				if char in collector_ends:
+					tmp += char
+
+					tokens.append(['STR', tmp])
+
+					is_str = False
+					collector_ends = []
+					tmp = ''
+
+				continue
+
+			# Detects raw & f-strings.
+			if char in ['r', 'f']:
+				might_be_special_str = char
 
 			if is_collector:
 				if char not in collector_ends:
@@ -56,11 +76,17 @@ def lex(raw: List[str]) -> List[List[str]]:
 
 			# String.
 			elif char in ['"', '\'']:
-				is_collector = True
-				collector_ends = ['"', '\'']
-				include_collector_end = False
+				is_str = True
+				collector_ends = [char]
+
 				tmp = ''
-				tokens.append(['STR', ''])
+				if might_be_special_str == 'r':
+					tmp = r''
+				elif might_be_special_str == 'f':
+					tmp = f''
+				tmp += char
+
+				might_be_special_str = ''
 
 			# Dict open.
 			elif char == '{':
@@ -100,7 +126,7 @@ def lex(raw: List[str]) -> List[List[str]]:
 					tokens, tmp)
 				tokens.append(['OP', char])
 
-			# Formating.
+			# Formatting.
 			elif char in ['\n', '\t']:
 				tokens, tmp, is_collector, collector_ends, include_collector_end = lexer_utils.word_or_special(
 					tokens, tmp)
@@ -118,7 +144,7 @@ def lex(raw: List[str]) -> List[List[str]]:
 					tokens[-2],
 					'WORD',
 					transpiler_utils.add_underscores_to_elems(['db'])
-					if utils.get_config_rule(['rules', 'underscores'], True)
+					if askfile.get(['rules', 'underscores'], True)
 					else 'db'
 			):
 				# Removes the WORD 'db'/'_db' and the OP '.'.

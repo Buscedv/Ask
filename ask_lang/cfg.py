@@ -44,10 +44,12 @@ basic_decorator_has_primary_key = False
 ask_config = {}
 
 project_information = {
-	'version': '1.0.0',
+	'version': '1.1.0',
 }
 
 source_file_name = ''
 is_dev = False
 is_extra_dev = False
+is_repl = False
+repl_previous_transpiled = ''
 transpilation_result = defaultdict(lambda: '', {})
