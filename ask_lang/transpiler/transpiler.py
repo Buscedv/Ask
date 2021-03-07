@@ -48,11 +48,8 @@ def transpile(source_lines: List[str]):
 	# Transpilation time capture start.
 	start_time = time.time()
 
-	if not cfg.is_repl:
+	if not cfg.is_repl and not cfg.is_module_transpile:
 		printing.style_print('Transpiling...', styles=['bold'], end='')
-
-	# Load Askfile.
-	askfile.load()
 
 	# Lexing.
 	tokens_list = lexer.lexer(source_lines)
@@ -69,14 +66,14 @@ def transpile(source_lines: List[str]):
 	end_time = time.time()
 	time_result = round(end_time - start_time, 3)
 
-	if not cfg.is_repl:
+	if not cfg.is_repl and not cfg.is_module_transpile:
 		# Checkmark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
 
 	if cfg.is_dev:
 		pprint(tokens_list)
 
-	if not cfg.is_repl:
+	if not cfg.is_repl and not cfg.is_module_transpile:
 		printing.transpilation_result(source_lines, time_result)
 
 	# Database setup & build.
@@ -90,3 +87,15 @@ def transpile(source_lines: List[str]):
 		'source_lines': source_lines,
 		'time_result': time_result
 	}
+
+
+def transpile_from_file():
+	# Transpiles.
+	with open(cfg.source_file_name) as f:
+		source_lines = f.readlines()
+
+	if not source_lines:
+		printing.style_print('\t- The file is empty!', color='red')
+		exit(1)
+
+	transpile(source_lines)

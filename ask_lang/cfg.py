@@ -53,3 +53,4 @@ is_extra_dev = False
 is_repl = False
 repl_previous_transpiled = ''
 transpilation_result = defaultdict(lambda: '', {})
+is_module_transpile = False

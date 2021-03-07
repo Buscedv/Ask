@@ -12,7 +12,7 @@ from ask_lang.utilities import files, serve_run, printing, askfile
 
 
 def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
-	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help']
+	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help', '--module-transpile']
 
 	file_name = ''
 	no_valid_flags = True
@@ -42,11 +42,23 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 				print()
 				print('Other configurations can be added to a file called `Askfile.toml`.')
 				print('Go to: https://docs.ask-lang.org for more information', end='\n\n')
+			elif param == '--module-transpile':
+				cfg.ask_config = {
+					'system': {
+						'output_path': '',
+						'server': False
+					}
+				}
+
+				cfg.is_module_transpile = True
 		else:
 			file_name = param
 
 	if cfg.is_dev and file_name == '':
 		no_valid_flags = True
+
+	if cfg.is_module_transpile:
+		cfg.ask_config['system']['output_path'] = files.get_file_of_file_path(file_name.replace('.ask', '.py'))
 
 	return file_name, no_valid_flags
 
@@ -55,6 +67,7 @@ def repl(first_time: bool = False):
 	cfg.is_repl = True
 
 	if first_time:
+		printing.initial_print()
 		printing.style_print('Type "q" to quit.', color='gray')
 
 	line = input('Ask >>> ')
@@ -71,7 +84,8 @@ def repl(first_time: bool = False):
 
 
 def main():
-	printing.initial_print()
+	# Load Askfile.
+	askfile.load()
 
 	if len(sys.argv) > 1:
 		param_file_name, no_valid_flags = parse_sys_args(sys.argv)
@@ -79,22 +93,17 @@ def main():
 		if not param_file_name and True in [x in sys.argv for x in ['-d', '--dev', '-xd', '--extra-dev']]:
 			repl(True)
 
+		if not cfg.is_module_transpile:
+			printing.initial_print()
+
 		cfg.source_file_name = param_file_name
 		if os.path.isfile(f'{os.getcwd()}/{cfg.source_file_name}'):
-			# Transpiles.
-			with open(cfg.source_file_name) as f:
-				source_lines = f.readlines()
-
-			if not source_lines:
-				printing.style_print('\t- The file is empty!', color='red')
-				exit(1)
-
-			transpiler.transpile(source_lines)
+			transpiler.transpile_from_file()
 
 			if askfile.get(['system', 'server'], True):
 				# Starts server
 				serve_run.run_server()
-			else:
+			elif not cfg.is_module_transpile:
 				printing.style_print('\nAuto start server is turned OFF.', styles=['bold'])
 				print('\t - The transpiled code can be found in:', end=' ')
 				printing.style_print(askfile.get(['system', 'output_path'], 'app.py'), color='blue', end='')

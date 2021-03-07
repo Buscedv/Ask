@@ -24,7 +24,7 @@ def run_server():
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
-		if not cfg.is_repl:
+		if not cfg.is_repl and not cfg.is_module_transpile:
 			printing.style_print('Running the app...', styles=['bold'], end=' ')
 			print('(Press Ctrl+C to stop)')
 

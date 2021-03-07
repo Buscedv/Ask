@@ -1,8 +1,24 @@
 # coding=utf-8
+import os
+import sys
 from typing import List
 
 from ask_lang import cfg
+from ask_lang.utilities import askfile, files
+from ask_lang.transpiler import transpiler
 from ask_lang.transpiler.utilities import transpiler_utils
+
+
+def might_be_ask_import(module):
+	# Checks if the imported module is a local .ask file.
+	# If it is transpile it.
+	# Otherwise ignore it and just append it to the output, it can be a python module for instance.
+
+	try:
+		if os.path.isfile(f'{files.get_root_from_file_path(files.output_file_path())}/{module}.ask'):
+			os.system(f'python3 {sys.argv[0]} {f"{files.get_root_from_file_path(cfg.source_file_name)}/{module}.ask"} --module-transpile')
+	except Exception:
+		return
 
 
 # Is there a db column or model defined in the most recent/current line (in tokens).
