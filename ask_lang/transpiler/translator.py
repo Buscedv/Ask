@@ -130,14 +130,20 @@ def translate(tokens: List[List[str]]) -> str:
 		elif token_type == 'STR':
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'WORD':
-			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
-
 			if is_import:
 				is_import = False
-				translator_utils.might_be_ask_import(token_val)
+				to_append = translator_utils.might_be_ask_import(token_val)
+				if to_append:
+					for line in to_append:
+						translated += f'{translator_utils.space_prefix(translated, token_val)}{line}\n'
+
+				continue
 
 			if token_val == 'import':
 				is_import = True
+				continue
+
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				new_line = '\n'

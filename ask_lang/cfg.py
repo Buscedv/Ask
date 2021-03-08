@@ -42,9 +42,10 @@ basic_decorator_has_primary_key = False
 
 # Others.
 ask_config = {}
+imported_ask_modules_to_delete = []
 
 project_information = {
-	'version': '1.1.0',
+	'version': '1.2.0',
 }
 
 source_file_name = ''
