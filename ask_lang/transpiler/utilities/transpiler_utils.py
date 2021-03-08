@@ -51,6 +51,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
 	cfg.flask_boilerplate += 'import abnex as ab\n'
 	cfg.flask_boilerplate += 'import re\n'
+	cfg.flask_boilerplate += 'import importlib.util\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
 	cfg.flask_boilerplate += 'CORS(app)\n'

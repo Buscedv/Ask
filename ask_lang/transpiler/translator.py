@@ -60,6 +60,7 @@ def translate(tokens: List[List[str]]) -> str:
 	on_next_run_uses_basic_decorator = False
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
+	is_import = False
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -129,6 +130,19 @@ def translate(tokens: List[List[str]]) -> str:
 		elif token_type == 'STR':
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'WORD':
+			if is_import:
+				is_import = False
+				to_append = translator_utils.might_be_ask_import(token_val)
+				if to_append:
+					for line in to_append:
+						translated += f'{translator_utils.space_prefix(translated, token_val)}{line}\n'
+
+				continue
+
+			if token_val == 'import':
+				is_import = True
+				continue
+
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
@@ -232,7 +246,7 @@ def translator(tokens_list: List[List[str]]) -> str:
 
 	# Put the output code into a main function if the app doesn't use routes, and prevent it from running multiple
 	# times since the output file is imported multiple times.
-	if not cfg.uses_routes:
+	if not cfg.uses_routes and not cfg.is_module_transpile:
 		translated_with_main_func = '\n\ndef main():\n'
 
 		if cfg.is_repl and cfg.repl_previous_transpiled:

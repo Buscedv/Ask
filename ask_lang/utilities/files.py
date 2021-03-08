@@ -86,5 +86,8 @@ def maybe_delete_app(force: bool = False):
 	if not askfile.get(['system', 'keep_app'], True) or force:
 		try:
 			os.remove(output_file_path())
+
+			for module in cfg.imported_ask_modules_to_delete:
+				os.remove(f'{get_root_from_file_path(output_file_path())}{module}.py')
 		except FileNotFoundError:
 			return
