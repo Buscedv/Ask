@@ -139,7 +139,7 @@ def translate(tokens: List[List[str]]) -> str:
 
 				continue
 
-			if token_val == 'import':
+			if token_val == 'extend':
 				is_import = True
 				continue
 
