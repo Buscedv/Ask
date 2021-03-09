@@ -91,7 +91,7 @@ def main():
 		# Load the config if it hasn't been set.
 		# This will only be false when running in module transpile mode.
 		if not cfg.ask_config:
-			askfile.load()  # This gets loaded here since it requires the cfg file name to get the correct path.
+			askfile.load()
 
 		if not param_file_name and True in [x in sys.argv for x in ['-d', '--dev', '-xd', '--extra-dev']]:
 			repl(True)
