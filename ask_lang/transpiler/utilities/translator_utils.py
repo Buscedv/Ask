@@ -4,8 +4,7 @@ import sys
 from typing import List
 
 from ask_lang import cfg
-from ask_lang.utilities import askfile, files
-from ask_lang.transpiler import transpiler
+from ask_lang.utilities import files
 from ask_lang.transpiler.utilities import transpiler_utils
 
 
@@ -13,6 +12,9 @@ def might_be_ask_import(module: str) -> list:
 	# Checks if the imported module is a local .ask file.
 	# If it is transpile it.
 	# Otherwise ignore it and just append it to the output, it can be a python module for instance.
+
+	if module in cfg.imported_ask_modules_to_delete:
+		return []
 
 	try:
 		if os.path.isfile(f'{files.get_root_from_file_path(files.output_file_path())}/{module}.ask'):

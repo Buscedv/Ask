@@ -84,11 +84,14 @@ def repl(first_time: bool = False):
 
 
 def main():
-	# Load Askfile.
-	askfile.load()
-
 	if len(sys.argv) > 1:
 		param_file_name, no_valid_flags = parse_sys_args(sys.argv)
+		cfg.source_file_name = param_file_name
+
+		# Load the config if it hasn't been set.
+		# This will only be false when running in module transpile mode.
+		if not cfg.ask_config:
+			askfile.load()  # This gets loaded here since it requires the cfg file name to get the correct path.
 
 		if not param_file_name and True in [x in sys.argv for x in ['-d', '--dev', '-xd', '--extra-dev']]:
 			repl(True)
@@ -96,7 +99,6 @@ def main():
 		if not cfg.is_module_transpile:
 			printing.initial_print()
 
-		cfg.source_file_name = param_file_name
 		if os.path.isfile(f'{os.getcwd()}/{cfg.source_file_name}'):
 			transpiler.transpile_from_file()
 
@@ -111,6 +113,9 @@ def main():
 		else:
 			if no_valid_flags:
 				printing.style_print('- The file could not be found!', color='red')
+
+		# Deletes the output file if configured to.
+		files.maybe_delete_app()
 	else:
 		repl(True)
 

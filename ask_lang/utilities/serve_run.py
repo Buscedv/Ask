@@ -59,9 +59,6 @@ def run_server():
 				os.environ['FLASK_ENV'] = 'development'
 
 			app.app.run()
-
-		# Deletes the output file if configured to.
-		files.maybe_delete_app()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 
