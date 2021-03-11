@@ -52,7 +52,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'import abnex as ab\n'
 	cfg.flask_boilerplate += 'import re\n'
 	cfg.flask_boilerplate += 'import importlib.util\n'
-	cfg.flask_boilerplate += 'import requests as request'
+	cfg.flask_boilerplate += 'import requests\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
 	cfg.flask_boilerplate += 'CORS(app)\n'
@@ -89,11 +89,11 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\n\t\treturn self.s()\n'
 
 	cfg.flask_boilerplate += '\n\tdef get(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
+	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
 	cfg.flask_boilerplate += '\n\t\treturn item.in_type()\n'
 
 	cfg.flask_boilerplate += '\n\tdef remove(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
+	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
 	cfg.flask_boilerplate += '\t\tdb.session.delete(item)\n'
 	cfg.flask_boilerplate += '\t\tdb.session.commit()\n'
 
@@ -118,8 +118,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\t}\n'
 
 	cfg.flask_boilerplate += '\n\tdef get_last_index(self):\n'
-	cfg.flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first_time()\n'
-
+	cfg.flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first()\n'
 	cfg.flask_boilerplate += '\n\t\tif AskLibrary.exists(last_item):\n'
 	cfg.flask_boilerplate += '\t\t\treturn last_item.index\n'
 	cfg.flask_boilerplate += '\n\t\treturn -1\n'

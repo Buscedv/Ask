@@ -42,7 +42,7 @@ def run_server():
 					logger_name='Ask Application',
 					format=' '.join([
 						f'\033[37m\t- {datetime.datetime.now().strftime("[%d/%b/%Y %H:%M:%S]")}\033[0m',
-						'\033[1m%(REQUEST_METHOD)s\033[0m:'
+						'\033[1m%(REQUEST_METHOD)s\033[0m '
 						'"\033[32m%(REMOTE_ADDR)s%(REQUEST_URI)s\033[0m"',
 						'→',
 						'\033[94m%(status)s\033[0m',

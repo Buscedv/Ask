@@ -57,7 +57,7 @@ def previous_non_keyword_word_tok(tokens: List[list]) -> str or None:
 
 # Converts URI strings to a format that can be used as a Python function name.
 def uri_to_func_name(route: str) -> str:
-	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
+	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_').replace('\'', '').replace('"', '')
 
 
 # Is the symbol a letter or underscore.

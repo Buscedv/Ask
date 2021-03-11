@@ -155,7 +155,7 @@ def translate(tokens: List[List[str]]) -> str:
 				if token_index < len(tokens) and tokens[token_index + 1][0] == 'STR':
 					next_token_val = tokens[token_index + 1][1]
 
-					translated += f'@app.route(\'{next_token_val}\', methods=[\'{token_val[1:]}\']){suffix}'
+					translated += f'@app.route({next_token_val}, methods=[\'{token_val[1:]}\']){suffix}'
 					cfg.uses_routes = True
 
 					# Flask-selfdoc decorator

@@ -45,6 +45,7 @@ waitress = "^1.4.4"
 Paste = "^3.5.0"
 tabulate = "^0.8.8"
 abnex = "^1.0.0"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 
