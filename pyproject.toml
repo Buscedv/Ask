@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ask_lang"
-version = "1.1.0"
+version = "1.2.0"
 description = "Ask is a modern open-source transpiled programming language, designed for building backend services and APIs. Ask reduces the amount of needed boilerplate code for setting up things like database connections and authentication to virtually zero lines."
 authors = ["Edvard Busck-Nielsen <me@edvard.dev>"]
 license = "GNU GPL v3.0"
@@ -45,6 +45,7 @@ waitress = "^1.4.4"
 Paste = "^3.5.0"
 tabulate = "^0.8.8"
 abnex = "^1.0.0"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 

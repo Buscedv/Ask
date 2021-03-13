@@ -6,7 +6,7 @@ from ask_lang.utilities import files
 
 
 def load():
-	cfg.ask_config = files.get_ask_config(files.get_root_from_file_path(cfg.source_file_name))
+	cfg.ask_config = files.get_ask_config(files.get_root_from_file_path(files.output_file_path()))
 
 
 def get(key_tree: List[str], not_found) -> Any:

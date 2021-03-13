@@ -24,7 +24,7 @@ def run_server():
 
 	# Starts the server or runs the main function if the app isn't using routes, meaning it's just a script.
 	try:
-		if not cfg.is_repl:
+		if not cfg.is_repl and not cfg.is_module_transpile:
 			printing.style_print('Running the app...', styles=['bold'], end=' ')
 			print('(Press Ctrl+C to stop)')
 
@@ -42,7 +42,7 @@ def run_server():
 					logger_name='Ask Application',
 					format=' '.join([
 						f'\033[37m\t- {datetime.datetime.now().strftime("[%d/%b/%Y %H:%M:%S]")}\033[0m',
-						'\033[1m%(REQUEST_METHOD)s\033[0m:'
+						'\033[1m%(REQUEST_METHOD)s\033[0m '
 						'"\033[32m%(REMOTE_ADDR)s%(REQUEST_URI)s\033[0m"',
 						'→',
 						'\033[94m%(status)s\033[0m',
@@ -59,9 +59,6 @@ def run_server():
 				os.environ['FLASK_ENV'] = 'development'
 
 			app.app.run()
-
-		# Deletes the output file if configured to.
-		files.maybe_delete_app()
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, cfg.transpilation_result['source_lines'], cfg.transpilation_result['time_result'])
 
