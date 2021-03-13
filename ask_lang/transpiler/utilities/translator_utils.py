@@ -1,8 +1,37 @@
 # coding=utf-8
+import os
+import sys
 from typing import List
 
 from ask_lang import cfg
+from ask_lang.utilities import files
 from ask_lang.transpiler.utilities import transpiler_utils
+
+
+def might_be_ask_import(module: str) -> list:
+	# Checks if the imported module is a local .ask file.
+	# If it is transpile it.
+	# Otherwise ignore it and just append it to the output, it can be a python module for instance.
+
+	if module in cfg.imported_ask_modules_to_delete:
+		return []
+
+	try:
+		if os.path.isfile(f'{files.get_root_from_file_path(files.output_file_path())}/{module}.ask'):
+			os.system(
+				f'python3 {sys.argv[0]} {f"{files.get_root_from_file_path(cfg.source_file_name)}/{module}.ask"} --module-transpile')
+
+		cfg.imported_ask_modules_to_delete.append(module)
+
+		module_file = f'".{files.get_root_from_file_path(files.output_file_path()).replace(os.getcwd(), "")}/{module}.py"'
+
+		return [
+			f'spec = importlib.util.spec_from_file_location("{module}", {module_file})',
+			f'{module} = importlib.util.module_from_spec(spec)',
+			f'spec.loader.exec_module({module})',
+		]
+	except Exception:
+		return []
 
 
 # Is there a db column or model defined in the most recent/current line (in tokens).
@@ -28,7 +57,7 @@ def previous_non_keyword_word_tok(tokens: List[list]) -> str or None:
 
 # Converts URI strings to a format that can be used as a Python function name.
 def uri_to_func_name(route: str) -> str:
-	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_')
+	return route.replace('/', '_').replace('<', '_').replace('>', '_').replace('-', '_').replace('\'', '').replace('"', '')
 
 
 # Is the symbol a letter or underscore.

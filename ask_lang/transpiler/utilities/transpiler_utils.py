@@ -51,6 +51,8 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'from flask_selfdoc import Autodoc\n'
 	cfg.flask_boilerplate += 'import abnex as ab\n'
 	cfg.flask_boilerplate += 'import re\n'
+	cfg.flask_boilerplate += 'import importlib.util\n'
+	cfg.flask_boilerplate += 'import requests\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
 	cfg.flask_boilerplate += 'CORS(app)\n'
@@ -63,7 +65,7 @@ def set_boilerplate():
 
 	# Generic database list {table(s)}.
 	# Generic list table
-	cfg.flask_boilerplate += '\n\nclass GenericList(db.Model):\n'
+	cfg.flask_boilerplate += '\n\nclass List(db.Model):\n'
 	cfg.flask_boilerplate += '\tid = db.Column(db.Integer, primary_key=True)\n'
 
 	cfg.flask_boilerplate += '\n\tdef set_list(self, entry):\n'
@@ -78,25 +80,25 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\t}\n'
 
 	cfg.flask_boilerplate += '\n\tdef list(self):\n'
-	cfg.flask_boilerplate += '\t\treturn [self.get(item.index) for item in GenericListItem.query.filter_by(parent_id=self.id)]\n'
+	cfg.flask_boilerplate += '\t\treturn [self.get(item.index) for item in ListItem.query.filter_by(parent_id=self.id)]\n'
 
 	cfg.flask_boilerplate += '\n\tdef push(self, item):\n'
-	cfg.flask_boilerplate += '\t\tnew_item = GenericListItem(item, self.id)\n'
+	cfg.flask_boilerplate += '\t\tnew_item = ListItem(item, self.id)\n'
 	cfg.flask_boilerplate += '\t\tdb.session.add(new_item)\n'
 	cfg.flask_boilerplate += '\t\tdb.session.commit()\n'
 	cfg.flask_boilerplate += '\n\t\treturn self.s()\n'
 
 	cfg.flask_boilerplate += '\n\tdef get(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
+	cfg.flask_boilerplate += '\t\titem = ListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
 	cfg.flask_boilerplate += '\n\t\treturn item.in_type()\n'
 
 	cfg.flask_boilerplate += '\n\tdef remove(self, index):\n'
-	cfg.flask_boilerplate += '\t\titem = GenericListItem.query.filter_by(parent_id=self.id, index=index).first_time()\n'
+	cfg.flask_boilerplate += '\t\titem = ListItem.query.filter_by(parent_id=self.id, index=index).first()\n'
 	cfg.flask_boilerplate += '\t\tdb.session.delete(item)\n'
 	cfg.flask_boilerplate += '\t\tdb.session.commit()\n'
 
 	# Generic list item table
-	cfg.flask_boilerplate += '\n\nclass GenericListItem(db.Model):\n'
+	cfg.flask_boilerplate += '\n\nclass ListItem(db.Model):\n'
 	cfg.flask_boilerplate += '\tid = db.Column(db.Integer, primary_key=True)\n'
 	cfg.flask_boilerplate += '\tindex = db.Column(db.Integer)\n'
 	cfg.flask_boilerplate += '\titem = db.Column(db.LargeBinary)\n'
@@ -116,8 +118,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\t}\n'
 
 	cfg.flask_boilerplate += '\n\tdef get_last_index(self):\n'
-	cfg.flask_boilerplate += '\t\tlast_item = GenericListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(GenericListItem.id)).first_time()\n'
-
+	cfg.flask_boilerplate += '\t\tlast_item = ListItem.query.filter_by(parent_id=self.parent_id).order_by(db.desc(ListItem.id)).first()\n'
 	cfg.flask_boilerplate += '\n\t\tif AskLibrary.exists(last_item):\n'
 	cfg.flask_boilerplate += '\t\t\treturn last_item.index\n'
 	cfg.flask_boilerplate += '\n\t\treturn -1\n'
@@ -125,9 +126,9 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\n\tdef in_type(self):\n'
 	cfg.flask_boilerplate += '\t\treturn pickle.loads(self.item)\n'
 
-	# GenericList creation function
+	# List creation function
 	cfg.flask_boilerplate += '\n\ndef generic_list_creator(entry: list or None = None):\n'
-	cfg.flask_boilerplate += '\tgeneric_list = GenericList()\n'
+	cfg.flask_boilerplate += '\tgeneric_list = List()\n'
 	cfg.flask_boilerplate += '\tdb.session.add(generic_list)\n'
 	cfg.flask_boilerplate += '\tdb.session.commit()\n'
 	cfg.flask_boilerplate += '\n\tif entry:\n'

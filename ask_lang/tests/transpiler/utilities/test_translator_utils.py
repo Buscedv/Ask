@@ -61,6 +61,7 @@ class TestTranspilerUtilitiesTranslatorUtilsUriToFuncName(unittest.TestCase):
 			'/foo/bar': '_foo_bar',
 			'/foo-bar': '_foo_bar',
 			'/foo/<bar>': '_foo__bar_',
+			'\'/foo/<bar>\'': '_foo__bar_'
 		}
 
 		for test in tests:
