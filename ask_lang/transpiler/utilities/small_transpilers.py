@@ -22,7 +22,7 @@ def transpile_function(function: str) -> str:
 	}, f'{function}(')
 
 
-def transpile_word(word: str) -> str:
+def transpile_word(word: str, translated: str) -> str:
 	translations = {
 		'body': 'request.json',
 		'form': 'request.form',
@@ -31,6 +31,9 @@ def transpile_word(word: str) -> str:
 		'datetime': 'datetime.datetime',
 		'respond': 'return'
 	}
+
+	if word in translations and translated and translated[-1] in ['.']:
+		return word
 
 	return generic_transpile_symbol(word, translations)
 

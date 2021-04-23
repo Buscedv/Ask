@@ -143,7 +143,7 @@ def translate(tokens: List[List[str]]) -> str:
 				is_import = True
 				continue
 
-			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val)}'
+			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val, translated)}'
 		elif token_type == 'FUNC':
 			if token_val[0] == '@':
 				new_line = '\n'
