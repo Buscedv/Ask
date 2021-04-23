@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+import re
 from pprint import pprint
 import time
 from types import ModuleType
@@ -8,9 +9,13 @@ from typing import List
 from ask_lang import cfg
 from ask_lang.transpiler import lexer, translator, errors
 from ask_lang.utilities import askfile, files, printing, serve_run
+from ask_lang.utilities.printing import style_print
 
 
 def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign
+	if cfg.is_include_transpile:
+		return
+
 	try:
 		# Imports app.py for two reasons:
 		# 1. To catch syntax errors.
@@ -23,7 +28,6 @@ def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip
 			print('\t✅')
 	except Exception as e:  # Exception is used here to capture all exception types.
 		errors.error_while_running(e, source_lines, time_result)
-
 		exit(1)
 
 
@@ -31,17 +35,26 @@ def build_db(file_name: str):
 	if not cfg.uses_db:
 		return
 
-	printing.style_print('Database:', styles=['bold'])
+	if not cfg.is_include_transpile:
+		printing.style_print('Database:', styles=['bold'])
 
 	if not askfile.get(['db', 'custom'], False) and not os.path.exists(files.get_db_file_path()):
-		print('\t- Building database...', end='')
+		if not cfg.is_include_transpile:
+			print('\t- Building database...', end='')
+
 		db_root = files.get_root_from_file_path(files.get_db_file_path())
-		print('\t✅')
+
+		if not cfg.is_include_transpile:
+			print('\t✅')
 
 		if db_root and db_root != file_name and not os.path.exists(db_root):
-			print('\t- Building Folder Structure...', end='')
+			if not cfg.is_include_transpile:
+				print('\t- Building Folder Structure...', end='')
+
 			os.makedirs(db_root)
-			print('\t✅')
+
+			if not cfg.is_include_transpile:
+				print('\t✅')
 
 
 def transpile(source_lines: List[str]):
@@ -69,7 +82,6 @@ def transpile(source_lines: List[str]):
 	if not cfg.is_repl and not cfg.is_module_transpile:
 		# Checkmark for the 'Transpiling...' message at the start of this function.
 		print('\t✅')
-
 	if cfg.is_dev:
 		pprint(tokens_list)
 
@@ -87,6 +99,10 @@ def transpile(source_lines: List[str]):
 		'source_lines': source_lines,
 		'time_result': time_result
 	}
+
+	if re.search(r'class[\s]+[\w]+\(db\.Model\):\n.+', cfg.included_module_code):
+		printing.style_print('IMPORTANT:', styles=['bold'], color='yellow')
+		print('\t- Database models should not be declared in included files❗️')
 
 
 def transpile_from_file():

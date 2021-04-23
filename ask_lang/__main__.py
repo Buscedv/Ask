@@ -12,7 +12,7 @@ from ask_lang.utilities import files, serve_run, printing, askfile
 
 
 def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
-	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help', '--module-transpile']
+	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help', '--module-transpile', '--include-transpile']
 
 	file_name = ''
 	no_valid_flags = True
@@ -51,6 +51,8 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 				}
 
 				cfg.is_module_transpile = True
+			elif param == '--include-transpile':
+				cfg.is_include_transpile = True
 		else:
 			file_name = param
 
