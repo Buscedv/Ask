@@ -43,6 +43,7 @@ basic_decorator_has_primary_key = False
 # Others.
 ask_config = {}
 imported_ask_modules_to_delete = []
+included_module_code = ''
 
 project_information = {
 	'version': '1.2.0',
@@ -55,3 +56,4 @@ is_repl = False
 repl_previous_transpiled = ''
 transpilation_result = defaultdict(lambda: '', {})
 is_module_transpile = False
+is_include_transpile = False
