@@ -9,7 +9,6 @@ from typing import List
 from ask_lang import cfg
 from ask_lang.transpiler import lexer, translator, errors
 from ask_lang.utilities import askfile, files, printing, serve_run
-from ask_lang.utilities.printing import style_print
 
 
 def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip: move-assign
@@ -32,27 +31,20 @@ def verify_and_load_db(source_lines: list, time_result: float):  # sourcery skip
 
 
 def build_db(file_name: str):
-	if not cfg.uses_db:
-		return
-
 	if not cfg.is_include_transpile:
 		printing.style_print('Database:', styles=['bold'])
 
 	if not askfile.get(['db', 'custom'], False) and not os.path.exists(files.get_db_file_path()):
 		if not cfg.is_include_transpile:
 			print('\t- Building database...', end='')
-
 		db_root = files.get_root_from_file_path(files.get_db_file_path())
-
 		if not cfg.is_include_transpile:
 			print('\t✅')
 
 		if db_root and db_root != file_name and not os.path.exists(db_root):
 			if not cfg.is_include_transpile:
 				print('\t- Building Folder Structure...', end='')
-
 			os.makedirs(db_root)
-
 			if not cfg.is_include_transpile:
 				print('\t✅')
 
@@ -89,7 +81,8 @@ def transpile(source_lines: List[str]):
 		printing.transpilation_result(source_lines, time_result)
 
 	# Database setup & build.
-	build_db(cfg.source_file_name)
+	if cfg.uses_db:
+		build_db(cfg.source_file_name)
 
 	# Verify transpilation
 	verify_and_load_db(source_lines, time_result)
