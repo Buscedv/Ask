@@ -46,6 +46,7 @@ Paste = "^3.5.0"
 tabulate = "^0.8.8"
 abnex = "^1.0.0"
 requests = "^2.25.1"
+coverage = "^5.5"
 
 [tool.poetry.dev-dependencies]
 
