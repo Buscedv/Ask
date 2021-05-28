@@ -33,6 +33,9 @@ def set_boilerplate():
 		cfg.flask_boilerplate = '# WARNING! Boilerplate skipped. Extra dev mode is on! (-xd/--extra-dev)'
 		return
 
+	if cfg.is_include_transpile:
+		return
+
 	# Imports & initial setup
 	cfg.flask_boilerplate = ''
 	cfg.flask_boilerplate += 'from flask import Flask, jsonify, abort, request, Response\n'

@@ -8,7 +8,18 @@ from ask_lang.utilities import files
 from ask_lang.transpiler.utilities import transpiler_utils
 
 
-def might_be_ask_import(module: str) -> list:
+def include_module(module_name: str) -> str:
+	_, transpiled_file_name = might_be_ask_import(module_name.replace('.', '/'), '--include-transpile')
+
+	with open(transpiled_file_name, 'r') as f:
+		to_return = ''.join(f.readlines())
+
+	os.remove(transpiled_file_name)
+
+	return to_return
+
+
+def might_be_ask_import(module: str, flags: str = '') -> (list, str):
 	# Checks if the imported module is a local .ask file.
 	# If it is transpile it.
 	# Otherwise ignore it and just append it to the output, it can be a python module for instance.
@@ -18,18 +29,19 @@ def might_be_ask_import(module: str) -> list:
 
 	try:
 		if os.path.isfile(f'{files.get_root_from_file_path(files.output_file_path())}/{module}.ask'):
+			print('\t✅\n\t- Transpiling external module...', end='')
 			os.system(
-				f'python3 {sys.argv[0]} {f"{files.get_root_from_file_path(cfg.source_file_name)}/{module}.ask"} --module-transpile')
+				f'python3 {sys.argv[0]} {f"{files.get_root_from_file_path(cfg.source_file_name)}/{module}.ask"} --module-transpile {flags}')
 
 		cfg.imported_ask_modules_to_delete.append(module)
 
-		module_file = f'".{files.get_root_from_file_path(files.output_file_path()).replace(os.getcwd(), "")}/{module}.py"'
+		module_file = f'"{files.get_root_from_file_path(files.output_file_path())}/{module}.py"'
 
 		return [
 			f'spec = importlib.util.spec_from_file_location("{module}", {module_file})',
 			f'{module} = importlib.util.module_from_spec(spec)',
 			f'spec.loader.exec_module({module})',
-		]
+		], module_file[1:-1]
 	except Exception:
 		return []
 

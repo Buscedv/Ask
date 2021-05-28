@@ -20,7 +20,8 @@ def style_print(text, color: str = None, styles: List[str] = None, end: str = '\
 		'red': '91m',
 		'green': '92m',
 		'blue': '94m',
-		'gray': '90m'
+		'gray': '90m',
+		'yellow': '33m'
 	}
 
 	result = str(text)

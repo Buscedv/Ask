@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+from ask_lang import cfg
 from ask_lang.transpiler.utilities import small_transpilers
 
 
@@ -13,6 +14,10 @@ def get_config_rule_patch_true(*args, **kwargs):
 
 
 class TestTranspilerUtilitiesSmallTranspilersGenericTranspileSymbol(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	get_config_rule_path_path = 'ask_lang.transpiler.utilities.small_transpilers.askfile.get'
 
 	def test_match(self):
@@ -49,6 +54,10 @@ class TestTranspilerUtilitiesSmallTranspilersGenericTranspileSymbol(unittest.Tes
 
 
 class TestTranspilerUtilitiesSmallTranspilersTranspileDecorator(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		self.assertEqual('\n@check_for_token', small_transpilers.transpile_decorator('protected'))
 
@@ -63,6 +72,10 @@ class TestTranspilerUtilitiesSmallTranspilersTranspileDecorator(unittest.TestCas
 
 
 class TestTranspilerUtilitiesSmallTranspilersTranspileDbAction(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_no_match(self):
 		self.assertEqual(('', False), small_transpilers.transpile_db_action(''))
 

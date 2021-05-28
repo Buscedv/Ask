@@ -7,12 +7,20 @@ from ask_lang.utilities import files
 
 
 class TestUtilitiesFileUtilsGetRootFromFilePath(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		file_path = '/folder/folder/file.txt'
 		self.assertEqual('/folder/folder', files.get_root_from_file_path(file_path))
 
 
 class TestUtilitiesFileUtilsGetFullDbFilePath(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		cfg.ask_config = {}
 		self.assertEqual(f'sqlite:///{os.getcwd()}/db.db', files.db_path_with_prefix())
@@ -27,6 +35,10 @@ class TestUtilitiesFileUtilsGetFullDbFilePath(unittest.TestCase):
 
 
 class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		cfg.ask_config = {}
 		self.assertEqual(f'{os.getcwd()}/db.db', files.get_db_file_path())
@@ -37,6 +49,10 @@ class TestUtilitiesFileUtilsGetDbFilePath(unittest.TestCase):
 
 
 class TestUtilitiesFileUtilsGetOutputFileDestinationPath(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		cfg.ask_config = {}
 		cfg.source_file_name = 'script.ask_lang'
