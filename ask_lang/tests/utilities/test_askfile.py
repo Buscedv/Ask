@@ -6,6 +6,10 @@ from ask_lang.utilities import askfile
 
 
 class TestUtilitiesAskfileGetConfigRule(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_single(self):
 		cfg.ask_config = {'key': 'value'}
 		self.assertEqual('value', askfile.get(['key'], 'missing'))

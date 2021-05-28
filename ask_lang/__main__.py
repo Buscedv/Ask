@@ -9,10 +9,11 @@ from tabulate import tabulate
 from ask_lang import cfg
 from ask_lang.transpiler import transpiler
 from ask_lang.utilities import files, serve_run, printing, askfile
+from ask_lang.utilities.printing import style_print
 
 
-def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
-	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help', '--module-transpile']
+def parse_sys_args(sys_args: List[str], is_unittest=False) -> Tuple[str, bool]:
+	flags = ['-d', '--dev', '-xd', '--extra-dev', '-v', '--version', '-h', '--help', '--module-transpile', '--include-transpile']
 
 	file_name = ''
 	no_valid_flags = True
@@ -25,17 +26,26 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 				cfg.is_dev = True
 			if param in ['-xd', '--extra-d']:
 				cfg.is_extra_dev = True
+
+				if is_unittest:
+					continue
 				printing.style_print('Extra Dev Mode Activated!', 'red', ['bold'])
 			elif param in ['-v', '--version']:
+				if is_unittest:
+					continue
+
 				printing.style_print('- Version:', color='blue', end=' ')
 				print(cfg.project_information["version"])
 			elif param in ['-h', '--help']:
+				if is_unittest:
+					continue
+
 				print('Usage: ask_lang [OPTIONS] [FILE]...', end='\n\n')
 				print(tabulate(
 					[
 						['-h', '--help', 'Show this message.'],
 						['-v', '--version', 'Show version information.'],
-						['-d', '--d', 'Turn on developer/debug mode.'],
+						['-d', '--dev', 'Turn on development & debug mode.'],
 					],
 					headers=['Option', 'Long Format', 'Description']
 				))
@@ -51,6 +61,8 @@ def parse_sys_args(sys_args: List[str]) -> Tuple[str, bool]:
 				}
 
 				cfg.is_module_transpile = True
+			elif param == '--include-transpile':
+				cfg.is_include_transpile = True
 		else:
 			file_name = param
 
@@ -112,7 +124,12 @@ def main():
 				print('.')
 		else:
 			if no_valid_flags:
+				if param_file_name[0] == '-':
+					style_print(f'- Invalid flag "{param_file_name}".', color='yellow')
+					exit(1)
+
 				printing.style_print('- The file could not be found!', color='red')
+				exit(1)
 
 		# Deletes the output file if configured to.
 		files.maybe_delete_app()
@@ -121,4 +138,5 @@ def main():
 
 
 if __name__ == '__main__':
+	cfg.set_defaults()
 	main()

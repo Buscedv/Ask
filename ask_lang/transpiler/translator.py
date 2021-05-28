@@ -4,6 +4,11 @@ from re import findall
 
 from ask_lang import cfg
 from ask_lang.transpiler.utilities import translator_utils, small_transpilers, transpiler_utils
+from ask_lang.transpiler.utilities.translator_utils import include_module
+
+
+def prepare_init_vars(vars: list, ignored: List[str]) -> list:
+	return [var for var in vars if var not in ignored]
 
 
 def insert_basic_decorator_code_to_insert(translated: str, ignored_db_vars: List[str]) -> str:
@@ -16,6 +21,7 @@ def insert_basic_decorator_code_to_insert(translated: str, ignored_db_vars: List
 	if not cfg.basic_decorator_has_primary_key:
 		code_lines.append('id = db.Column(db.Integer, primary_key=True)\n')
 		cfg.basic_decorator_collector.insert(0, 'id')
+		ignored_db_vars.append('id')
 
 	for line_index, line in enumerate(translated_lines_reversed):
 		if 'db.Column(' in line:
@@ -23,16 +29,16 @@ def insert_basic_decorator_code_to_insert(translated: str, ignored_db_vars: List
 			line_to_place_code_at = line_index + 1
 			break
 
-	code_lines.append(f'def __init__(self, {", ".join(cfg.basic_decorator_collector)}):')
+	code_lines.append(f'def __init__(self, {", ".join(prepare_init_vars(cfg.basic_decorator_collector, ignored_db_vars))}):')
 
-	for var in cfg.basic_decorator_collector:
+	for var in prepare_init_vars(cfg.basic_decorator_collector, ignored_db_vars):
 		code_lines.append(f'\tself.{var} = {var}')
 
 	code_lines.append('')
 	code_lines.append('def s(self):')
 	code_lines.append('\treturn {')
 
-	for var_index, var in enumerate(ignored_db_vars + cfg.basic_decorator_collector):
+	for var_index, var in enumerate(ignored_db_vars + prepare_init_vars(cfg.basic_decorator_collector, ignored_db_vars)):
 		code_lines.append(f'\t\t\'{var}\': self.{var},')
 	code_lines.append('\t}\n')
 
@@ -61,6 +67,8 @@ def translate(tokens: List[List[str]]) -> str:
 	past_lines_tokens = []
 	ignored_due_to_basic_decorator = []
 	is_import = False
+	is_include = False
+	included_module_name = ''
 
 	for token_index, token in enumerate(tokens):
 		if is_skip:
@@ -109,6 +117,13 @@ def translate(tokens: List[List[str]]) -> str:
 				indention_depth_counter += 1
 
 		if token_type == 'FORMAT':
+			if token_val == '\n' and is_include:
+				is_include = False
+				cfg.included_module_code += include_module(included_module_name)
+				included_module_name = ''
+
+				continue
+
 			if token_val == '\n' and add_parenthesis_at_en_of_line:
 				translated += ')'
 				add_parenthesis_at_en_of_line = False
@@ -120,6 +135,10 @@ def translate(tokens: List[List[str]]) -> str:
 		elif token_type == 'NUM':
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'OP':
+			if is_include:
+				included_module_name += token_val
+				continue
+
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 
 			if needs_db_commit and token_val == ')':
@@ -130,9 +149,13 @@ def translate(tokens: List[List[str]]) -> str:
 		elif token_type == 'STR':
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{token_val}'
 		elif token_type == 'WORD':
+			if is_include:
+				included_module_name += token_val
+				continue
+
 			if is_import:
 				is_import = False
-				to_append = translator_utils.might_be_ask_import(token_val)
+				to_append, _ = translator_utils.might_be_ask_import(token_val)
 				if to_append:
 					for line in to_append:
 						translated += f'{translator_utils.space_prefix(translated, token_val)}{line}\n'
@@ -141,6 +164,10 @@ def translate(tokens: List[List[str]]) -> str:
 
 			if token_val == 'extend':
 				is_import = True
+				continue
+			elif token_val == 'include':
+				is_include = True
+				included_module_name = ''
 				continue
 
 			translated += f'{translator_utils.space_prefix(translated, token_val)}{small_transpilers.transpile_word(token_val, translated)}'
@@ -244,6 +271,10 @@ def translator(tokens_list: List[List[str]]) -> str:
 	# Translates tokens and adds the end boilerplate to the output code.
 	translated = translate(tokens_list)
 
+	if not cfg.is_repl:
+		# Boilerplate setup.
+		transpiler_utils.set_boilerplate()
+
 	# Put the output code into a main function if the app doesn't use routes, and prevent it from running multiple
 	# times since the output file is imported multiple times.
 	if not cfg.uses_routes and not cfg.is_module_transpile:
@@ -254,6 +285,12 @@ def translator(tokens_list: List[List[str]]) -> str:
 				if bool(findall(r'^[\t\s]*[\w]+[\s]*=[\s]*.+', line)):
 					translated_with_main_func += f'\t{line}\n'
 
+		# Insert included modules.
+		if cfg.included_module_code:
+			for line in cfg.included_module_code.split('\n'):
+				translated_with_main_func += f'\t{line}\n'
+
+		# Insert "main" transpiled lines.
 		for line in translated.split('\n'):
 			translated_with_main_func += f'\t{line}\n'
 
@@ -261,12 +298,11 @@ def translator(tokens_list: List[List[str]]) -> str:
 			cfg.repl_previous_transpiled += f'\n{translated}'
 
 		translated = translated_with_main_func
-
-	if not cfg.is_repl:
-		# Boilerplate setup.
-		transpiler_utils.set_boilerplate()
+	elif cfg.included_module_code:
+		translated = f'{cfg.included_module_code}\n{translated}'
 
 	translated = f'{cfg.flask_boilerplate}\n{translated}'
+
 	translated += cfg.flask_end_boilerplate
 
 	return translated

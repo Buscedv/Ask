@@ -1,10 +1,15 @@
 # coding=utf-8
 import unittest
 
+from ask_lang import cfg
 from ask_lang.transpiler import lexer
 
 
 class TestTranspilerLexerInsertGroupMarkers(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tokens = [
 			['FUNC_DEF', 'function'],
@@ -66,6 +71,10 @@ class TestTranspilerLexerInsertGroupMarkers(unittest.TestCase):
 
 
 class TestTranspilerLexerMergeOps(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		self.assertEqual(
 			[['OP', '=='], ['TOKEN', 'value'], ['OP', '->'], ['TOKEN', 'value'], ['OP', '='], ['TOKEN', 'value'], ['OP', '=']],
@@ -76,8 +85,11 @@ class TestTranspilerLexerMergeOps(unittest.TestCase):
 
 
 class TestTranspilerLexerLex(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	# TODO: Add advanced tests here.
-	pass
 
 
 if __name__ == '__main__':
