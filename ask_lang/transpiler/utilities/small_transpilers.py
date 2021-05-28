@@ -27,6 +27,7 @@ def transpile_word(word: str, translated: str) -> str:
 		'body': 'request.json',
 		'form': 'request.form',
 		'args': 'request.args',
+		'files': 'request.files',
 		'req': 'AskLibrary.get_all_req()',
 		'datetime': 'datetime.datetime',
 		'respond': 'return'
