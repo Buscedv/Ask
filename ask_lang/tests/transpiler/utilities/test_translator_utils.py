@@ -1,9 +1,14 @@
 import unittest
 
+from ask_lang import cfg
 from ask_lang.transpiler.utilities import translator_utils
 
 
 class TestTranspilerUtilitiesTranslatorUtilsIsDbColumnInLastLine(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_true_db_action(self):
 		self.assertEqual(
 			True,
@@ -36,6 +41,10 @@ class TestTranspilerUtilitiesTranslatorUtilsIsDbColumnInLastLine(unittest.TestCa
 
 
 class TestTranspilerUtilitiesTranslatorUtilsPreviousNonKeywordWordTok(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tests = [
 			{
@@ -56,6 +65,10 @@ class TestTranspilerUtilitiesTranslatorUtilsPreviousNonKeywordWordTok(unittest.T
 
 
 class TestTranspilerUtilitiesTranslatorUtilsUriToFuncName(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tests = {
 			'/foo/bar': '_foo_bar',
@@ -69,6 +82,10 @@ class TestTranspilerUtilitiesTranslatorUtilsUriToFuncName(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesTranslatorUtilsIsWordChar(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		self.assertEqual(True, translator_utils.is_word_char('a'))
 		self.assertEqual(True, translator_utils.is_word_char('_'))
@@ -79,6 +96,10 @@ class TestTranspilerUtilitiesTranslatorUtilsIsWordChar(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesTranslatorUtilsSpacePrefix(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_no_space_beginning(self):
 		self.assertEqual('', translator_utils.space_prefix(''))
 
@@ -103,6 +124,10 @@ class TestTranspilerUtilitiesTranslatorUtilsSpacePrefix(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesTranslatorUtilsExtractParamsFromUri(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tests = {
 			'': '',
@@ -120,6 +145,10 @@ class TestTranspilerUtilitiesTranslatorUtilsExtractParamsFromUri(unittest.TestCa
 
 
 class TestTranspilerUtilitiesTranslatorUtilsGetTabCount(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tests = {
 			'\t': '\t',
@@ -137,6 +166,10 @@ class TestTranspilerUtilitiesTranslatorUtilsGetTabCount(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesTranslatorUtilsAddUnderscoresToDictKeys(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		self.assertEqual(
 			{'key': 'value', '_key': 'value'},

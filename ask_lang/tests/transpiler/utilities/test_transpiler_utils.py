@@ -1,9 +1,14 @@
 import unittest
 
+from ask_lang import cfg
 from ask_lang.transpiler.utilities import transpiler_utils
 
 
 class TestTranspilerUtilitiesTranspilerUtilsTokenCheck(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_match_none(self):
 		self.assertEqual(False, transpiler_utils.token_check(['TYPE', 'value']))
 
@@ -37,6 +42,10 @@ class TestTranspilerUtilitiesTranspilerUtilsTokenCheck(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesTranspilerUtilsAddUnderscoresToElems(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		self.assertEqual(['1', '2', '_1', '_2'], transpiler_utils.add_underscores_to_elems(['1', '2']))
 

@@ -1,9 +1,14 @@
 import unittest
 
+from ask_lang import cfg
 from ask_lang.transpiler.utilities import lexer_utils
 
 
 class TestTranspilerUtilitiesLexerUtilsGroupToksByLines(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_(self):
 		tokens = [
 			['TOKEN', 'token'],
@@ -35,6 +40,10 @@ class TestTranspilerUtilitiesLexerUtilsGroupToksByLines(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_empty_tmp(self):
 		expected = ([['TOKEN', 'token']], '', False, [], False)
 		self.assertEqual(expected, lexer_utils.word_or_special([['TOKEN', 'token']], ''))
@@ -53,6 +62,10 @@ class TestTranspilerUtilitiesLexerUtilsWordOrSpecial(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_not_string(self):
 		expected = ([{'is_string': False, 'code': 'code'}], '', True)
 		self.assertEqual(expected, lexer_utils.add_chunk([], False, 'code'))
@@ -71,6 +84,10 @@ class TestTranspilerUtilitiesLexerUtilsAddChunk(unittest.TestCase):
 
 
 class TestTranspilerUtilitiesLexerUtilsReformatLine(unittest.TestCase):
+	@classmethod
+	def setUp(cls) -> None:
+		cfg.set_defaults()
+
 	def test_add_new_line_at_the_end(self):
 		self.assertEqual('word\n', lexer_utils.reformat_line('word'))
 		self.assertEqual('word\n', lexer_utils.reformat_line('word\n'))
