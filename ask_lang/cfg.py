@@ -76,7 +76,7 @@ def set_defaults():
 	included_module_code = ''
 
 	project_information = {
-		'version': '1.2.0',
+		'version': '1.3.0',
 	}
 
 	source_file_name = ''
