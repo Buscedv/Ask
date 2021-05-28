@@ -186,6 +186,9 @@ def set_boilerplate():
 	cfg.flask_boilerplate += '\t\tif request.args:\n'
 	cfg.flask_boilerplate += '\t\t\tfor thing in request.args.keys():\n'
 	cfg.flask_boilerplate += '\t\t\t\treq[thing] = request.args[thing]\n\n'
+	cfg.flask_boilerplate += '\t\tif request.files:\n'
+	cfg.flask_boilerplate += '\t\t\tfor thing in request.files.keys():\n'
+	cfg.flask_boilerplate += '\t\t\t\treq[thing] = request.files[thing]\n\n'
 	cfg.flask_boilerplate += '\t\treturn req\n'
 
 	cfg.flask_boilerplate += '\n\t@staticmethod\n'

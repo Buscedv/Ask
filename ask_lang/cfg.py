@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 # Transpiler related globals.
-built_in_vars = ['body', 'form', 'args', 'req', 'auth', 'env', 'db', 'datetime']
+built_in_vars = ['body', 'form', 'args', 'req', 'files', 'auth', 'env', 'db', 'datetime']
 variables = built_in_vars
 keywords = ['if', 'else', 'elif', 'in', 'return', 'not', 'or', 'respond']
 # "Special" keywords = keywords that require some sort of data after the keyword it self.
