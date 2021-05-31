@@ -7,6 +7,14 @@ optional = false
 python-versions = ">=3.9,<4.0"
 
 [[package]]
+name = "blinker"
+version = "1.4"
+description = "Fast, simple object-to-object and broadcast signaling"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "certifi"
 version = "2020.12.5"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -84,6 +92,18 @@ python-versions = "*"
 Flask = ">=0.8"
 limits = "*"
 six = ">=1.4.1"
+
+[[package]]
+name = "flask-mail"
+version = "0.9.1"
+description = "Flask extension for sending email"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+blinker = "*"
+Flask = "*"
 
 [[package]]
 name = "flask-selfdoc"
@@ -324,12 +344,15 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "bf6cf71f5dc2bd99028ebc7a26aee2a88a15cd19d027da37f2e6af812e61bdc5"
+content-hash = "e827089f91938810d0b97472c0b6acf16aac0b05e684b87b07252b2f9b0a5afc"
 
 [metadata.files]
 abnex = [
     {file = "abnex-1.0.0-py3-none-any.whl", hash = "sha256:bca75d52a446f6d37ad4784e76e1efe3a6ce811b706a6cf8e31ba73ba05c9885"},
     {file = "abnex-1.0.0.tar.gz", hash = "sha256:d936e7e587fee4be5433f307b91049da996dcd6037584e2dfc6d3d978ccf183d"},
+]
+blinker = [
+    {file = "blinker-1.4.tar.gz", hash = "sha256:471aee25f3992bd325afa3772f1063dbdbbca947a041b8b89466dc00d606f8b6"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
@@ -409,6 +432,9 @@ flask-limiter = [
     {file = "Flask-Limiter-1.4.tar.gz", hash = "sha256:021279c905a1e24f181377ab3be711be7541734b494f4e6db2b8edeba7601e48"},
     {file = "Flask_Limiter-1.4-py3-none-any.whl", hash = "sha256:f8a65a7874f48ff8df2ea5e86d5b85b48fcbae065ebeb5271b317fe68fcfa979"},
     {file = "Flask_Limiter-1.4-py3.7.egg", hash = "sha256:055a388a89f4d5768c64025443f1f41e3babcbbbf315c728413c27b4975af239"},
+]
+flask-mail = [
+    {file = "Flask-Mail-0.9.1.tar.gz", hash = "sha256:22e5eb9a940bf407bcf30410ecc3708f3c56cc44b29c34e1726fe85006935f41"},
 ]
 flask-selfdoc = [
     {file = "Flask-Selfdoc-1.2.3.tar.gz", hash = "sha256:5b76b26e37ccd6241ef793fb839f4c2b265dc9c65bcf6e92d469098a5c25a44a"},
