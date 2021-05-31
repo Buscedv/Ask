@@ -96,6 +96,8 @@ def repl(first_time: bool = False):
 
 
 def main():
+	cfg.set_defaults()
+
 	if len(sys.argv) > 1:
 		param_file_name, no_valid_flags = parse_sys_args(sys.argv)
 		cfg.source_file_name = param_file_name
