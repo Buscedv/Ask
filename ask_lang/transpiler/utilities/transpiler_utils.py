@@ -1,6 +1,6 @@
 # coding=utf-8
 from ask_lang import cfg
-from ask_lang.utilities import files
+from ask_lang.utilities import askfile, files
 
 
 # Checks if a given token matches type(s) and/or value(s)
@@ -56,6 +56,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'import re\n'
 	cfg.flask_boilerplate += 'import importlib.util\n'
 	cfg.flask_boilerplate += 'import requests\n'
+	cfg.flask_boilerplate += 'from flask_mail import Mail as flask_mail_mail\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
 	cfg.flask_boilerplate += 'CORS(app)\n'
@@ -65,6 +66,28 @@ def set_boilerplate():
 	cfg.flask_boilerplate += f'app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'{files.db_path_with_prefix()}\'\n'
 	cfg.flask_boilerplate += 'app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False\n'
 	cfg.flask_boilerplate += 'db = SQLAlchemy(app)\n'
+
+	# Mail configuration.
+	if 'mail' in cfg.ask_config:
+		cfg.flask_boilerplate += 'app.config.update({\n'
+		for config_rule in cfg.ask_config['mail']:
+			if config_rule in ['use_ssl', 'debug', 'use_tls', 'port']:
+				cfg.flask_boilerplate += f'\t\'MAIL_{config_rule.upper()}\':{askfile.get(["mail", config_rule], "")},\n'
+			else:
+				cfg.flask_boilerplate += f'\t\'MAIL_{config_rule.upper()}\':\'{askfile.get(["mail", config_rule], "")}\',\n'
+		cfg.flask_boilerplate += '})\n'
+		cfg.flask_boilerplate += '\nflask_mail_main = flask_mail_mail(app)\n'
+
+	cfg.flask_boilerplate += '\n\nclass Mail:\n'
+
+	cfg.flask_boilerplate += '\t@staticmethod\n'
+	cfg.flask_boilerplate += '\tdef msg(subject=\'\', recipients=[], body=\'\'):\n'
+	cfg.flask_boilerplate += '\t\tfrom flask_mail import Message\n'
+	cfg.flask_boilerplate += '\n\t\treturn Message(subject=subject, sender=app.config[\'MAIL_USERNAME\'], recipients=recipients, body=body)\n'
+
+	cfg.flask_boilerplate += '\n\t@staticmethod\n'
+	cfg.flask_boilerplate += '\tdef send(message):\n'
+	cfg.flask_boilerplate += '\t\tflask_mail_main.send(message)\n'
 
 	# Generic database list {table(s)}.
 	# Generic list table
@@ -311,6 +334,9 @@ def set_boilerplate():
 
 	cfg.flask_boilerplate += "random = Random()\n"
 	cfg.flask_boilerplate += "_random = random\n"
+
+	cfg.flask_boilerplate += "mail = Mail()\n"
+	cfg.flask_boilerplate += "_mail = mail\n"
 
 	# Decorator function for checking & validating the passed in token for protected routes.
 	cfg.flask_boilerplate += "\n\ndef check_for_token(func):\n"
