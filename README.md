@@ -29,12 +29,12 @@ Flask is a very popular and well-established web framework for Python, so there'
 
 The transpiled app is completely standalone and doesn't require Ask in any way.
 
-## Installation
+## Installation (normal usage)
 - You can install Ask from the PyPI. You can use `pip` but we recommend that you use [pipx](https://pipxproject.github.io/pipx/).
 - `$ pipx install ask-lang`.
 - Then run your apps with: `$ ask [your file].ask`.
 
-## Run locally
+## Run locally (for development)
 1. Clone this repo: `https://github.com/Buscedv/Ask.git`.
 2. Install [Poetry](https://python-poetry.org/).
 3. Create a new virtual environment: `python3 venv venv`.
