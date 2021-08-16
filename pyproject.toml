@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ask_lang"
-version = "1.4.1"
+version = "1.4.2"
 description = "Ask is a modern open-source transpiled programming language, designed for building backend services and APIs. Ask reduces the amount of needed boilerplate code for setting up things like database connections and authentication to virtually zero lines."
 authors = ["Edvard Busck-Nielsen <me@edvard.dev>"]
 license = "GNU GPL v3.0"
@@ -17,7 +17,7 @@ classifiers = [
     "Framework :: Flask",
     "Operating System :: OS Independent",
 	"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.8",
 	"Topic :: Software Development",
 	"Topic :: Software Development :: Build Tools",
 	"Topic :: Software Development :: Version Control :: Git",
@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 Flask = "^1.1.2"
 Flask-Cors = "^3.0.10"
 Flask-Limiter = "^1.4"
@@ -44,7 +44,7 @@ toml = "^0.10.2"
 waitress = "^1.4.4"
 Paste = "^3.5.0"
 tabulate = "^0.8.8"
-abnex = "^1.0.0"
+abnex = "^1.0.2"
 requests = "^2.25.1"
 coverage = "^5.5"
 Flask-Mail = "^0.9.1"
