@@ -2,7 +2,7 @@
 
 # Ask
 
-[![CircleCI](https://circleci.com/gh/circleci/circleci-docs.svg?style=svg)](https://circleci.com/gh/Buscedv/Ask)
+<!-- [![CircleCI](https://circleci.com/gh/circleci/circleci-docs.svg?style=svg)](https://circleci.com/gh/Buscedv/Ask) -->
 
 ## Introduction.
 Ask is an open source, dynamic, and transpiled programming language built for building backends and APIs. Ask directly transpiles to Python, more specifically Flask.
