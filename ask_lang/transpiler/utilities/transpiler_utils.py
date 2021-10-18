@@ -59,7 +59,19 @@ def set_boilerplate():
 	cfg.flask_boilerplate += 'from flask_mail import Mail as flask_mail_mail\n'
 
 	cfg.flask_boilerplate += 'app = Flask(__name__)\n'
-	cfg.flask_boilerplate += 'CORS(app)\n'
+
+	# CORS configuration
+	cfg.flask_boilerplate += 'CORS(app'
+
+	if 'cors' in cfg.ask_config:
+		cfg.flask_boilerplate += ', '
+		for rule_index, config_rule in enumerate(cfg.ask_config['cors']):
+			if rule_index > 0:
+				cfg.flask_boilerplate += ', '
+			cfg.flask_boilerplate += f'{config_rule}={cfg.ask_config["cors"][config_rule]}'
+
+	cfg.flask_boilerplate += ')\n'
+
 	cfg.flask_boilerplate += 'auto = Autodoc(app)\n'
 
 	# Database connection
