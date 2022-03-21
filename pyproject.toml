@@ -41,7 +41,7 @@ Flask-Selfdoc = "^1.2.3"
 # Don't update PyJWT, it breaks in future releases!
 PyJWT = "1.7.1"
 toml = "^0.10.2"
-waitress = "^1.4.4"
+waitress = ">=1.4.4,<3.0.0"
 Paste = "^3.5.0"
 tabulate = "^0.8.8"
 abnex = "1.0.2"
