@@ -22,7 +22,7 @@ Ask's syntax is heavily inspired by Python, and can almost be considered to be a
 
 The main idea behind Ask is to simplify common backend actions (e.g. working with databases). Building a full database CRUD REST API with JWT authentication in Ask is very straight forward and simple and requires virtually zero lines of boilerplate code and no setup whatsoever.
 
-## Extendable.
+## Extendable
 Ask is a transpiled language (kind of like TypeScript) which means that it compiles the source code to another language that has a similar level of abstraction. In Ask's case, the target language is Python, more specifically a Flask app.
 
 Flask is a very popular and well-established web framework for Python, so there's already a lot of tools, and services for deploying Flask apps.
