@@ -101,6 +101,6 @@ As you can see Ask hides away all the clutter and boilerplate.
 You can find the full documentation on [docs.ask-lang.org](https://docs.ask-lang.org).
 
 ## Contact
-- Website: [ask-lang.org](https://ask-lang.org).
+- Website: [ask.edvard.dev](https://ask.edvard.dev).
 - Email: [me(a)edvard.dev](mailto:me@edvard.dev).
 - GitHub: [Buscedv](https://github.com/Buscedv).
