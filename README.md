@@ -40,7 +40,7 @@ The transpiled app is completely standalone and doesn't require Ask in any way.
 3. Create a new virtual environment: `python3 venv venv`.
 4. Activate it: `source venv/bin/activate`.
 5. Install dependencies: `poetry install`.
-6. (Optional but helpful in some cases) Run Ask in development mode: [Docs](https://docs.ask-lang.org/development-tools/running-in-development-mode1).
+6. (Optional but helpful in some cases) Run Ask in development mode: [Docs](https://docs.ask.edvard.dev/development-tools/running-in-development-mode1).
 
 If you want to contribute please read the CONTRIBUTING.md file for code style, standards, etc.
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 As you can see Ask hides away all the clutter and boilerplate.
 
 ## Documentation
-You can find the full documentation on [docs.ask-lang.org](https://docs.ask-lang.org).
+You can find the full documentation on [docs.ask.edvard.dev](https://docs.ask.edvard.dev).
 
 ## Contact
 - Website: [ask.edvard.dev](https://ask.edvard.dev).
