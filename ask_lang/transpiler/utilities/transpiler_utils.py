@@ -366,7 +366,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\treturn wrapped\n"
 
 	# Flask limiter setup.
-	cfg.flask_boilerplate += '\n\nlimiter = Limiter(app, key_func=get_remote_address)'
+	cfg.flask_boilerplate += '\n\nlimiter = Limiter(get_remote_address, app=app, storage_uri=\'memory://\')'
 
 	# Boilerplate code a the end of the output file (app.py).
 	cfg.flask_end_boilerplate = '\n\n@app.route(\'/docs/\', methods=[\'GET\'], defaults={\'filter_type\': None})\n'
