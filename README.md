@@ -37,7 +37,7 @@ The transpiled app is completely standalone and doesn't require Ask in any way.
 ## Run locally (for development)
 1. Clone this repo: `https://github.com/Buscedv/Ask.git`.
 2. Install [Poetry](https://python-poetry.org/).
-3. Create a new virtual environment: `python3 venv venv`.
+3. Create a new virtual environment: `python3 -m venv venv`.
 4. Activate it: `source venv/bin/activate`.
 5. Install dependencies: `poetry install`.
 6. (Optional but helpful in some cases) Run Ask in development mode: [Docs](https://docs.ask.edvard.dev/development-tools/running-in-development-mode1).
