@@ -1,0 +1,18 @@
+@get('/'):
+    status('Hello, World!', 200)
+
+@post('/admin/login'):
+	if require_keys(['email', 'password'], body):
+		status('An email and a password is required', 400)
+
+	if body['email'] in ['test@test.test', 'test1@test.test'] and body['password'] == 'abc':
+		auth.login(body['email'], 3600)
+
+		respond({token: auth.get_token()})
+	else:
+		status('Wrong email or password', 401)
+
+
+&protected
+@post('/admin/test-token'):
+	respond(True)

@@ -35,6 +35,12 @@ def run_server():
 		# The app uses routes, so it's an API, the app needs to run in a web server.
 		elif askfile.get(['server', 'production'], True) is True and cfg.is_dev is False:
 			# Run in the production server.
+			host_server_address = askfile.get(['server', 'host'], '127.0.0.1')
+			host_server_port = askfile.get(['server', 'port'], '5000')
+
+			printing.style_print('* Server running on: ', styles=['bold'], end=' ')
+			print(f'http://{host_server_address}:{host_server_port}')
+
 			print('\033[91m\t- ', end='')
 			waitress.serve(
 				TransLogger(
@@ -48,8 +54,8 @@ def run_server():
 						'\033[94m%(status)s\033[0m',
 					])
 				),
-				host=askfile.get(['server', 'host'], '127.0.0.1'),
-				port=askfile.get(['server', 'port'], '5000'),
+				host=host_server_address,
+				port=host_server_port,
 				ident='Ask Application',
 			)
 		else:

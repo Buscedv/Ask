@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ask_lang"
-version = "1.4.5"
+version = "1.5.0"
 description = "Ask is a modern open-source transpiled programming language, designed for building backend services and APIs. Ask reduces the amount of needed boilerplate code for setting up things like database connections and authentication to virtually zero lines."
 authors = ["Edvard Busck-Nielsen <me@edvard.dev>"]
 license = "GNU GPL v3.0"
@@ -38,8 +38,7 @@ six = "^1.15.0"
 SQLAlchemy = ">=2.0.16"
 PyMySQL = "^1.0.2"
 Flask-Selfdoc = "^1.2.3"
-# Don't update PyJWT, it breaks in future releases!
-PyJWT = "1.7.1"
+PyJWT = "^2.9.0"
 toml = "^0.10.2"
 waitress = "^3.0.0"
 Paste = "^3.5.0"

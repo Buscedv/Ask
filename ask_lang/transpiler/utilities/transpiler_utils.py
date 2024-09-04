@@ -257,7 +257,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\tdef __init__(self):\n"
 	cfg.flask_boilerplate += "\t\timport uuid\n"
 	cfg.flask_boilerplate += "\n\t\tself.secret_key = uuid.uuid4().hex\n"
-	cfg.flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key)\n"
+	cfg.flask_boilerplate += "\t\tself.token = jwt.encode({}, self.secret_key, algorithm='HS256')\n"
 
 	cfg.flask_boilerplate += "\n\tdef set_token(self, req_token):\n"
 	cfg.flask_boilerplate += "\t\tself.token = req_token\n"
@@ -270,17 +270,16 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\t\tself.encode(payload)\n"
 
 	cfg.flask_boilerplate += "\n\tdef encode(self, payload):\n"
-	cfg.flask_boilerplate += "\t\tself.token = jwt.encode(payload, str(self.secret_key))\n"
+	cfg.flask_boilerplate += "\t\tself.token = jwt.encode(payload, str(self.secret_key), algorithm='HS256')\n"
 
 	cfg.flask_boilerplate += "\n\tdef decode(self):\n"
-	cfg.flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key))\n'
+	cfg.flask_boilerplate += '\t\treturn jwt.decode(self.token, str(self.secret_key), algorithms=[\'HS256\'])\n'
 
 	cfg.flask_boilerplate += "\n\tdef user(self):\n"
 	cfg.flask_boilerplate += '\t\treturn self.decode()[\'user\']\n'
 
-	# If decode AttributeError here, make sure that PyJWT is on 1.7.1.
 	cfg.flask_boilerplate += "\n\tdef get_token(self):\n"
-	cfg.flask_boilerplate += '\t\treturn self.token.decode(\'utf-8\')\n'
+	cfg.flask_boilerplate += '\t\treturn self.token\n'
 
 	cfg.flask_boilerplate += "\n\tdef is_valid(self):\n"
 	cfg.flask_boilerplate += "\t\ttry:\n"
@@ -359,7 +358,7 @@ def set_boilerplate():
 	cfg.flask_boilerplate += "\t\tif not token:\n"
 	cfg.flask_boilerplate += "\t\t\treturn jsonify({'message': 'Missing token!'}), 400\n"
 	cfg.flask_boilerplate += "\t\ttry:\n"
-	cfg.flask_boilerplate += "\t\t\t_ = jwt.decode(token, _auth.secret_key)\n"
+	cfg.flask_boilerplate += "\t\t\t_ = jwt.decode(token, _auth.secret_key, algorithms=['HS256'])\n"
 	cfg.flask_boilerplate += "\t\texcept Exception:\n"
 	cfg.flask_boilerplate += "\t\t\treturn jsonify({'message': 'Invalid token!'}), 401\n"
 	cfg.flask_boilerplate += "\t\treturn func(*args, **kwargs)\n"
