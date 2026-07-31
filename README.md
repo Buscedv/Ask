@@ -103,4 +103,4 @@ You can find the full documentation on [docs.ask.edvard.dev](https://docs.ask.ed
 ## Contact
 - Website: [ask.edvard.dev](https://ask.edvard.dev).
 - Email: [me(a)edvard.dev](mailto:me@edvard.dev).
-- GitHub: [Buscedv](https://github.com/Buscedv).
+- GitHub: [Buscedv](https://github.com/edda-bn).
